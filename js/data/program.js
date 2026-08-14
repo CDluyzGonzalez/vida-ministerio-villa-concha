@@ -1,0 +1,3715 @@
+// ============================================================
+// VIDA Y MINISTERIO — VILLA CONCHA
+// js/data/program.js
+// Programa general compuesto por los bimestres locales.
+// ============================================================
+
+const DEFAULT_PROGRAM = [
+    {
+      "bimestre": "Marzo - Abril",
+      "weeks": [
+        {
+          "id": "marzo-abril__0",
+          "semana": "Semana 2-8 De Marzo 2026",
+          "lectura_semanal": "Lectura semanal de la Biblia ISAÍAS 41, 42",
+          "items": [
+            {
+              "section": "OPEN",
+              "label": "Canción 63 y oración",
+              "name": "Miguel Blanco"
+            },
+            {
+              "section": "INTRO",
+              "label": "Palabras de introducción (1 min.)",
+              "name": "Sergio Cespedes"
+            },
+            {
+              "section": "TESOROS",
+              "num": 1,
+              "label": "“No tengas miedo” (10 mins.)",
+              "name": "Eliu Rodriguez"
+            },
+            {
+              "section": "TESOROS",
+              "num": 2,
+              "label": "Busquemos perlas escondidas (10 mins.)",
+              "name": "Albeiro Prieto"
+            },
+            {
+              "section": "TESOROS",
+              "num": 3,
+              "label": "Lectura de la Biblia (4 mins.)   Is 42:1-13 (th lección 11).",
+              "name": "Favio tarazona"
+            },
+            {
+              "section": "MAESTROS",
+              "num": 4,
+              "label": "Empiece conversaciones (3 mins.)  (lmd lección 6 punto 4).",
+              "subs": [
+                {
+                  "name": "Maria Luisa Mendoza",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "Andrea Cespedes",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "MAESTROS",
+              "num": 5,
+              "label": "Empiece conversaciones (4 mins.)   (lmd lección 2 punto 4).",
+              "subs": [
+                {
+                  "name": "Justin Reyes",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "Eduardo Parra",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "MAESTROS",
+              "num": 6,
+              "label": "Discurso.   (5 mins.) (th lección 1).",
+              "name": "Nolberto Calderón"
+            },
+            {
+              "section": "NVC",
+              "label": "Canción 19"
+            },
+            {
+              "section": "NVC",
+              "num": 7,
+              "label": "El sábado 7 de marzo comienza la campaña de la Conmemoración (5 mins.)",
+              "name": "Johan Duarte"
+            },
+            {
+              "section": "NVC",
+              "num": 8,
+              "label": "Logros de la organización para el mes de marzo (10 mins.)",
+              "name": "Sergio Cespedes"
+            },
+            {
+              "section": "NVC",
+              "num": 9,
+              "label": "Estudio bíblico de la congregación (30 mins.)",
+              "conductor": "Nicolas Medina",
+              "lector": "Jhoyzer cadena"
+            },
+            {
+              "section": "CONCLUSION",
+              "label": "Palabras de conclusión (3 min.)",
+              "name": "Sergio Cespedes"
+            },
+            {
+              "section": "CLOSE",
+              "label": "Canción 73 y oración",
+              "name": "David Obando"
+            }
+          ]
+        },
+        {
+          "id": "marzo-abril__1",
+          "semana": "Semana 9-15 De Marzo",
+          "lectura_semanal": "Lectura semanal de la Biblia ISAÍAS 43, 44",
+          "items": [
+            {
+              "section": "OPEN",
+              "label": "Canción 63 y oración",
+              "name": "Sergio Cespedes"
+            },
+            {
+              "section": "INTRO",
+              "label": "Palabras de introducción (1 min.)",
+              "name": "Johan Duarte"
+            },
+            {
+              "section": "TESOROS",
+              "num": 1,
+              "label": "Una profecía escrita dos siglos antes de su cumplimiento (10 mins.)",
+              "name": "Wilmer Reyes"
+            },
+            {
+              "section": "TESOROS",
+              "num": 2,
+              "label": "Busquemos perlas escondidas (10 mins.)",
+              "name": "Anderson Gomez"
+            },
+            {
+              "section": "TESOROS",
+              "num": 3,
+              "label": "Lectura de la Biblia (4 mins.) Is 44:9-20 (th lección 10).",
+              "name": "Edgar Sandoval"
+            },
+            {
+              "section": "MAESTROS",
+              "num": 4,
+              "label": "Empiece conversaciones (1 mins.) (lmd lección 4 punto 3).",
+              "subs": [
+                {
+                  "name": "Nancy Torres",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "Amparo Laytón",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "MAESTROS",
+              "num": 5,
+              "label": "Empiece conversaciones (3 mins.)  (lmd lección 3 punto 4).",
+              "subs": [
+                {
+                  "name": "Sandra Moreno",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "Luz Francy Serrano",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "MAESTROS",
+              "num": 6,
+              "label": "Empiece conversaciones (3 mins.)) (lmd lección 6 punto 3).",
+              "subs": [
+                {
+                  "name": "David Obando",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "Fabián Reyes",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "MAESTROS",
+              "num": 7,
+              "label": "Haga revisitas  (4 mins.) (lmd lección 7 punto 4).",
+              "subs": [
+                {
+                  "name": "Esteban Santacruz",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "Caleb Santacruz",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "NVC",
+              "label": "Canción 69"
+            },
+            {
+              "section": "NVC",
+              "num": 8,
+              "label": "Necesidades de la congregación (15 mins.)",
+              "name": "Eduardo Parra"
+            },
+            {
+              "section": "NVC",
+              "num": 9,
+              "label": "Discurso visita circuito (30 mins.)",
+              "name": "Gustavo Montes"
+            },
+            {
+              "section": "CONCLUSION",
+              "label": "Palabras de conclusión (3 min.)",
+              "name": "Johan Duarte"
+            },
+            {
+              "section": "CLOSE",
+              "label": "Canción 137 y oración",
+              "name": "Gustavo Montes"
+            }
+          ]
+        },
+        {
+          "id": "marzo-abril__2",
+          "semana": "Semana 16-22 De Marzo",
+          "lectura_semanal": "Lectura semanal de la Biblia ISAÍAS  45-47",
+          "items": [
+            {
+              "section": "OPEN",
+              "label": "Canción 2 y oración",
+              "name": "Edgar Sandoval"
+            },
+            {
+              "section": "INTRO",
+              "label": "Palabras de introducción (1 min.)",
+              "name": "Sergio Rojas"
+            },
+            {
+              "section": "TESOROS",
+              "num": 1,
+              "label": "“Yo soy Dios, y no hay nadie como yo” (10 mins.)",
+              "name": "Eduardo Parra"
+            },
+            {
+              "section": "TESOROS",
+              "num": 2,
+              "label": "Busquemos perlas escondidas (10 mins.)",
+              "name": "Henry Luna"
+            },
+            {
+              "section": "TESOROS",
+              "num": 3,
+              "label": "Lectura de la Biblia (4 mins.) Is 45:1-11 (th lección 5).",
+              "name": "Orlando Caballero"
+            },
+            {
+              "section": "MAESTROS",
+              "num": 4,
+              "label": "Empiece conversaciones (3 mins.) (lmd lección 5 punto 3).",
+              "subs": [
+                {
+                  "name": "Luz Marina Muñoz",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "Mary Suárez Acosta",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "MAESTROS",
+              "num": 5,
+              "label": "Haga revisitas  (4 mins.)  (lmd lección 9 punto 5).",
+              "subs": [
+                {
+                  "name": "Endrianly Alexandra Suarez",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "Edilma prieto",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "MAESTROS",
+              "num": 6,
+              "label": "Haga discípulos (5 mins.) (lmd lección 11 punto 3).",
+              "subs": [
+                {
+                  "name": "Anderson Rodriguez",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "Andrés Herrera",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "NVC",
+              "label": "Canción 38"
+            },
+            {
+              "section": "NVC",
+              "num": 7,
+              "label": "Jehová es el único que siempre nos puede ayudar (7 mins.)",
+              "name": "Nicolas Medina"
+            },
+            {
+              "section": "NVC",
+              "num": 8,
+              "label": "Informe sobre la actividad del Departamento Local de Diseño y Construcción ( 8 mins.)",
+              "name": "Sergio Rojas"
+            },
+            {
+              "section": "NVC",
+              "num": 9,
+              "label": "Estudio bíblico de la congregación (30 mins.)",
+              "conductor": "Johan Duarte",
+              "lector": "Alirio Calderón"
+            },
+            {
+              "section": "CONCLUSION",
+              "label": "Palabras de conclusión (3 min.)",
+              "name": "Sergio Rojas"
+            },
+            {
+              "section": "CLOSE",
+              "label": "Canción 148 y oración",
+              "name": "Jose Antonio Chacon"
+            }
+          ]
+        },
+        {
+          "id": "marzo-abril__3",
+          "semana": "Semana 23-29 De Marzo",
+          "lectura_semanal": "Lectura semanal de la Biblia ISAÍAS 28, 29",
+          "items": [
+            {
+              "section": "OPEN",
+              "label": "Canción 89 y oración",
+              "name": "Alirio Calderón"
+            },
+            {
+              "section": "INTRO",
+              "label": "Palabras de introducción (1 min.)",
+              "name": "Eliu Rodriguez"
+            },
+            {
+              "section": "TESOROS",
+              "num": 1,
+              "label": "Si le prestamos atención a Jehová, nos irá bien (10 mins.)",
+              "name": "Alirio Calderon"
+            },
+            {
+              "section": "TESOROS",
+              "num": 2,
+              "label": "Busquemos perlas escondidas (10 mins.)",
+              "name": "Nolberto Calderón"
+            },
+            {
+              "section": "TESOROS",
+              "num": 3,
+              "label": "Lectura de la Biblia (4 mins.)  Is 48:9-20 (th lección 11).",
+              "name": "Diego Velasquez"
+            },
+            {
+              "section": "MAESTROS",
+              "num": 4,
+              "label": "Empiece conversaciones (3 mins.) (lmd lección 5 punto 3).",
+              "subs": [
+                {
+                  "name": "Ilsy Sanabria Durán",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "Carlina Tallaferro",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "MAESTROS",
+              "num": 5,
+              "label": "Haga revisitas ( 4 mins.)   (lmd lección 9 punto 3).",
+              "subs": [
+                {
+                  "name": "Albeiro Prieto",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "Luis A. Reyes",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "MAESTROS",
+              "num": 6,
+              "label": "Haga revisitas  ( 5  mins.) (lmd lección 8 punto 3).",
+              "subs": [
+                {
+                  "name": "Alejandra Obando",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "Rosa Rojas",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "NVC",
+              "label": "Canción 107"
+            },
+            {
+              "section": "NVC",
+              "num": 7,
+              "label": "Aproveche bien el día más importante del año (15 mins.)",
+              "name": "Eduardo Parra"
+            },
+            {
+              "section": "NVC",
+              "num": 8,
+              "label": "Repaso asamblea de Circuito (15 mins.)",
+              "name": "Sergio Cespedes"
+            },
+            {
+              "section": "NVC",
+              "num": 9,
+              "label": "Estudio bíblico de la congregación (15 mins.)",
+              "conductor": "Sergio Rojas"
+            },
+            {
+              "section": "CONCLUSION",
+              "label": "Palabras de conclusión (3 min.)",
+              "name": "Eliu Rodriguez"
+            },
+            {
+              "section": "CLOSE",
+              "label": "Canción 134 y oración",
+              "name": "Favio tarazona"
+            }
+          ]
+        },
+        {
+          "id": "marzo-abril__4",
+          "semana": "Semana 6-12 De Abril",
+          "lectura_semanal": "Lectura semanal de la Biblia ISAÍAS 50, 51",
+          "items": [
+            {
+              "section": "OPEN",
+              "label": "Canción 88 y oración",
+              "name": "Nolberto Calderón"
+            },
+            {
+              "section": "INTRO",
+              "label": "Palabras de introducción (1 min.)",
+              "name": "Eduardo Parra"
+            },
+            {
+              "section": "TESOROS",
+              "num": 1,
+              "label": "Escuchemos al que fue instruido por Dios. (10 mins.)",
+              "name": "Johan Duarte"
+            },
+            {
+              "section": "TESOROS",
+              "num": 2,
+              "label": "Busquemos perlas escondidas (10 mins.)",
+              "name": "Anderson Gomez"
+            },
+            {
+              "section": "TESOROS",
+              "num": 3,
+              "label": "Lectura de la Biblia (4 mins.)  Is 50:1-11 (th lección 2).",
+              "name": "Anderson Rodríguez"
+            },
+            {
+              "section": "MAESTROS",
+              "num": 4,
+              "label": "Empiece conversaciones (4 mins.) (lmd lección 2 punto 4).",
+              "subs": [
+                {
+                  "name": "Bernarda Sanchez",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "Vanesaa Rodriguez",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "MAESTROS",
+              "num": 5,
+              "label": "Haga revisitas (4 mins.)  (lmd lección 9 punto 4).",
+              "subs": [
+                {
+                  "name": "Mary Suárez Acosta",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "Johanna Oviedo",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "MAESTROS",
+              "num": 6,
+              "label": "Explique sus creencias (4 mins.)  (lmd lección 11 punto 5).",
+              "subs": [
+                {
+                  "name": "Alirio Calderón",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "Jose  Duran",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "NVC",
+              "label": "Canción 99"
+            },
+            {
+              "section": "NVC",
+              "num": 7,
+              "label": "Informe 2 del Cuerpo Gobernante 2026 (15 mins.)",
+              "name": "Eduardo Parra"
+            },
+            {
+              "section": "NVC",
+              "num": 8,
+              "label": "Estudio bíblico de la congregación (30 mins.)",
+              "conductor": "Sergio Rojas",
+              "lector": "Esteban Santacr"
+            },
+            {
+              "section": "CONCLUSION",
+              "label": "Palabras de conclusión (3 min.)",
+              "name": "Eduardo Parra"
+            },
+            {
+              "section": "CLOSE",
+              "label": "Canción 13 y oración",
+              "name": "Luis Quecho"
+            }
+          ]
+        },
+        {
+          "id": "marzo-abril__5",
+          "semana": "Semana 13-19 De Abril",
+          "lectura_semanal": "Lectura semanal de la Biblia ISAÍAS  52, 53",
+          "items": [
+            {
+              "section": "OPEN",
+              "label": "Canción 18 y oración",
+              "name": "Albeiro Prieto"
+            },
+            {
+              "section": "INTRO",
+              "label": "Palabras de introducción (1 min.)",
+              "name": "Nicolas Medina"
+            },
+            {
+              "section": "TESOROS",
+              "num": 1,
+              "label": "¡Cuánto amor mostró Jesús! (10 mins.)",
+              "name": "Sergio Cespedes"
+            },
+            {
+              "section": "TESOROS",
+              "num": 2,
+              "label": "Busquemos perlas escondidas (10 mins.)",
+              "name": "Esteban Santacruz"
+            },
+            {
+              "section": "TESOROS",
+              "num": 3,
+              "label": "Lectura de la Biblia (4 mins.)  Is 53:3-12 (th lección 10).",
+              "name": "Andres Camilo Muñoz"
+            },
+            {
+              "section": "MAESTROS",
+              "num": 4,
+              "label": "Empiece conversaciones (4 mins.) lmd 4:4",
+              "subs": [
+                {
+                  "name": "Emilse Rodríguez",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "Jaqueline Medina",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "MAESTROS",
+              "num": 5,
+              "label": "Empiece conversaciones (4 mins.) lmd 3:3",
+              "subs": [
+                {
+                  "name": "Laura Tarazona",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "Leonor Chacon Vera",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "MAESTROS",
+              "num": 6,
+              "label": "Haga revisitas (lmd lección 8 punto 3).",
+              "subs": [
+                {
+                  "name": "Luis Quecho",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "Luis Serrano",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "NVC",
+              "label": "Canción 20"
+            },
+            {
+              "section": "NVC",
+              "num": 7,
+              "label": "Hazte amigo de Jehová: El mejor regalo que te dio Jehová (15 mins.)",
+              "name": "Anderson Gomez"
+            },
+            {
+              "section": "NVC",
+              "num": 8,
+              "label": "Estudio bíblico de la congregación (30 mins.)",
+              "conductor": "Eliu Rodriguez",
+              "lector": "Oscar Duarte"
+            },
+            {
+              "section": "CONCLUSION",
+              "label": "Palabras de conclusión (3 min.)",
+              "name": "Nicolas Medina"
+            },
+            {
+              "section": "CLOSE",
+              "label": "Canción 57 y oración",
+              "name": "Diego Velasquez"
+            }
+          ]
+        },
+        {
+          "id": "marzo-abril__6",
+          "semana": "Semana 20-26 De Abril",
+          "lectura_semanal": "Lectura semanal de la Biblia ISAÍAS   54, 55",
+          "items": [
+            {
+              "section": "OPEN",
+              "label": "Canción 86 y oración",
+              "name": "Sergio Rojas"
+            },
+            {
+              "section": "INTRO",
+              "label": "Palabras de introducción (1 min.)",
+              "name": "Carlos D´Luyz"
+            },
+            {
+              "section": "TESOROS",
+              "num": 1,
+              "label": "¿Cuánto está dispuesto a invertir? (10 mins.)",
+              "name": "Eliu Rodriguez"
+            },
+            {
+              "section": "TESOROS",
+              "num": 2,
+              "label": "Busquemos perlas escondidas (10 mins.)",
+              "name": "Alirio Calderón"
+            },
+            {
+              "section": "TESOROS",
+              "num": 3,
+              "label": "Lectura de la Biblia (4 mins.) Is 54:1-10 (th lección 11).",
+              "name": "Hernando Rojas"
+            },
+            {
+              "section": "MAESTROS",
+              "num": 4,
+              "label": "Empiece conversaciones (2 mins.)  (lmd lección 1 punto 4).",
+              "subs": [
+                {
+                  "name": "Lissette Santacruz",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "Amparo Blanco",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "MAESTROS",
+              "num": 5,
+              "label": "Empiece conversaciones.(2 mins.)  (lmd lección 2 punto 3).",
+              "subs": [
+                {
+                  "name": "Endrianly Alexandra Suarez",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "Patricia Parra",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "MAESTROS",
+              "num": 6,
+              "label": "Haga revisitas. (2 mins.) (lmd lección 9 punto 3).",
+              "subs": [
+                {
+                  "name": "Sarai Tallaferro",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "Nilda Acosta",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "MAESTROS",
+              "num": 7,
+              "label": "Discurso. (5 mins.) be 28-31. (th lección 14).",
+              "subs": [
+                {
+                  "name": "Edgar Serrano",
+                  "role": "Nombre"
+                }
+              ]
+            },
+            {
+              "section": "NVC",
+              "label": "Canción 97"
+            },
+            {
+              "section": "NVC",
+              "num": 7,
+              "label": "Que ningún obstáculo le impida tener su estudio personal (15 mins.)",
+              "name": "Johan Duarte"
+            },
+            {
+              "section": "NVC",
+              "num": 8,
+              "label": "Estudio bíblico de la congregación (30 mins.)",
+              "conductor": "Eduardo Parra",
+              "lector": "Sergio Rojas"
+            },
+            {
+              "section": "CONCLUSION",
+              "label": "Palabras de conclusión (3 min.)",
+              "name": "Carlos D´Luyz"
+            },
+            {
+              "section": "CLOSE",
+              "label": "Canción 163 y oración",
+              "name": "Orlando Prada"
+            }
+          ]
+        },
+        {
+          "id": "marzo-abril__7",
+          "semana": "Semana 27 De Abril A 3 De Mayo",
+          "lectura_semanal": "Lectura semanal de la Biblia ISAÍAS 56, 57",
+          "items": [
+            {
+              "section": "OPEN",
+              "label": "Canción 12 y oración",
+              "name": "Henry Luna"
+            },
+            {
+              "section": "INTRO",
+              "label": "Palabras de introducción (1 min.)",
+              "name": "Alirio Calderón"
+            },
+            {
+              "section": "TESOROS",
+              "num": 1,
+              "label": "Felices de tener a Jehová en nuestra vida (10 mins.)",
+              "name": "Eduardo Parra"
+            },
+            {
+              "section": "TESOROS",
+              "num": 2,
+              "label": "Busquemos perlas escondidas (10 mins.)",
+              "name": "Wilmer Reyes"
+            },
+            {
+              "section": "TESOROS",
+              "num": 3,
+              "label": "Lectura de la Biblia (4 mins.) Is 56:4-12 (th lección 5).",
+              "name": "Jhoel Cadena"
+            },
+            {
+              "section": "MAESTROS",
+              "num": 4,
+              "label": "Empiece conversaciones (3 mins.)  (lmd lección 2 punto 4).",
+              "subs": [
+                {
+                  "name": "Maria Eugenia Luna",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "Angie Beleño",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "MAESTROS",
+              "num": 5,
+              "label": "Explique sus creencias (5 mins.) (th lección 16).",
+              "subs": [
+                {
+                  "name": "Anderson Rodriguez",
+                  "role": "Nombre"
+                }
+              ]
+            },
+            {
+              "section": "MAESTROS",
+              "num": 6,
+              "label": "Haga discípulos. (4 mins.)  lmd 7:5",
+              "subs": [
+                {
+                  "name": "Cristian Reyes",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "Oscar Duarte",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "NVC",
+              "label": "Canción 58"
+            },
+            {
+              "section": "NVC",
+              "num": 8,
+              "label": "Nunca deje de hablar de Jehová (15 mins.)",
+              "name": "Nicolas Medina"
+            },
+            {
+              "section": "NVC",
+              "num": 9,
+              "label": "Estudio bíblico de la congregación (30 mins.)",
+              "conductor": "Sergio Cespedes",
+              "lector": "David Obando"
+            },
+            {
+              "section": "CONCLUSION",
+              "label": "Palabras de conclusión (3 min.)",
+              "name": "Alirio Calderón"
+            },
+            {
+              "section": "CLOSE",
+              "label": "Canción 163 y oración",
+              "name": "Edgar Serrano"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "bimestre": "Mayo - Junio",
+      "weeks": [
+        {
+          "id": "mayo-junio__0",
+          "semana": "Semana 4-10 De Mayo 2026",
+          "lectura_semanal": "Lectura semanal de la Biblia ISAÍAS 58, 59",
+          "items": [
+            {
+              "section": "OPEN",
+              "label": "Canción 21 y oración",
+              "name": "Orlando Prada"
+            },
+            {
+              "section": "INTRO",
+              "label": "Palabras de introducción (1 min.)",
+              "name": "Eduardo Parra"
+            },
+            {
+              "section": "TESOROS",
+              "num": 1,
+              "label": "Disfrute al máximo de la bendición de Jehová (10 mins.)",
+              "name": "Sergio Rojas"
+            },
+            {
+              "section": "TESOROS",
+              "num": 2,
+              "label": "Busquemos perlas escondidas (10 mins.)",
+              "name": "Esteban Santacruz"
+            },
+            {
+              "section": "TESOROS",
+              "num": 3,
+              "label": "Lectura de la Biblia (4 mins.) Is 59:1-12 (th lección 10).",
+              "name": "Oscar Duarte"
+            },
+            {
+              "section": "MAESTROS",
+              "num": 4,
+              "label": "Empiece conversaciones (3 mins.) (lmd lección 1 punto 5).",
+              "subs": [
+                {
+                  "name": "Luisa Serrano",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "Mayreth Trujillo",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "MAESTROS",
+              "num": 5,
+              "label": "Empiece conversaciones (4 mins.) (lmd lección 2 punto 4).",
+              "subs": [
+                {
+                  "name": "Libia Cardenas",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "Natividad Rojas",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "MAESTROS",
+              "num": 6,
+              "label": "Discurso (5 mins.) (th lección 8).",
+              "subs": [
+                {
+                  "name": "Jhoyzer Cadena",
+                  "role": "Nombre"
+                }
+              ]
+            },
+            {
+              "section": "NVC",
+              "label": "Canción 100"
+            },
+            {
+              "section": "NVC",
+              "num": 7,
+              "label": "“Sean siempre hospitalarios”  (15 mins.)",
+              "name": "Sergio Cespedes"
+            },
+            {
+              "section": "NVC",
+              "num": 8,
+              "label": "Estudio bíblico de la congregación (30 mins.)",
+              "conductor": "Carlos D' Luyz",
+              "lector": "Jhoel Cadena"
+            },
+            {
+              "section": "CONCLUSION",
+              "label": "Palabras de conclusión (3 min.)",
+              "name": "Eduardo Parra"
+            },
+            {
+              "section": "CLOSE",
+              "label": "Canción 42 y oración",
+              "name": "Jhoel Cadena"
+            }
+          ]
+        },
+        {
+          "id": "mayo-junio__1",
+          "semana": "Semana 11-17 De Mayo",
+          "lectura_semanal": "Lectura semanal de la Biblia ISAÍAS 60, 61",
+          "items": [
+            {
+              "section": "OPEN",
+              "label": "Canción 146 y oración",
+              "name": "Johan Cadena"
+            },
+            {
+              "section": "INTRO",
+              "label": "Palabras de introducción (1 min.)",
+              "name": "Sergio Cespedes"
+            },
+            {
+              "section": "TESOROS",
+              "num": 1,
+              "label": "“Levántate, oh, mujer, despide luz” (10 mins.)",
+              "name": "Johan Duarte"
+            },
+            {
+              "section": "TESOROS",
+              "num": 2,
+              "label": "Busquemos perlas escondidas (10 mins.)",
+              "name": "Wilmer Reyes"
+            },
+            {
+              "section": "TESOROS",
+              "num": 3,
+              "label": "Lectura de la Biblia (4 mins.) Is 61:1-9 (th lección 11).",
+              "name": "Luis Quecho"
+            },
+            {
+              "section": "MAESTROS",
+              "num": 4,
+              "label": "Empiece conversaciones (3 mins.) (lmd lección 4 punto 3).",
+              "subs": [
+                {
+                  "name": "Carolina Moreno",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "Lissette Santacruz",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "MAESTROS",
+              "num": 5,
+              "label": "Haga revisitas. (4 mins.) (lmd lección 3 punto 4).",
+              "subs": [
+                {
+                  "name": "David Quiñonez",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "Andres Camilo Muñoz",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "MAESTROS",
+              "num": 6,
+              "label": "Haga discípulos (5 mins.) (lmd lección 11 punto 4).",
+              "subs": [
+                {
+                  "name": "Graciela Reyes",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "Vanesa Muñoz Reyes",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "NVC",
+              "label": "Canción 156"
+            },
+            {
+              "section": "NVC",
+              "num": 8,
+              "label": "Informe 3 del Cuerpo Gobernante 2026 (15 mins.)",
+              "name": "Sergio Cespedes"
+            },
+            {
+              "section": "NVC",
+              "num": 9,
+              "label": "Estudio bíblico de la congregación (30 mins.)",
+              "conductor": "Alirio Calderón",
+              "lector": "Jhoyzer Cadena"
+            },
+            {
+              "section": "CONCLUSION",
+              "label": "Palabras de conclusión (3 min.)",
+              "name": "Sergio Cespedes"
+            },
+            {
+              "section": "CLOSE",
+              "label": "Canción Canción 119 y oración",
+              "name": "Henry Luna"
+            }
+          ]
+        },
+        {
+          "id": "mayo-junio__2",
+          "semana": "Semana 18-24 De Mayo",
+          "lectura_semanal": "Lectura semanal de la Biblia ISAÍAS 62-64",
+          "items": [
+            {
+              "section": "OPEN",
+              "label": "Canción 44 y oración",
+              "name": "Edgar Sandoval"
+            },
+            {
+              "section": "INTRO",
+              "label": "Palabras de introducción (1 min.)",
+              "name": "Johan Duarte"
+            },
+            {
+              "section": "TESOROS",
+              "num": 1,
+              "label": "El Alfarero nos moldea con amor y compasión (10 mins.)",
+              "name": "Sergio Rojas"
+            },
+            {
+              "section": "TESOROS",
+              "num": 2,
+              "label": "Busquemos perlas escondidas (10 mins.)",
+              "name": "Henry Luna"
+            },
+            {
+              "section": "TESOROS",
+              "num": 3,
+              "label": "Lectura de la Biblia (4 mins.) Is 64:4-12 (th lección 12).",
+              "name": "Caleb Santacruz"
+            },
+            {
+              "section": "MAESTROS",
+              "num": 4,
+              "label": "Empiece conversaciones (3 mins.) (lmd lección 1 punto 5).",
+              "subs": [
+                {
+                  "name": "Diana Quecho",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "Andrea Velasquez",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "MAESTROS",
+              "num": 5,
+              "label": "Haga revisitas (4 mins.) (lmd lección 9 punto 4).",
+              "subs": [
+                {
+                  "name": "Nancy Rojas",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "Rosa Rojas",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "MAESTROS",
+              "num": 6,
+              "label": "Haga discípulos (5 mins.) (lmd lección 12 punto 3).",
+              "subs": [
+                {
+                  "name": "Wilmer Reyes",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "Edgar Sandoval",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "NVC",
+              "label": "Canción 115"
+            },
+            {
+              "section": "NVC",
+              "num": 7,
+              "label": "Preparados para las situaciones de emergencia: Esté listo para lo imprevisto  (15 mins.)",
+              "name": "Eduardo Parra"
+            },
+            {
+              "section": "NVC",
+              "num": 9,
+              "label": "Estudio bíblico de la congregación (30 mins.)",
+              "conductor": "Eliu Rodriguez",
+              "lector": "David Obando"
+            },
+            {
+              "section": "CONCLUSION",
+              "label": "Palabras de conclusión (3 min.)",
+              "name": "Johan Duarte"
+            },
+            {
+              "section": "CLOSE",
+              "label": "Canción 151 y oración",
+              "name": "Anderson Gomez"
+            }
+          ]
+        },
+        {
+          "id": "mayo-junio__3",
+          "semana": "Semana 25-31 De Mayo",
+          "lectura_semanal": "Lectura semanal de la Biblia ISAÍAS 65, 66",
+          "items": [
+            {
+              "section": "OPEN",
+              "label": "Canción 24 y oración",
+              "name": "Nolberto Calderón"
+            },
+            {
+              "section": "INTRO",
+              "label": "Palabras de introducción (1 min.)",
+              "name": "Sergio Rojas"
+            },
+            {
+              "section": "TESOROS",
+              "num": 1,
+              "label": "¡Cuánto amamos nuestro paraíso espiritual! (10 mins.)",
+              "name": "Nicolas Medina"
+            },
+            {
+              "section": "TESOROS",
+              "num": 2,
+              "label": "Busquemos perlas escondidas (10 mins.)",
+              "name": "Albeiro Prieto"
+            },
+            {
+              "section": "TESOROS",
+              "num": 3,
+              "label": "Lectura de la Biblia (4 mins.) Is 65:17-25 (th lección 10).",
+              "name": "Sebastián Beleño"
+            },
+            {
+              "section": "MAESTROS",
+              "num": 4,
+              "label": "Empiece conversaciones (3 mins.) (lmd lección 5 punto 3).",
+              "subs": [
+                {
+                  "name": "Sandra Moreno",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "Yolanda Barón",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "MAESTROS",
+              "num": 5,
+              "label": "Empiece conversaciones (2 mins.) (lmd lección 4 punto 5).",
+              "subs": [
+                {
+                  "name": "Diego Velasquez",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "Gabriel Ojeda",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "MAESTROS",
+              "num": 6,
+              "label": "Empiece conversaciones (3 mins.) (lmd lección 1 punto 4).",
+              "subs": [
+                {
+                  "name": "Lizeth Rodríguez",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "Mayreth D' Luyz",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "MAESTROS",
+              "num": 7,
+              "label": "Explique sus creencias (3 mins.) (th lección 17).",
+              "subs": [
+                {
+                  "name": "Luisa Serrano",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "Beatriz Serrano",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "NVC",
+              "label": "Canción 80"
+            },
+            {
+              "section": "NVC",
+              "num": 8,
+              "label": "¿Tendrás tú una vida llena de cosas buenas?  (15  mins.)",
+              "name": "Johan Duarte"
+            },
+            {
+              "section": "NVC",
+              "num": 9,
+              "label": "Estudio bíblico de la congregación (30 mins.)",
+              "conductor": "Sergio Cespedes",
+              "lector": "Esteban Santa."
+            },
+            {
+              "section": "CONCLUSION",
+              "label": "Palabras de conclusión (3 min.)",
+              "name": "Sergio Rojas"
+            },
+            {
+              "section": "CLOSE",
+              "label": "Canción 55 y oración",
+              "name": "Luis Quecho"
+            }
+          ]
+        },
+        {
+          "id": "mayo-junio__4",
+          "semana": "Semana 1-7 De Junio",
+          "lectura_semanal": "Lectura semanal de la Biblia JEREMÍAS 1-3",
+          "items": [
+            {
+              "section": "OPEN",
+              "label": "Canción 84 y oración",
+              "name": "Alirio Calderón"
+            },
+            {
+              "section": "INTRO",
+              "label": "Palabras de introducción (1 min.)",
+              "name": "Nicolas Medina"
+            },
+            {
+              "section": "TESOROS",
+              "num": 1,
+              "label": "“No te dejes intimidar [...], porque ‘yo estoy contigo’” (10 mins.)",
+              "name": "Carlos D´Luyz"
+            },
+            {
+              "section": "TESOROS",
+              "num": 2,
+              "label": "Busquemos perlas escondidas (10 mins.)",
+              "name": "Nolberto Calderón"
+            },
+            {
+              "section": "TESOROS",
+              "num": 3,
+              "label": "Lectura de la Biblia (4 mins.) Jer 3:14-25 (th lección 12).",
+              "name": "Jorge Andres Jaimes"
+            },
+            {
+              "section": "MAESTROS",
+              "num": 4,
+              "label": "Empiece conversaciones (3 mins.) (lmd lección 2 punto 5).",
+              "subs": [
+                {
+                  "name": "Cristina Zurita",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "Rosa Rojas",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "MAESTROS",
+              "num": 5,
+              "label": "Haga revisitas (4 mins.) (lmd lección 8 punto 3).",
+              "subs": [
+                {
+                  "name": "Beatriz Serrano",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "Angie Beleño",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "MAESTROS",
+              "num": 6,
+              "label": "Haga discípulos (4 mins.) (lmd lección 12 punto 5).",
+              "subs": [
+                {
+                  "name": "Orlando Prada",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "Jhoyzer Cadena",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "NVC",
+              "label": "Canción 76"
+            },
+            {
+              "section": "NVC",
+              "num": 7,
+              "label": "¡Sé valiente como Jeremías! (6 mins.)",
+              "name": "Anderson Gomez"
+            },
+            {
+              "section": "NVC",
+              "num": 8,
+              "label": "“Listos para presentar una defensa [...] con apacibilidad y profundo respeto” (9 mins.)",
+              "name": "Eduardo Parra"
+            },
+            {
+              "section": "NVC",
+              "num": 9,
+              "label": "Estudio bíblico de la congregación (30 mins.)",
+              "conductor": "Sergio Rojas",
+              "lector": "Andrés Herrera"
+            },
+            {
+              "section": "CONCLUSION",
+              "label": "Palabras de conclusión(3 min.)",
+              "name": "Nicolas Medina"
+            },
+            {
+              "section": "CLOSE",
+              "label": "Canción 18 y oración",
+              "name": "Diego Velasquez"
+            }
+          ]
+        },
+        {
+          "id": "mayo-junio__5",
+          "semana": "Semana 8-14 De Junio",
+          "lectura_semanal": "Lectura semanal de la Biblia JEREMÍAS 4-6",
+          "items": [
+            {
+              "section": "OPEN",
+              "label": "Canción 56 y oración",
+              "name": "Miguel Blanco"
+            },
+            {
+              "section": "INTRO",
+              "label": "Palabras de introducción (1 min.)",
+              "name": "Alirio Calderón"
+            },
+            {
+              "section": "TESOROS",
+              "num": 1,
+              "label": "No nos enfermemos espiritualmente como les pasó a los de Judá (10 mins.)",
+              "name": "Anderson Gomez"
+            },
+            {
+              "section": "TESOROS",
+              "num": 2,
+              "label": "Busquemos perlas escondidas (10 mins.)",
+              "name": "Henry Luna"
+            },
+            {
+              "section": "TESOROS",
+              "num": 3,
+              "label": "Lectura de la Biblia (4 mins.) Jer 5:1-11 (th lección 5).",
+              "name": "Edgar Sandoval"
+            },
+            {
+              "section": "MAESTROS",
+              "num": 4,
+              "label": "Empiece conversaciones (2 mins.) (lmd lección 2 punto 3).",
+              "subs": [
+                {
+                  "name": "Patricia Avila",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "Linda Cote",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "MAESTROS",
+              "num": 5,
+              "label": "Empiece conversaciones (2 mins.) (lmd lección 1 punto 3).",
+              "subs": [
+                {
+                  "name": "Diana Quecho",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "Flor Reyes",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "MAESTROS",
+              "num": 6,
+              "label": "Haga revisitas (4 mins.) (lmd lección 3 punto 3).",
+              "subs": [
+                {
+                  "name": "Andrea Cespedes",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "Nancy Torres",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "MAESTROS",
+              "num": 7,
+              "label": "Explique sus creencias (3 mins.) ijwfq artículo 5. (th lección 7).",
+              "subs": [
+                {
+                  "name": "Anderson Rodriguez",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "Favio tarazona",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "NVC",
+              "label": "Canción 60"
+            },
+            {
+              "section": "NVC",
+              "num": 8,
+              "label": "Proteja su corazón de la información falsa (8 mins.)",
+              "name": "Nicolas Medina"
+            },
+            {
+              "section": "NVC",
+              "num": 9,
+              "label": "Recordatorios para la asamblea Regional (15 mins.)",
+              "name": "Eliu Rodriguez"
+            },
+            {
+              "section": "NVC",
+              "num": 10,
+              "label": "Estudio bíblico de la congregación (20 mins.)",
+              "name": "Eduardo Parra"
+            },
+            {
+              "section": "CONCLUSION",
+              "label": "Palabras de conclusión (3 min.)",
+              "name": "Alirio Calderón"
+            },
+            {
+              "section": "CLOSE",
+              "label": "Canción 68 y oración",
+              "name": "David Obando"
+            }
+          ]
+        },
+        {
+          "id": "mayo-junio__6",
+          "semana": "Semana 15-21 De Junio",
+          "lectura_semanal": "Lectura semanal de la Biblia JEREMÍAS 7, 8",
+          "items": [
+            {
+              "section": "OPEN",
+              "label": "Canción 152 y oración",
+              "name": "Carlos D' Luyz"
+            },
+            {
+              "section": "INTRO",
+              "label": "Palabras de introducción (1 min.)",
+              "name": "Johan Duarte"
+            },
+            {
+              "section": "TESOROS",
+              "num": 1,
+              "label": "No respetaron el templo de Jehová (10 mins.)",
+              "name": "Eduardo Parra"
+            },
+            {
+              "section": "TESOROS",
+              "num": 2,
+              "label": "Busquemos perlas escondidas (10 mins.)",
+              "name": "Alirio Calderón"
+            },
+            {
+              "section": "TESOROS",
+              "num": 3,
+              "label": "Lectura de la Biblia (4 mins.) Jer 8:4-13 (th lección 2).",
+              "name": "Luis Serrano"
+            },
+            {
+              "section": "MAESTROS",
+              "num": 4,
+              "label": "Empiece conversaciones (3 mins.) (lmd lección 5 punto 5).",
+              "subs": [
+                {
+                  "name": "Gabriela Guerrero",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "Ashley Ojeda",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "MAESTROS",
+              "num": 5,
+              "label": "Haga revisitas (2 mins.) (lmd lección 9 punto 3).",
+              "subs": [
+                {
+                  "name": "Hernando Rojas",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "Miguel Blanco",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "MAESTROS",
+              "num": 6,
+              "label": "Haga discípulos (5 mins.) (th lección 19).",
+              "subs": [
+                {
+                  "name": "Ilsy Sanabria Durán",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "Amparo Laytón",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "NVC",
+              "label": "Canción 91"
+            },
+            {
+              "section": "NVC",
+              "num": 7,
+              "label": "¿Cómo podemos demostrar que respetamos el Salón del Reino? (5 mins.)",
+              "name": "Sergio Rojas"
+            },
+            {
+              "section": "NVC",
+              "num": 8,
+              "label": "Cómo usamos las donaciones: Mantenemos nuestros Salones del Reino en buen estado (10 mins.)",
+              "name": "Eliu Rodriguez"
+            },
+            {
+              "section": "NVC",
+              "num": 9,
+              "label": "Estudio bíblico de la congregación (30 mins.)",
+              "conductor": "Nicolás Medina",
+              "lector": "Oscar Duarte"
+            },
+            {
+              "section": "CONCLUSION",
+              "label": "Palabras de conclusión (3 min.)",
+              "name": "Johan Duarte"
+            },
+            {
+              "section": "CLOSE",
+              "label": "Canción 71 y oración",
+              "name": "Favio tarazona"
+            }
+          ]
+        },
+        {
+          "id": "mayo-junio__7",
+          "semana": "Semana 22-28 De Junio",
+          "lectura_semanal": "Lectura semanal de la Biblia JEREMÍAS 9, 10",
+          "items": [
+            {
+              "section": "OPEN",
+              "label": "Canción 5 y oración",
+              "name": "Albeiro Prieto"
+            },
+            {
+              "section": "INTRO",
+              "label": "Palabras de introducción (1 min.)",
+              "name": "Eliu Rodríguez"
+            },
+            {
+              "section": "TESOROS",
+              "num": 1,
+              "label": "¿De qué presumirá usted? (10 mins.)",
+              "name": "Wilmer Reyes"
+            },
+            {
+              "section": "TESOROS",
+              "num": 2,
+              "label": "Busquemos perlas escondidas (10 mins.)",
+              "name": "Anderson Gómez"
+            },
+            {
+              "section": "TESOROS",
+              "num": 3,
+              "label": "Lectura de la Biblia (4 mins.) Jer 9:13-24 (th lección 12).",
+              "name": "Cristian Reyes"
+            },
+            {
+              "section": "MAESTROS",
+              "num": 4,
+              "label": "Empiece conversaciones (4 mins.) (lmd lección 3 punto 5).",
+              "subs": [
+                {
+                  "name": "Nancy Torres",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "Alejandra Obando",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "MAESTROS",
+              "num": 5,
+              "label": "Empiece conversaciones (4 mins.) (lmd lección 3 punto 4).",
+              "subs": [
+                {
+                  "name": "Luisa Serrano",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "Adriana Bolivar",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "MAESTROS",
+              "num": 6,
+              "label": "Haga revisitas (4 mins.) (lmd lección 7 punto 3).",
+              "subs": [
+                {
+                  "name": "Andres Herrera",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "Jose  Duran",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "NVC",
+              "label": "Canción 48"
+            },
+            {
+              "section": "NVC",
+              "num": 7,
+              "label": "No nos dejemos engañar, apoyemos el Reino de Dios (Jer. 10:23) (15 mins.)",
+              "name": "Sergio Cespedes"
+            },
+            {
+              "section": "NVC",
+              "num": 8,
+              "label": "Necesidades de la congregación (7 mins.)",
+              "name": "Eliu Rodríguez"
+            },
+            {
+              "section": "NVC",
+              "num": 9,
+              "label": "Estudio bíblico de la congregación (23 mins.)",
+              "conductor": "Johan Duarte",
+              "lector": "Nicolás Medina"
+            },
+            {
+              "section": "CONCLUSION",
+              "label": "Palabras de conclusión (3 min.)",
+              "name": "Eliu Rodríguez"
+            },
+            {
+              "section": "CLOSE",
+              "label": "Canción 58 y oración",
+              "name": "Edgar Serrano"
+            }
+          ]
+        },
+        {
+          "id": "mayo-junio__8",
+          "semana": "Semana 29 De Junio A 5 De Julio",
+          "lectura_semanal": "Lectura semanal de la Biblia JEREMÍAS 11, 12",
+          "items": [
+            {
+              "section": "OPEN",
+              "label": "Canción 106 y oración",
+              "name": "Edgar Sandoval"
+            },
+            {
+              "section": "INTRO",
+              "label": "Palabras de introducción (1 min.)",
+              "name": "Carlos D' Luyz"
+            },
+            {
+              "section": "TESOROS",
+              "num": 1,
+              "label": "Cómo “competir en una carrera contra caballos (10 mins.)",
+              "name": "Alirio Calderon"
+            },
+            {
+              "section": "TESOROS",
+              "num": 2,
+              "label": "Busquemos perlas escondidas (10 mins.)",
+              "name": "Esteban Santacruz"
+            },
+            {
+              "section": "TESOROS",
+              "num": 3,
+              "label": "Lectura de la Biblia (4 mins.) Jer 12:1-11 (th lección 2).",
+              "name": "Jhoel Cadena"
+            },
+            {
+              "section": "MAESTROS",
+              "num": 4,
+              "label": "Empiece conversaciones (3 mins.) (lmd lección 1 punto 4).",
+              "subs": [
+                {
+                  "name": "Luz Marina Muñoz",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "Bernarda Sanchez",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "MAESTROS",
+              "num": 5,
+              "label": "Haga revisitas (4 mins.) (lmd lección 3 punto 3).",
+              "subs": [
+                {
+                  "name": "Dayana Duarte",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "Angie Sandoval Sanchez",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "MAESTROS",
+              "num": 6,
+              "label": "Discurso (5 mins.) lmd apéndice A punto 17. (th lección 14).",
+              "subs": [
+                {
+                  "name": "Daniel Jaimes",
+                  "role": "Nombre"
+                }
+              ]
+            },
+            {
+              "section": "NVC",
+              "label": "Canción 48"
+            },
+            {
+              "section": "NVC",
+              "num": 8,
+              "label": "Recordatorios para la asamblea regional (7 mins.)",
+              "name": "Sergio Rojas"
+            },
+            {
+              "section": "NVC",
+              "num": 7,
+              "label": "Informe 4 del Cuerpo Gobernante (15 mins.)",
+              "name": "Carlos D' Luyz"
+            },
+            {
+              "section": "NVC",
+              "num": 8,
+              "label": "Estudio bíblico de la congregación (23 mins.)",
+              "conductor": "Eduardo Parra",
+              "lector": "Anderson Gomez"
+            },
+            {
+              "section": "CONCLUSION",
+              "label": "Palabras de conclusión (3 min.)",
+              "name": "Carlos D' Luyz"
+            },
+            {
+              "section": "CLOSE",
+              "label": "Canción 69 y oración",
+              "name": "Nolberto Calderon"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "bimestre": "Julio - Agosto",
+      "weeks": [
+        {
+          "id": "julio-agosto__0",
+          "semana": "Semana 6-12 De Julio",
+          "lectura_semanal": "Lectura semanal de la Biblia JEREMÍAS 13-15",
+          "items": [
+            {
+              "section": "OPEN",
+              "label": "Canción 123 y oración",
+              "name": "Edgar Sandoval"
+            },
+            {
+              "section": "INTRO",
+              "label": "Palabras de introducción (1 min.)",
+              "name": "Eduardo Parra"
+            },
+            {
+              "section": "TESOROS",
+              "num": 1,
+              "label": "Jehová merece que le obedezcamos (10 mins.)",
+              "name": "Eliu Rodríguez"
+            },
+            {
+              "section": "TESOROS",
+              "num": 2,
+              "label": "Busquemos perlas escondidas (10 mins.)",
+              "name": "Albeiro Prieto"
+            },
+            {
+              "section": "TESOROS",
+              "num": 3,
+              "label": "Lectura de la Biblia (4 mins.) Jer 13:1-14 (th lección 2).",
+              "name": "Daniel Jaimes"
+            },
+            {
+              "section": "MAESTROS",
+              "num": 4,
+              "label": "Empiece conversaciones (3 mins.) (lmd lección 1 punto 5).",
+              "subs": [
+                {
+                  "name": "Alba Sandoval",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "Nancy Torres",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "MAESTROS",
+              "num": 5,
+              "label": "Haga revisitas (4 mins.) (lmd lección 9 punto 4).",
+              "subs": [
+                {
+                  "name": "Graciela Quiñónez",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "Shirley Cáceres",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "MAESTROS",
+              "num": 6,
+              "label": "Discurso (5 mins.) (th lección 7).",
+              "subs": [
+                {
+                  "name": "Esteban Santacruz",
+                  "role": "Nombre"
+                }
+              ]
+            },
+            {
+              "section": "NVC",
+              "label": "Canción 49"
+            },
+            {
+              "section": "NVC",
+              "num": 7,
+              "label": "“Obedecer es mejor que ofrecer un sacrificio” (15 mins.)",
+              "name": "Sergio Cespedes"
+            },
+            {
+              "section": "NVC",
+              "num": 8,
+              "label": "Estudio bíblico de la congregación (30 mins.)",
+              "conductor": "Carlos D´ Luyz",
+              "lector": "Andres Herrera"
+            },
+            {
+              "section": "CONCLUSION",
+              "label": "Palabras de conclusión (3 min.)",
+              "name": "Eduardo Parra"
+            },
+            {
+              "section": "CLOSE",
+              "label": "Canción 61 y oración",
+              "name": "Miguel Blanco"
+            }
+          ]
+        },
+        {
+          "id": "julio-agosto__1",
+          "semana": "Semana 13-19 De Julio ASAMBLEA REGIONAL",
+          "lectura_semanal": "Lectura semanal de la Biblia JEREMÍAS 16, 17",
+          "items": [
+            {
+              "section": "OPEN",
+              "label": "Canción 34 y oración"
+            },
+            {
+              "section": "INTRO",
+              "label": "Palabras de introducción (1 min.)",
+              "name": "ASAMBLEA REGIONAL"
+            },
+            {
+              "section": "TESOROS",
+              "num": 1,
+              "label": "¿Estamos confiando en la persona correcta? (10 mins.)"
+            },
+            {
+              "section": "TESOROS",
+              "num": 2,
+              "label": "Busquemos perlas escondidas (10 mins.)"
+            },
+            {
+              "section": "TESOROS",
+              "num": 3,
+              "label": "Lectura de la Biblia (4 mins.) Jer 17:5-18 (th lección 5).",
+              "name": "ASAMBLEA REGIONAL"
+            },
+            {
+              "section": "MAESTROS",
+              "num": 4,
+              "label": "Empiece conversaciones (3 mins.) (lmd lección 5 punto 5).",
+              "subs": [
+                {
+                  "name": "",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "MAESTROS",
+              "num": 5,
+              "label": "Haga revisitas (4 mins.) (lmd lección 7 punto 4).",
+              "subs": [
+                {
+                  "name": "",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "MAESTROS",
+              "num": 6,
+              "label": "Haga discípulos (5 mins.) (lmd lección 11 punto 3).",
+              "subs": [
+                {
+                  "name": "",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "NVC",
+              "label": "Canción 54"
+            },
+            {
+              "section": "NVC",
+              "num": 8,
+              "label": "Joven, confía en los consejos de la Biblia (15 mins.)",
+              "name": "ASAMBLEA REGIONAL"
+            },
+            {
+              "section": "NVC",
+              "num": 9,
+              "label": "Estudio bíblico de la congregación (30 mins.)",
+              "lector": ""
+            },
+            {
+              "section": "CONCLUSION",
+              "label": "Palabras de conclusión (3 min.)"
+            },
+            {
+              "section": "CLOSE",
+              "label": "Canción 22 y oración",
+              "name": "ASAMBLEA REGIONAL"
+            }
+          ]
+        },
+        {
+          "id": "julio-agosto__2",
+          "semana": "Semana 20-26 De Julio",
+          "lectura_semanal": "Lectura semanal de la Biblia JEREMÍAS 18, 19",
+          "items": [
+            {
+              "section": "OPEN",
+              "label": "Canción 44 y oración",
+              "name": "Orlando Prada"
+            },
+            {
+              "section": "INTRO",
+              "label": "Palabras de introducción (1 min.)",
+              "name": "Johan Duarte"
+            },
+            {
+              "section": "TESOROS",
+              "num": 1,
+              "label": "Recuperarnos en sentido espiritual es posible (10 mins.)",
+              "name": "Eduardo Parra"
+            },
+            {
+              "section": "TESOROS",
+              "num": 2,
+              "label": "Busquemos perlas escondidas (10 mins.)",
+              "name": "Henry Luna"
+            },
+            {
+              "section": "TESOROS",
+              "num": 3,
+              "label": "Lectura de la Biblia (4 mins.) Jer 19:1-11 (th lección 5).",
+              "name": "Edgar Sandoval"
+            },
+            {
+              "section": "MAESTROS",
+              "num": 4,
+              "label": "Empiece conversaciones (4 mins.) (lmd lección 4 punto 3).",
+              "subs": [
+                {
+                  "name": "Andrea Velasquez",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "Sophia Velazquez",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "MAESTROS",
+              "num": 5,
+              "label": "Haga revisitas (4 mins.) (lmd lección 9 punto 3).",
+              "subs": [
+                {
+                  "name": "Libia Cardenas",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "Ofelmina Caballero",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "MAESTROS",
+              "num": 6,
+              "label": "Explique sus creencias (4 mins.) (th lección 20).",
+              "subs": [
+                {
+                  "name": "Anderson Rodriguez",
+                  "role": "Nombre"
+                }
+              ]
+            },
+            {
+              "section": "NVC",
+              "label": "Canción 38"
+            },
+            {
+              "section": "NVC",
+              "num": 7,
+              "label": "Pasos para recuperarnos en sentido espiritual (15 mins.)",
+              "name": "Nicolas Medina"
+            },
+            {
+              "section": "NVC",
+              "num": 9,
+              "label": "Estudio bíblico de la congregación (30 mins.)",
+              "conductor": "Eliu Rodríguez",
+              "lector": "David Obando"
+            },
+            {
+              "section": "CONCLUSION",
+              "label": "Palabras de conclusión (3 min.)",
+              "name": "Johan Duarte"
+            },
+            {
+              "section": "CLOSE",
+              "label": "Canción 153 y oración",
+              "name": "Anderson Gomez"
+            }
+          ]
+        },
+        {
+          "id": "julio-agosto__3",
+          "semana": "Semana 27 De Julio A 2 De Agosto",
+          "lectura_semanal": "Lectura semanal de la Biblia JEREMÍAS 20, 21",
+          "items": [
+            {
+              "section": "OPEN",
+              "label": "Canción 73 y oración",
+              "name": "David Obando"
+            },
+            {
+              "section": "INTRO",
+              "label": "Palabras de introducción (1 min.)",
+              "name": "Sergio Rojas"
+            },
+            {
+              "section": "TESOROS",
+              "num": 1,
+              "label": "Predicó con valor (10 mins.)",
+              "name": "Eliu Rodriguez"
+            },
+            {
+              "section": "TESOROS",
+              "num": 2,
+              "label": "Busquemos perlas escondidas (10 mins.)",
+              "name": "Alirio Calderón"
+            },
+            {
+              "section": "TESOROS",
+              "num": 3,
+              "label": "Lectura de la Biblia (4 mins.) Jer 20:7-18 (th lección 2).",
+              "name": "Edgar Serrano"
+            },
+            {
+              "section": "MAESTROS",
+              "num": 4,
+              "label": "Empiece conversaciones (4 mins.) (lmd lección 2 punto 4).",
+              "subs": [
+                {
+                  "name": "Mariana Gomez",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "Emilse Rodríguez",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "MAESTROS",
+              "num": 5,
+              "label": "Haga revisitas (4 mins.) (lmd lección 9 punto 3).",
+              "subs": [
+                {
+                  "name": "Mileydis Rodríguez",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "Emilce Ochoa Guerrero",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "MAESTROS",
+              "num": 6,
+              "label": "Explique sus creencias (4 mins.) (th lección 13).",
+              "subs": [
+                {
+                  "name": "Wilmer Reyes",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "Justin Reyes",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "NVC",
+              "label": "Canción 57"
+            },
+            {
+              "section": "NVC",
+              "num": 7,
+              "label": "Seamos adaptables y mostremos interés por las personas ( 15  mins.)",
+              "name": "Johan Duarte"
+            },
+            {
+              "section": "NVC",
+              "num": 8,
+              "label": "Estudio bíblico de la congregación (30 mins.)",
+              "conductor": "Sergio Cespedes",
+              "lector": "Nolberto Calde."
+            },
+            {
+              "section": "CONCLUSION",
+              "label": "Palabras de conclusión (3 min.)",
+              "name": "Sergio Rojas"
+            },
+            {
+              "section": "CLOSE",
+              "label": "Canción 31 y oración",
+              "name": "Diego Velasquez"
+            }
+          ]
+        },
+        {
+          "id": "julio-agosto__4",
+          "semana": "Semana 3-9 De Agosto",
+          "lectura_semanal": "Lectura semanal de la Biblia JEREMÍAS 22, 23",
+          "items": [
+            {
+              "section": "OPEN",
+              "label": "Canción 40 y oración",
+              "name": "Alirio Calderón"
+            },
+            {
+              "section": "INTRO",
+              "label": "Palabras de introducción (1 min.)",
+              "name": "Nicolas Medina"
+            },
+            {
+              "section": "TESOROS",
+              "num": 1,
+              "label": "¡Qué importante es tener buenos pastores! (10 mins.)",
+              "name": "Anderson Gomez"
+            },
+            {
+              "section": "TESOROS",
+              "num": 2,
+              "label": "Busquemos perlas escondidas (10 mins.)",
+              "name": "Esteban Santacruz"
+            },
+            {
+              "section": "TESOROS",
+              "num": 3,
+              "label": "Lectura de la Biblia (4 mins.) Jer 23:25-36 (th lección 11).",
+              "name": "Alejandro Castañeda"
+            },
+            {
+              "section": "MAESTROS",
+              "num": 4,
+              "label": "Empiece conversaciones (4 mins.) (lmd lección 3 punto 4).",
+              "subs": [
+                {
+                  "name": "Dayana Duarte",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "Patricia Avila",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "MAESTROS",
+              "num": 5,
+              "label": "Haga revisitas (4 mins.) (lmd lección 9 punto 5).",
+              "subs": [
+                {
+                  "name": "Leidy Reyes",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "Mariela Celis Pinzón",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "MAESTROS",
+              "num": 6,
+              "label": "Discurso (4 mins.) lmd apéndice A punto 19. (th lección 15).",
+              "subs": [
+                {
+                  "name": "Wilmer Reyes",
+                  "role": "Nombre"
+                }
+              ]
+            },
+            {
+              "section": "NVC",
+              "label": "Canción 103"
+            },
+            {
+              "section": "NVC",
+              "num": 7,
+              "label": "Del pasado al presente: El Cuerpo Gobernante promueve la unidad (parte 1) (15 mins.)",
+              "name": "Eliu Rodriguez"
+            },
+            {
+              "section": "NVC",
+              "num": 8,
+              "label": "Discurso Superintendente de circuito (30 mins.)",
+              "name": "Gustavo Montes"
+            },
+            {
+              "section": "CONCLUSION",
+              "label": "Palabras de conclusión(3 min.)",
+              "name": "Nicolas Medina"
+            },
+            {
+              "section": "CLOSE",
+              "label": "Canción 60 y oración",
+              "name": "Gustavo Montes"
+            }
+          ]
+        },
+        {
+          "id": "julio-agosto__5",
+          "semana": "Semana 10-16 De Agosto",
+          "lectura_semanal": "Lectura semanal de la Biblia JEREMÍAS 24, 25",
+          "items": [
+            {
+              "section": "OPEN",
+              "label": "Canción 124 y oración",
+              "name": "Edgar Serrano"
+            },
+            {
+              "section": "INTRO",
+              "label": "Palabras de introducción (1 min.)",
+              "name": "Alirio Calderón"
+            },
+            {
+              "section": "TESOROS",
+              "num": 1,
+              "label": "¿Qué hace que los “higos” sean buenos o malos? (10 mins.)",
+              "name": "Johan Duarte"
+            },
+            {
+              "section": "TESOROS",
+              "num": 2,
+              "label": "Busquemos perlas escondidas (10 mins.)",
+              "name": "Nolberto Calderón"
+            },
+            {
+              "section": "TESOROS",
+              "num": 3,
+              "label": "Lectura de la Biblia (4 mins.) Jer 24:1-10 (th lección 5).",
+              "name": "Alexander Chacon"
+            },
+            {
+              "section": "MAESTROS",
+              "num": 4,
+              "label": "Empiece conversaciones (4 mins.) (lmd lección 2 punto 5).",
+              "subs": [
+                {
+                  "name": "Libia Cardenas",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "Edilma prieto",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "MAESTROS",
+              "num": 5,
+              "label": "Haga revisitas (4 mins.) (lmd lección 9 punto 5).",
+              "subs": [
+                {
+                  "name": "Patricia Parra",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "Nilda Acosta",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "MAESTROS",
+              "num": 6,
+              "label": "Haga discípulos (4 mins.) (lmd lección 12 punto 4).",
+              "subs": [
+                {
+                  "name": "Albeiro Prieto",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "Diego Velasquez",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "NVC",
+              "label": "Canción 65"
+            },
+            {
+              "section": "NVC",
+              "num": 7,
+              "label": "Informe 5 del Cuerpo Gobernante (15 mins.)",
+              "name": "Alirio Calderón"
+            },
+            {
+              "section": "NVC",
+              "num": 8,
+              "label": "Estudio bíblico de la congregación (20 mins.)",
+              "conductor": "Sergio Cespedes",
+              "lector": "Oscar Duarte"
+            },
+            {
+              "section": "CONCLUSION",
+              "label": "Palabras de conclusión (3 min.)",
+              "name": "Alirio Calderón"
+            },
+            {
+              "section": "CLOSE",
+              "label": "Canción 137 y oración",
+              "name": "Henry Luna"
+            }
+          ]
+        },
+        {
+          "id": "julio-agosto__6",
+          "semana": "Semana 17-23 De Agosto",
+          "lectura_semanal": "Lectura semanal de la Biblia JEREMÍAS 26-28",
+          "items": [
+            {
+              "section": "OPEN",
+              "label": "Canción 77 y oración",
+              "name": "Hernando Rojas"
+            },
+            {
+              "section": "INTRO",
+              "label": "Palabras de introducción (1 min.)",
+              "name": "Sergio Cespedes"
+            },
+            {
+              "section": "TESOROS",
+              "num": 1,
+              "label": "No se deje engañar por los falsos profetas (10 mins.)",
+              "name": "Nicolas Medina"
+            },
+            {
+              "section": "TESOROS",
+              "num": 2,
+              "label": "Busquemos perlas escondidas (10 mins.)",
+              "name": "Wilmer Reyes"
+            },
+            {
+              "section": "TESOROS",
+              "num": 3,
+              "label": "Lectura de la Biblia (4 mins.)  Jer 28:5-17 (th lección 5).",
+              "name": "Henry Luna"
+            },
+            {
+              "section": "MAESTROS",
+              "num": 4,
+              "label": "Empiece conversaciones (3 mins.) (lmd lección 1 punto 4).",
+              "subs": [
+                {
+                  "name": "Andrea Velasquez",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "Ingrid Beleño",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "MAESTROS",
+              "num": 5,
+              "label": "Haga revisitas (4 mins.) (lmd lección 9 punto 3).",
+              "subs": [
+                {
+                  "name": "Nolberto Calderón",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "David Quiñonez",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "MAESTROS",
+              "num": 6,
+              "label": "Haga discípulos (5 mins.) (lmd lección 11 punto 4).",
+              "subs": [
+                {
+                  "name": "Graciela Reyes",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "Nhora Rodriguez",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "NVC",
+              "label": "Canción 16"
+            },
+            {
+              "section": "NVC",
+              "num": 7,
+              "label": "Repaso Asamblea Regional (15 mins.)",
+              "name": "Johan Duarte"
+            },
+            {
+              "section": "NVC",
+              "num": 8,
+              "label": "Estudio bíblico de la congregación (30 mins.)",
+              "conductor": "Alirio Calderón",
+              "lector": "Andres Herrera"
+            },
+            {
+              "section": "CONCLUSION",
+              "label": "Palabras de conclusión (3 min.)",
+              "name": "Sergio Cespedes"
+            },
+            {
+              "section": "CLOSE",
+              "label": "Canción 71 y oración",
+              "name": "Luis Quecho"
+            }
+          ]
+        },
+        {
+          "id": "julio-agosto__7",
+          "semana": "Semana 24-30 De Agosto",
+          "lectura_semanal": "Lectura semanal de la Biblia JEREMÍAS 29, 30",
+          "items": [
+            {
+              "section": "OPEN",
+              "label": "Canción 12 y oración",
+              "name": "Anderson Gomez"
+            },
+            {
+              "section": "INTRO",
+              "label": "Palabras de introducción (1 min.)",
+              "name": "Eliu Rodríguez"
+            },
+            {
+              "section": "TESOROS",
+              "num": 1,
+              "label": "Jehová disciplina a sus siervos hasta el grado debido (10 mins.)",
+              "name": "Sergio Rojas"
+            },
+            {
+              "section": "TESOROS",
+              "num": 2,
+              "label": "Busquemos perlas escondidas (10 mins.)",
+              "name": "Henry Luna"
+            },
+            {
+              "section": "TESOROS",
+              "num": 3,
+              "label": "Lectura de la Biblia (4 mins.) Jer 30:1-11 (th lección 2).",
+              "name": "Sebastián Beleño"
+            },
+            {
+              "section": "MAESTROS",
+              "num": 4,
+              "label": "Empiece conversaciones (4 mins.) (lmd lección 3 punto 4).",
+              "subs": [
+                {
+                  "name": "Lizeth Rodríguez",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "Maria Luisa Mendoza",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "MAESTROS",
+              "num": 5,
+              "label": "Empiece conversaciones (3 mins.) (lmd lección 1 punto 5).",
+              "subs": [
+                {
+                  "name": "Beatriz Serrano",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "Jaqueline Medina",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "MAESTROS",
+              "num": 6,
+              "label": "Discurso (5 mins.) (th lección 1).",
+              "subs": [
+                {
+                  "name": "Santiago Serrano",
+                  "role": "Nombre"
+                }
+              ]
+            },
+            {
+              "section": "NVC",
+              "label": "Canción 3"
+            },
+            {
+              "section": "NVC",
+              "num": 7,
+              "label": "Jehová llena de esperanza a sus siervos (10 mins.)",
+              "name": "Anderson Gomez"
+            },
+            {
+              "section": "NVC",
+              "num": 8,
+              "label": "Campaña especial en septiembre (5 mins.)",
+              "name": "Johan Duarte"
+            },
+            {
+              "section": "NVC",
+              "num": 9,
+              "label": "Estudio bíblico de la congregación (30 mins.)",
+              "conductor": "Nicolas Medina",
+              "lector": "Nolberto Calder."
+            },
+            {
+              "section": "CONCLUSION",
+              "label": "Palabras de conclusión (3 min.)",
+              "name": "Eliu Rodríguez"
+            },
+            {
+              "section": "CLOSE",
+              "label": "Canción 156 y oración",
+              "name": "Ismael Medina"
+            }
+          ]
+        },
+        {
+          "id": "julio-agosto__8",
+          "semana": "Semana 31 De Agosto A 6 De Septiembre",
+          "lectura_semanal": "Lectura semanal de la Biblia JEREMÍAS 31",
+          "items": [
+            {
+              "section": "OPEN",
+              "label": "Canción 27 y oración",
+              "name": "Nolberto Calderón"
+            },
+            {
+              "section": "INTRO",
+              "label": "Palabras de introducción (1 min.)",
+              "name": "Carlos D' Luyz"
+            },
+            {
+              "section": "TESOROS",
+              "num": 1,
+              "label": "“Haré un nuevo pacto” (10 mins.)",
+              "name": "Sergio Cespedes"
+            },
+            {
+              "section": "TESOROS",
+              "num": 2,
+              "label": "Busquemos perlas escondidas (10 mins.)",
+              "name": "Nolberto Calderon"
+            },
+            {
+              "section": "TESOROS",
+              "num": 3,
+              "label": "Lectura de la Biblia (4 mins.) Jer 31:1-11 (th lección 12).",
+              "name": "Jose Antonio Chacon"
+            },
+            {
+              "section": "MAESTROS",
+              "num": 4,
+              "label": "Empiece conversaciones (3 mins.) (lmd lección 4 punto 3).",
+              "subs": [
+                {
+                  "name": "Ana Prieto",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "Perla Lucely Torres",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "MAESTROS",
+              "num": 5,
+              "label": "Empiece conversaciones (4 mins.) (lmd lección 3 punto 3).",
+              "subs": [
+                {
+                  "name": "Vanesa Muñoz Reyes",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "Shirley Cáceres",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "MAESTROS",
+              "num": 6,
+              "label": "Discurso (5 mins.) ijwfq artículo 37. (th lección 14).",
+              "subs": [
+                {
+                  "name": "Anderson Rodriguez",
+                  "role": "Nombre"
+                }
+              ]
+            },
+            {
+              "section": "NVC",
+              "label": "Canción 67"
+            },
+            {
+              "section": "NVC",
+              "num": 7,
+              "label": "Seamos adaptables y usemos JW.ORG (15 mins.)",
+              "name": "Johan Duarte"
+            },
+            {
+              "section": "NVC",
+              "num": 8,
+              "label": "Estudio bíblico de la congregación (30 mins.)",
+              "conductor": "Eliu Rodríguez",
+              "lector": "Anderson Gomez"
+            },
+            {
+              "section": "CONCLUSION",
+              "label": "Palabras de conclusión (3 min.)",
+              "name": "Carlos D' Luyz"
+            },
+            {
+              "section": "CLOSE",
+              "label": "Canción 132 y oración",
+              "name": "Favio Tarazona"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "bimestre": "Septiembre - Octubre",
+      "weeks": [
+        {
+          "id": "septiembre-octubre__0",
+          "semana": "Semana 7-13 De Septiembre 2026",
+          "lectura_semanal": "Lectura semanal de la Biblia JEREMÍAS 32, 33",
+          "items": [
+            {
+              "section": "OPEN",
+              "label": "Cancion 1 y oración",
+              "name": "Jose Antonio Chacon"
+            },
+            {
+              "section": "INTRO",
+              "label": "Palabras de introducción (1 min.)",
+              "name": "Eduardo Parra"
+            },
+            {
+              "section": "TESOROS",
+              "num": 1,
+              "label": "Meditar en las cualidades de Jehová fortalece nuestra fe (10 mins.)",
+              "name": "Carlos D´ Luyz"
+            },
+            {
+              "section": "TESOROS",
+              "num": 2,
+              "label": "Busquemos perlas escondidas (10 mins.)",
+              "name": "Henry Luna"
+            },
+            {
+              "section": "TESOROS",
+              "num": 3,
+              "label": "Lectura de la Biblia (4 mins.) Jer 32:6-18 (th lección 2.)",
+              "name": "Luis Quecho"
+            },
+            {
+              "section": "MAESTROS",
+              "num": 4,
+              "label": "Empiece conversaciones (3 mins.) (lmd lección 4 punto 3.)",
+              "subs": [
+                {
+                  "name": "Amparo Blanco",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "María Alejandra Toro",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "MAESTROS",
+              "num": 5,
+              "label": "Empiece conversaciones (4 mins.) (lmd lección 4 punto 4.)",
+              "subs": [
+                {
+                  "name": "Mileydis Rodríguez",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "Sophia Velazquez",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "MAESTROS",
+              "num": 6,
+              "label": "Haga revisitas ( 5 mins.) (lmd lección 8 punto 3.)",
+              "subs": [
+                {
+                  "name": "Edgar Serrano",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "Esteban Santacruz",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "NVC",
+              "label": "Canción 128"
+            },
+            {
+              "section": "NVC",
+              "num": 7,
+              "label": "En esta campaña, ni un golpe al aire (15 mins.)",
+              "name": "Johan Duarte"
+            },
+            {
+              "section": "NVC",
+              "num": 8,
+              "label": "Estudio bíblico de la congregación (30 mins.)",
+              "conductor": "Nicolas Medina",
+              "lector": "Oscar Duarte"
+            },
+            {
+              "section": "CONCLUSION",
+              "label": "Palabras de conclusión (3 min.)",
+              "name": "Eduardo Parra"
+            },
+            {
+              "section": "CLOSE",
+              "label": "Canción 143  y oración",
+              "name": "Orlando Prada"
+            }
+          ]
+        },
+        {
+          "id": "septiembre-octubre__1",
+          "semana": "Semana 14-20 De Septiembre",
+          "lectura_semanal": "Lectura semanal de la Biblia JEREMÍAS 34, 35",
+          "items": [
+            {
+              "section": "OPEN",
+              "label": "Canción 161 y oración"
+            },
+            {
+              "section": "INTRO",
+              "label": "Palabras de introducción (1 min.)",
+              "name": "Eliu Rodríguez"
+            },
+            {
+              "section": "TESOROS",
+              "num": 1,
+              "label": "Jehová recompensa a los que siempre le obedecen (10 mins.)",
+              "name": "Sergio Rojas"
+            },
+            {
+              "section": "TESOROS",
+              "num": 2,
+              "label": "Busquemos perlas escondidas (10 mins.)",
+              "name": "Wilmer Reyes"
+            },
+            {
+              "section": "TESOROS",
+              "num": 3,
+              "label": "Lectura de la Biblia (4 mins.) Jer 35:1-14 (th lección 5.)",
+              "name": "Orlando Caballero"
+            },
+            {
+              "section": "MAESTROS",
+              "num": 4,
+              "label": "Empiece conversaciones ( 2 mins.) (lmd lección 3 punto 3.)",
+              "subs": [
+                {
+                  "name": "Alexandra Suarez",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "Leonor Chacon Vera",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "MAESTROS",
+              "num": 5,
+              "label": "Empiece conversaciones (2 mins.) (lmd lección 3 punto 5.)",
+              "subs": [
+                {
+                  "name": "Henry Luna",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "Orlando Prada",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "MAESTROS",
+              "num": 6,
+              "label": "Haga revisitas (3 mins.) (lmd lección 7 punto 4.)",
+              "subs": [
+                {
+                  "name": "Ligia Prada",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "Maria Luisa Mendoza",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "MAESTROS",
+              "num": 7,
+              "label": "Haga discípulos ( 4 mins.) (th lección 11.)",
+              "subs": [
+                {
+                  "name": "Mary Suárez Acosta",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "Maria Eugenia Luna",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "NVC",
+              "label": "Canción 121"
+            },
+            {
+              "section": "NVC",
+              "num": 8,
+              "label": "El autocontrol nos ayuda a obedecer (6 mins.)",
+              "name": "Nicolas Medina"
+            },
+            {
+              "section": "NVC",
+              "num": 9,
+              "label": "Logros de la organización para el mes de septiembre ( 9 mins.)",
+              "name": "Anderson Gomez"
+            },
+            {
+              "section": "NVC",
+              "num": 10,
+              "label": "Estudio bíblico de la congregación (30 mins.)",
+              "conductor": "Sergio Cespedes",
+              "lector": "Nolberto Calde."
+            },
+            {
+              "section": "CONCLUSION",
+              "label": "Palabras de conclusión (3 min.)",
+              "name": "Eliu Rodríguez"
+            },
+            {
+              "section": "CLOSE",
+              "label": "Canción 28  y oración"
+            }
+          ]
+        },
+        {
+          "id": "septiembre-octubre__2",
+          "semana": "Semana 21-27 De Septiembre",
+          "lectura_semanal": "Lectura semanal de la Biblia JEREMÍAS 36, 37",
+          "items": [
+            {
+              "section": "OPEN",
+              "label": "Canción 74  y oración"
+            },
+            {
+              "section": "INTRO",
+              "label": "Palabras de introducción (1 min.)"
+            },
+            {
+              "section": "TESOROS",
+              "num": 1,
+              "label": "Jehová ayuda a quienes apoyan su Reino (10 mins.)"
+            },
+            {
+              "section": "TESOROS",
+              "num": 2,
+              "label": "Busquemos perlas escondidas (10 mins.)"
+            },
+            {
+              "section": "TESOROS",
+              "num": 3,
+              "label": "Lectura de la Biblia (4 mins.) Jer 36:1-13 (th lección 10.)",
+              "name": "Joel Reyes"
+            },
+            {
+              "section": "MAESTROS",
+              "num": 4,
+              "label": "Empiece conversaciones (3 mins.) (lmd lección 5 punto 5.)",
+              "subs": [
+                {
+                  "name": "Gabriela Guerrero",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "Nhora Rodriguez",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "MAESTROS",
+              "num": 5,
+              "label": "Haga revisitas (4 mins.) (lmd lección 9 punto 4.)",
+              "subs": [
+                {
+                  "name": "Vanesa Rodriguez",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "Lisset Chacon Moreno",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "MAESTROS",
+              "num": 6,
+              "label": "¿Qué diría? (6 mins.) (lmd lección 2 punto 5.)",
+              "subs": [
+                {
+                  "name": "",
+                  "role": "Nombre"
+                }
+              ]
+            },
+            {
+              "section": "NVC",
+              "label": "Canción 142"
+            },
+            {
+              "section": "NVC",
+              "num": 7,
+              "label": "Seamos siempre neutrales en nuestro corazón (15 mins.)"
+            },
+            {
+              "section": "NVC",
+              "num": 8,
+              "label": "Estudio bíblico de la congregación (15 mins.)",
+              "conductor": "Eduardo Parra",
+              "lector": ""
+            },
+            {
+              "section": "CONCLUSION",
+              "label": "Palabras de conclusión (3 min.)"
+            },
+            {
+              "section": "CLOSE",
+              "label": "Canción 134 y oración"
+            }
+          ]
+        },
+        {
+          "id": "septiembre-octubre__3",
+          "semana": "Semana 28 De Septiembre A 4 De Octubre",
+          "lectura_semanal": "Lectura semanal de la Biblia JEREMÍAS 38, 39",
+          "items": [
+            {
+              "section": "OPEN",
+              "label": "Canción 102 y oración"
+            },
+            {
+              "section": "INTRO",
+              "label": "Palabras de introducción (1 min.)"
+            },
+            {
+              "section": "TESOROS",
+              "num": 1,
+              "label": "No dejemos de ayudarnos unos a otros (10 mins.)"
+            },
+            {
+              "section": "TESOROS",
+              "num": 2,
+              "label": "Busquemos perlas escondidas (10 mins.)"
+            },
+            {
+              "section": "TESOROS",
+              "num": 3,
+              "label": "Lectura de la Biblia (4 mins.) Jer 38:1-13 (th lección 12.)"
+            },
+            {
+              "section": "MAESTROS",
+              "num": 4,
+              "label": "Empiece conversaciones (3 mins.) (lmd lección 9 punto 3.)",
+              "subs": [
+                {
+                  "name": "Patricia Parra",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "Adriana bolivar",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "MAESTROS",
+              "num": 5,
+              "label": "Haga revisitas (4 mins.) (lmd lección 9 punto 5.)",
+              "subs": [
+                {
+                  "name": "Mayreth D' Luyz",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "Mariana Gomez",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "MAESTROS",
+              "num": 6,
+              "label": "¿Qué diría? (6 mins.) (lmd lección 1 punto 4.)",
+              "subs": [
+                {
+                  "name": "Wilmer Reyes",
+                  "role": "Nombre"
+                }
+              ]
+            },
+            {
+              "section": "NVC",
+              "label": "Canción 90"
+            },
+            {
+              "section": "NVC",
+              "num": 8,
+              "label": "“¿Quién me tocó?” ( 15 mins.)"
+            },
+            {
+              "section": "NVC",
+              "num": 9,
+              "label": "Estudio bíblico de la congregación (30 mins.)",
+              "conductor": "",
+              "lector": ""
+            },
+            {
+              "section": "CONCLUSION",
+              "label": "Palabras de conclusión(3 min.)"
+            },
+            {
+              "section": "CLOSE",
+              "label": "Canción 56 y oración"
+            }
+          ]
+        },
+        {
+          "id": "septiembre-octubre__4",
+          "semana": "Semana 5-11 De Octubre",
+          "lectura_semanal": "Lectura semanal de la Biblia JEREMÍAS 40, 41",
+          "items": [
+            {
+              "section": "OPEN",
+              "label": "Canción 33 y oración",
+              "name": "Orlando Prada"
+            },
+            {
+              "section": "INTRO",
+              "label": "Palabras de introducción (1 min.)"
+            },
+            {
+              "section": "TESOROS",
+              "num": 1,
+              "label": "Tengamos un punto de vista equilibrado de la protección de Jehová (10 mins.)"
+            },
+            {
+              "section": "TESOROS",
+              "num": 2,
+              "label": "Busquemos perlas escondidas (10 mins.)"
+            },
+            {
+              "section": "TESOROS",
+              "num": 3,
+              "label": "Lectura de la Biblia (4 mins.) Jer 40:1-10 (th lección 2).",
+              "name": "Gabriel Ojeda"
+            },
+            {
+              "section": "MAESTROS",
+              "num": 4,
+              "label": "Empiece conversaciones (2 mins.) (lmd lección 2 punto 3).",
+              "subs": [
+                {
+                  "name": "",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "MAESTROS",
+              "num": 5,
+              "label": "Empiece conversaciones (2 mins.) (lmd lección 2 punto 5).",
+              "subs": [
+                {
+                  "name": "",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "MAESTROS",
+              "num": 6,
+              "label": "Empiece conversaciones (4 mins.) (lmd lección 5 punto 3).",
+              "subs": [
+                {
+                  "name": "",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "MAESTROS",
+              "num": 7,
+              "label": "Explique sus creencias (3 mins.) (th lección 17).",
+              "subs": [
+                {
+                  "name": "",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "NVC",
+              "label": "Canción 17"
+            },
+            {
+              "section": "NVC",
+              "num": 8,
+              "label": "Jehová protege a las viudas (15 mins.)"
+            },
+            {
+              "section": "NVC",
+              "num": 9,
+              "label": "Estudio bíblico de la congregación (30 mins.)",
+              "conductor": "",
+              "lector": ""
+            },
+            {
+              "section": "CONCLUSION",
+              "label": "Palabras de conclusión(3 min.)"
+            },
+            {
+              "section": "CLOSE",
+              "label": "Canción 38 y oración",
+              "name": "Sergio Rojas        "
+            }
+          ]
+        },
+        {
+          "id": "septiembre-octubre__5",
+          "semana": "Semana 12-18 De Octubre",
+          "lectura_semanal": "Lectura semanal de la Biblia JEREMÍAS 42-44",
+          "items": [
+            {
+              "section": "OPEN",
+              "label": "Canción 103 y oración"
+            },
+            {
+              "section": "INTRO",
+              "label": "Palabras de introducción (1 min.)"
+            },
+            {
+              "section": "TESOROS",
+              "num": 1,
+              "label": "Pidieron guía y luego la rechazaron (10 mins.)"
+            },
+            {
+              "section": "TESOROS",
+              "num": 2,
+              "label": "Busquemos perlas escondidas (10 mins.)"
+            },
+            {
+              "section": "TESOROS",
+              "num": 3,
+              "label": "Lectura de la Biblia (4 mins.) Jer 43:1-13 (th lección 11.)"
+            },
+            {
+              "section": "MAESTROS",
+              "num": 4,
+              "label": "Empiece conversaciones (3 mins.) (lmd lección 1 punto 5).",
+              "subs": [
+                {
+                  "name": "",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "MAESTROS",
+              "num": 5,
+              "label": "Haga revisitas (4 mins.) (lmd lección 7 punto 4).",
+              "subs": [
+                {
+                  "name": "",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "MAESTROS",
+              "num": 6,
+              "label": "¿Qué diría? (6 mins.) (lmd lección 2 punto 3).",
+              "subs": [
+                {
+                  "name": "",
+                  "role": "Nombre"
+                }
+              ]
+            },
+            {
+              "section": "NVC",
+              "label": "Canción 47"
+            },
+            {
+              "section": "NVC",
+              "num": 7,
+              "label": "Necesidades de la congregación (15 mins.)"
+            },
+            {
+              "section": "NVC",
+              "num": 8,
+              "label": "Estudio bíblico de la congregación (30 mins.)",
+              "conductor": "",
+              "lector": ""
+            },
+            {
+              "section": "CONCLUSION",
+              "label": "Palabras de conclusión (3 min.)"
+            },
+            {
+              "section": "CLOSE",
+              "label": "Canción 129 y oración"
+            }
+          ]
+        },
+        {
+          "id": "septiembre-octubre__6",
+          "semana": "Semana 19-25 De Octubre",
+          "lectura_semanal": "Lectura semanal de la Biblia JEREMÍAS 45,46",
+          "items": [
+            {
+              "section": "OPEN",
+              "label": "Canción 21 y oración"
+            },
+            {
+              "section": "INTRO",
+              "label": "Palabras de introducción (1 min.)"
+            },
+            {
+              "section": "TESOROS",
+              "num": 1,
+              "label": "La esperanza es clave para estar contentos (10 mins.)"
+            },
+            {
+              "section": "TESOROS",
+              "num": 2,
+              "label": "Busquemos perlas escondidas (10 mins.)"
+            },
+            {
+              "section": "TESOROS",
+              "num": 3,
+              "label": "Lectura de la Biblia (4 mins.) Jer 46:13-24 (th lección 10)."
+            },
+            {
+              "section": "MAESTROS",
+              "num": 4,
+              "label": "Empiece conversaciones (3 mins.) (lmd lección 2 punto 3).",
+              "subs": [
+                {
+                  "name": "",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "MAESTROS",
+              "num": 5,
+              "label": "Empiece conversaciones (2 mins.) (lmd lección 4 punto 5).",
+              "subs": [
+                {
+                  "name": "",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "MAESTROS",
+              "num": 6,
+              "label": "Empiece conversaciones (2 mins.) (lmd lección 2 punto 4).",
+              "subs": [
+                {
+                  "name": "",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "MAESTROS",
+              "num": 7,
+              "label": "Discurso (4 mins.) (lmd apéndice A punto 20) (th lección 7).",
+              "subs": [
+                {
+                  "name": "",
+                  "role": "Nombre"
+                }
+              ]
+            },
+            {
+              "section": "NVC",
+              "label": "Canción 117"
+            },
+            {
+              "section": "NVC",
+              "num": 8,
+              "label": "“No se olviden [...] de compartir lo que tienen” (15 mins.)"
+            },
+            {
+              "section": "NVC",
+              "num": 9,
+              "label": "Estudio bíblico de la congregación (30 mins.)",
+              "conductor": "",
+              "lector": ""
+            },
+            {
+              "section": "CONCLUSION",
+              "label": "Palabras de conclusión (3 min.)"
+            },
+            {
+              "section": "CLOSE",
+              "label": "Canción 87 y oración"
+            }
+          ]
+        },
+        {
+          "id": "septiembre-octubre__7",
+          "semana": "Semana 26 De Octubre A 1 De Noviembre",
+          "lectura_semanal": "Lectura semanal de la Biblia JEREMÍAS 47, 48",
+          "items": [
+            {
+              "section": "OPEN",
+              "label": "Canción 125 y oración"
+            },
+            {
+              "section": "INTRO",
+              "label": "Palabras de introducción (1 min.)"
+            },
+            {
+              "section": "TESOROS",
+              "num": 1,
+              "label": "Jehová es un juez justo y misericordioso (10 mins.)"
+            },
+            {
+              "section": "TESOROS",
+              "num": 2,
+              "label": "Busquemos perlas escondidas (10 mins.)"
+            },
+            {
+              "section": "TESOROS",
+              "num": 3,
+              "label": "Lectura de la Biblia (4 mins.) Jer 48:1-13 (th lección 11.)"
+            },
+            {
+              "section": "MAESTROS",
+              "num": 4,
+              "label": "Empiece conversaciones (3 mins.) (lmd lección 5 punto 4).",
+              "subs": [
+                {
+                  "name": "",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "MAESTROS",
+              "num": 5,
+              "label": "Haga revisitas (4 mins.) (lmd lección 9 punto 5).",
+              "subs": [
+                {
+                  "name": "",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "MAESTROS",
+              "num": 6,
+              "label": "Haga discípulos (5 mins.) (th lección 8).",
+              "subs": [
+                {
+                  "name": "",
+                  "role": "Nombre"
+                },
+                {
+                  "name": "",
+                  "role": "Ayudante"
+                }
+              ]
+            },
+            {
+              "section": "NVC",
+              "label": "Canción 158"
+            },
+            {
+              "section": "NVC",
+              "num": 7,
+              "label": "Necesidades de la congregación (15 mins.)"
+            },
+            {
+              "section": "NVC",
+              "num": 8,
+              "label": "Estudio bíblico de la congregación (30 mins.)",
+              "conductor": "",
+              "lector": ""
+            },
+            {
+              "section": "CONCLUSION",
+              "label": "Palabras de conclusión (3 min.)"
+            },
+            {
+              "section": "CLOSE",
+              "label": "Canción 54 y oración"
+            }
+          ]
+        }
+      ]
+    }
+];
