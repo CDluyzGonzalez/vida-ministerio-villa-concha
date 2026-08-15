@@ -2550,6 +2550,41 @@ window.deleteMaestrosAssignment = deleteMaestrosAssignment;
 
 
 // ============================================================
+// RESPONSIVE: apila Nombre/Ayudante en pantallas angostas (celular)
+// ============================================================
+// La fila de Seamos Mejores Maestros usa una grilla de 3 columnas con
+// mínimos fijos (300px + 145px + 145px) que no cabe en un celular.
+// Se inyecta una sola vez una hoja de estilos que, con !important,
+// gana sobre el style inline y apila las columnas en una sola.
+(function injectMaestrosResponsiveCSS() {
+  if (document.getElementById('wm-responsive-fix')) return;
+  const style = document.createElement('style');
+  style.id = 'wm-responsive-fix';
+  style.textContent = `
+    @media (max-width: 680px) {
+      .maestros-pair-row {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 10px !important;
+      }
+      .maestros-pair-row .maestros-person-column {
+        width: 100% !important;
+      }
+      .maestros-pair-row .maestros-person-column .assign-btn,
+      .maestros-pair-row .maestros-person-column .assign-static {
+        width: 100% !important;
+        max-width: none !important;
+        text-align: left !important;
+        box-sizing: border-box !important;
+      }
+    }
+  `;
+  document.head.appendChild(style);
+})();
+
+
+// ============================================================
 // RENDER PRINCIPAL
 // ============================================================
 
