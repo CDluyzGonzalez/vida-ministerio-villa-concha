@@ -64,6 +64,50 @@ function normName(s) {
 
 
 // ============================================================
+// ALMACENAMIENTO LOCAL COMPATIBLE CON LIVE SERVER
+// ============================================================
+// El entorno original puede ofrecer window.storage. Live Server no.
+// Este respaldo usa localStorage para que la app pueda cargar y guardar
+// sin producir TypeError cuando se prueba localmente.
+
+async function appStorageGet(key) {
+  try {
+    if (window.storage && typeof window.storage.get === 'function') {
+      const result = await window.storage.get(key, true);
+      if (result) return result;
+    }
+  } catch (_) {}
+
+  try {
+    if (window.localStorage) {
+      const value = window.localStorage.getItem(key);
+      return value === null ? null : { value };
+    }
+  } catch (_) {}
+
+  return null;
+}
+
+async function appStorageSet(key, value) {
+  try {
+    if (window.storage && typeof window.storage.set === 'function') {
+      await window.storage.set(key, value, true);
+      return true;
+    }
+  } catch (_) {}
+
+  try {
+    if (window.localStorage) {
+      window.localStorage.setItem(key, value);
+      return true;
+    }
+  } catch (_) {}
+
+  return false;
+}
+
+
+// ============================================================
 // CALCULAR CATEGORÍA DE UNA ASIGNACIÓN
 // ============================================================
 
@@ -181,17 +225,41 @@ function computeCat(it) {
 // ============================================================
 
 function isPureSongLine(it) {
+  if (!it) return false;
 
+  const label =
+    String(it.label || '')
+      .trim()
+      .replace(/^[•·▪◦\-\s]+/, '')
+      .trim();
+
+  // Canción independiente: puede venir en MID o NVC.
+  // Una canción acompañada de "y oración" sigue siendo una asignación normal.
+  const looksLikeStandaloneSong =
+    /^canc[ií]ó[nn]\s*(?:n[º°.]?\s*)?\d+$/i.test(label) ||
+    /^\d+$/.test(label);
+
+  if (looksLikeStandaloneSong) {
+    const hasAssignment =
+      !!String(it.name || '').trim() ||
+      !!String(it.conductor || '').trim() ||
+      !!String(it.lector || '').trim() ||
+      (Array.isArray(it.subs) &&
+        it.subs.some(
+          s => String(s?.name || '').trim()
+        ));
+
+    return !hasAssignment;
+  }
+
+  // Compatibilidad con líneas antiguas MID que no traían el número
+  // dentro del texto, pero sí representaban una canción independiente.
   return (
     it.section === 'MID' &&
-    !/oraci[oó]n/i.test(
-      it.label || ''
-    ) &&
-    /canc[ií]ó[nn]|^\s*[•·▪◦\-]?\s*\d+\s*$/i.test(
-      it.label || ''
-    )
+    !/oraci[oó]n/i.test(label) &&
+    !String(it.name || '').trim() &&
+    !Array.isArray(it.subs)
   );
-
 }
 
 
@@ -663,10 +731,7 @@ async function loadData() {
   try {
 
     const p =
-      await window.storage.get(
-        'wm-program',
-        true
-      );
+      await appStorageGet('wm-program');
 
 
     PROGRAM =
@@ -695,10 +760,7 @@ async function loadData() {
   try {
 
     const pe =
-      await window.storage.get(
-        'wm-people',
-        true
-      );
+      await appStorageGet('wm-people');
 
 
     PEOPLE =
@@ -788,8 +850,37 @@ async function loadData() {
     hadRemotePeople
   ) {
 
-    PEOPLE =
-      remote.people;
+    const basePeople =
+      Array.isArray(localPeople)
+        ? localPeople.map(p => ({ ...p }))
+        : [];
+
+    const indexById = new Map();
+    const indexByName = new Map();
+
+    basePeople.forEach((p, index) => {
+      if (p?.id) indexById.set(String(p.id), index);
+      if (p?.nombre) indexByName.set(normName(p.nombre), index);
+    });
+
+    (Array.isArray(remote.people) ? remote.people : []).forEach(remotePerson => {
+      const idKey = remotePerson?.id ? String(remotePerson.id) : '';
+      const nameKey = normName(remotePerson?.nombre || '');
+      let index = idKey && indexById.has(idKey)
+        ? indexById.get(idKey)
+        : indexByName.get(nameKey);
+
+      if (index === undefined) {
+        index = basePeople.length;
+        basePeople.push({ ...remotePerson });
+        if (idKey) indexById.set(idKey, index);
+        if (nameKey) indexByName.set(nameKey, index);
+      } else {
+        basePeople[index] = { ...basePeople[index], ...remotePerson };
+      }
+    });
+
+    PEOPLE = basePeople;
 
   }
 
@@ -898,10 +989,7 @@ async function migrateVarones() {
   try {
 
     const m =
-      await window.storage.get(
-        'wm-meta',
-        true
-      );
+      await appStorageGet('wm-meta');
 
 
     meta =
@@ -1109,13 +1197,9 @@ async function migrateVarones() {
 
   try {
 
-    await window.storage.set(
+    await appStorageSet(
       'wm-meta',
-      JSON.stringify({
-        varonesMigratedV2:
-          true
-      }),
-      true
+      JSON.stringify({ varonesMigratedV2: true })
     );
 
   } catch (e) {}
@@ -1129,42 +1213,32 @@ async function migrateVarones() {
 
 async function saveProgram() {
 
-    try {
+  try {
 
-    if (
-        window.storage &&
-        typeof window.storage.set ===
-        'function'
-    ) {
-
-    await window.storage.set(
-        'wm-program',
-        JSON.stringify(
-        PROGRAM
-        ),
-        true
+    await appStorageSet(
+      'wm-program',
+      JSON.stringify(PROGRAM)
     );
 
-    }
+  } catch (e) {
 
-} catch (e) {
+    console.error(
+      e
+    );
 
-    // El almacenamiento local es opcional.
-    // La fuente principal de datos es Apps Script / Sheets.
-
-}
+  }
 
 
-if (
+  if (
     APPS_SCRIPT_URL
-) {
+  ) {
 
     await postRemote(
-        'saveProgram',
-        PROGRAM
+      'saveProgram',
+      PROGRAM
     );
 
-}
+  }
 
 }
 
@@ -1177,26 +1251,16 @@ async function savePeople() {
 
   try {
 
-    if (
-      window.storage &&
-      typeof window.storage.set ===
-        'function'
-    ) {
-
-      await window.storage.set(
-        'wm-people',
-        JSON.stringify(
-          PEOPLE
-        ),
-        true
-      );
-
-    }
+    await appStorageSet(
+      'wm-people',
+      JSON.stringify(PEOPLE)
+    );
 
   } catch (e) {
 
-    // El almacenamiento local es opcional.
-    // La fuente principal de datos es Apps Script / Sheets.
+    console.error(
+      e
+    );
 
   }
 
@@ -1224,10 +1288,7 @@ async function getAdminPin() {
   try {
 
     const r =
-      await window.storage.get(
-        'wm-admin-pin',
-        true
-      );
+      await appStorageGet('wm-admin-pin');
 
 
     return r
@@ -1255,12 +1316,9 @@ async function setAdminPin(
 
   try {
 
-    await window.storage.set(
+    await appStorageSet(
       'wm-admin-pin',
-      JSON.stringify(
-        pin
-      ),
-      true
+      JSON.stringify(pin)
     );
 
   } catch (e) {
@@ -2246,6 +2304,7 @@ function eligibleFor(
 ) {
 
   if (
+    cat === 'maestros_lectura' ||
     cat === 'libre'
   ) {
 
@@ -2286,6 +2345,208 @@ function eligibleFor(
     );
 
 }
+
+
+// ============================================================
+// SEAMOS MEJORES MAESTROS — BIMESTRE ANTERIOR
+// ============================================================
+
+function getPreviousBimestreLabel(bimestre) {
+  const labels = (PROGRAM || []).map(b => b && b.bimestre).filter(Boolean);
+  const index = labels.indexOf(bimestre);
+  return index > 0 ? labels[index - 1] : null;
+}
+
+function collectAssignedNamesFromItem(it, out) {
+  if (!it || !out) return;
+  [it.name, it.conductor, it.lector].forEach(name => {
+    if (name) out.add(normName(name));
+  });
+  if (Array.isArray(it.subs)) {
+    it.subs.forEach(sub => {
+      if (sub && sub.name) out.add(normName(sub.name));
+    });
+  }
+}
+
+function getUsedNamesInBimestre(bimestre) {
+  const used = new Set();
+  const bim = (PROGRAM || []).find(b => b && b.bimestre === bimestre);
+  if (!bim) return used;
+  (bim.weeks || []).forEach(w => {
+    (w.items || []).forEach(it => collectAssignedNamesFromItem(it, used));
+  });
+  return used;
+}
+
+function wasUsedInPreviousBimestre(nombre) {
+  if (!currentBimestre || !nombre) return false;
+  const previous = getPreviousBimestreLabel(currentBimestre);
+  if (!previous) return false;
+  return getUsedNamesInBimestre(previous).has(normName(nombre));
+}
+
+// ============================================================
+// SEAMOS MEJORES MAESTROS — GESTIÓN DE ASIGNACIONES
+// ============================================================
+
+function openAddMaestrosAssignmentModal(bim, w) {
+  const overlay = openOverlay(`
+    <div class="modal-head">
+      <h3>Agregar asignación</h3>
+      <p>Seamos Mejores Maestros · ${esc(w.semana || '')}</p>
+    </div>
+    <div class="field">
+      <label>Texto de la asignación</label>
+      <input class="search-input" id="new-maestros-label" placeholder="Ej.: Empiece conversaciones (3 mins.) (lmd lección 4 punto 3)." />
+    </div>
+    <div class="field" style="margin-top:12px;">
+      <label>Personas que necesita</label>
+      <select class="search-input" id="new-maestros-structure">
+        <option value="name">Solo Nombre</option>
+        <option value="pair">Nombre + Ayudante</option>
+      </select>
+    </div>
+    <div class="modal-foot" style="margin-top:16px;">
+      <button class="btn btn-ghost btn-sm" data-action="close">Cancelar</button>
+      <button class="btn btn-primary btn-sm" data-action="save">Agregar</button>
+    </div>
+  `);
+  const input = overlay.querySelector('#new-maestros-label');
+  input.focus();
+  overlay.querySelector('[data-action="close"]').addEventListener('click', () => overlay.remove());
+  overlay.querySelector('[data-action="save"]').addEventListener('click', async () => {
+    const label = String(input.value || '').trim();
+    if (!label) { input.focus(); return; }
+    const structure = overlay.querySelector('#new-maestros-structure').value;
+    const item = { section: 'MAESTROS', label };
+    if (structure === 'pair') {
+      item.subs = [
+        { role: 'Nombre', name: '' },
+        { role: 'Ayudante', name: '' }
+      ];
+    } else {
+      item.name = '';
+    }
+    if (!Array.isArray(w.items)) w.items = [];
+
+    // Insertar dentro del primer bloque de Seamos Mejores Maestros,
+    // justo antes de la siguiente sección (normalmente NVC).
+    let insertAt = w.items.findIndex(x => x?.section === 'MAESTROS');
+
+    if (insertAt === -1) {
+      insertAt = w.items.findIndex(x => x?.section === 'NVC');
+      if (insertAt === -1) insertAt = w.items.length;
+    } else {
+      let cursor = insertAt;
+      while (cursor + 1 < w.items.length && w.items[cursor + 1]?.section === 'MAESTROS') {
+        cursor++;
+      }
+      insertAt = cursor + 1;
+    }
+
+    const maestrosNums = w.items
+      .filter(x => x?.section === 'MAESTROS' && Number.isFinite(Number(x?.num)))
+      .map(x => Number(x.num));
+
+    if (maestrosNums.length) {
+      item.num = Math.max(...maestrosNums) + 1;
+    }
+
+    w.items.splice(insertAt, 0, item);
+    await saveProgram();
+    overlay.remove();
+    openWeeks.add(w.id);
+    render();
+  });
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+}
+
+function changeMaestrosAssignmentStructure(bim, w, it) {
+  const isPair = Array.isArray(it.subs);
+  const overlay = openOverlay(`
+    <div class="modal-head">
+      <h3>Editar tipo de asignación</h3>
+      <p>${esc(it.label || '')}</p>
+    </div>
+    <div class="field">
+      <label>Personas que necesita</label>
+      <select class="search-input" id="edit-maestros-structure">
+        <option value="name" ${!isPair ? 'selected' : ''}>Solo Nombre</option>
+        <option value="pair" ${isPair ? 'selected' : ''}>Nombre + Ayudante</option>
+      </select>
+    </div>
+    <div class="modal-foot" style="margin-top:16px;">
+      <button class="btn btn-ghost btn-sm" data-action="close">Cancelar</button>
+      <button class="btn btn-primary btn-sm" data-action="save">Guardar</button>
+    </div>
+  `);
+  overlay.querySelector('[data-action="close"]').addEventListener('click', () => overlay.remove());
+  overlay.querySelector('[data-action="save"]').addEventListener('click', () => {
+    const structure = overlay.querySelector('#edit-maestros-structure').value;
+    if (structure === 'pair') {
+      const oldSubs = Array.isArray(it.subs) ? it.subs : [];
+      const nombre = oldSubs.find(s => normName(s.role) === 'nombre')?.name || it.name || '';
+      const ayudante = oldSubs.find(s => normName(s.role) === 'ayudante')?.name || '';
+      delete it.name;
+      it.subs = [
+        { role: 'Nombre', name: nombre },
+        { role: 'Ayudante', name: ayudante }
+      ];
+    } else {
+      const oldSubs = Array.isArray(it.subs) ? it.subs : [];
+      const nombre = oldSubs.find(s => normName(s.role) === 'nombre')?.name || '';
+      delete it.subs;
+      it.name = nombre;
+    }
+    saveProgram();
+    overlay.remove();
+    render();
+  });
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+}
+
+function deleteMaestrosAssignment(bim, w, idx) {
+  const item = w.items?.[idx];
+  if (!item) return;
+  openConfirmModal(
+    `¿Eliminar esta asignación?\n\n${item.label || ''}`,
+    () => {
+      if (Array.isArray(w.items) && idx >= 0 && idx < w.items.length) {
+        w.items.splice(idx, 1);
+        saveProgram();
+        render();
+      }
+    },
+    { title: 'Eliminar asignación', okLabel: 'Eliminar' }
+  );
+}
+
+function appendMaestrosAdminControls(node, bim, w, it, idx) {
+  if (!isAdmin || !it || it.section !== 'MAESTROS') return;
+  const target =
+    node?.matches?.('.item-row')
+      ? node
+      : node?.querySelector?.('.item-row');
+  if (!target) return;
+  const controls = el(`
+    <span style="display:inline-flex;gap:4px;margin-left:8px;align-items:center;">
+      <button type="button" class="edit-pencil" title="Cambiar entre solo Nombre y Nombre + Ayudante">⚙</button>
+      <button type="button" class="edit-pencil" title="Eliminar asignación" style="color:#b42318;">×</button>
+    </span>
+  `);
+  const buttons = controls.querySelectorAll('button');
+  buttons[0].addEventListener('click', e => { e.stopPropagation(); changeMaestrosAssignmentStructure(bim, w, it); });
+  buttons[1].addEventListener('click', e => { e.stopPropagation(); deleteMaestrosAssignment(bim, w, idx); });
+  const label = target.querySelector('.item-label');
+  if (label) label.appendChild(controls);
+}
+
+// Exponer los controles explícitamente en el ámbito global del navegador.
+window.appendMaestrosAdminControls = appendMaestrosAdminControls;
+window.openAddMaestrosAssignmentModal = openAddMaestrosAssignmentModal;
+window.changeMaestrosAssignmentStructure = changeMaestrosAssignmentStructure;
+window.deleteMaestrosAssignment = deleteMaestrosAssignment;
 
 
 // ============================================================
@@ -3405,8 +3666,8 @@ function buildPdfWeekNode(
 
         body.appendChild(
           el(
-            `<div class="item-row"><div class="item-label song-label">${songIconSvg()}<span class="song-text">${esc(
-              songLabel
+            `<div class="item-row"><div class="item-label song-label">${songIconSvg()}<span style="display:inline !important;visibility:visible !important;opacity:1 !important;color:#363535 !important;font-weight:600 !important;white-space:nowrap !important;">${esc(
+              songLabel || 'Canción'
             )}</span></div></div>`
           )
         );
@@ -3634,949 +3895,131 @@ async function downloadBimestrePdf(
   bim
 ) {
 
-  if (
-    !window.jspdf?.jsPDF
-  ) {
-
+  if (!window.jspdf?.jsPDF) {
     alert(
       'No se pudo cargar el generador PDF. Abre la aplicación con conexión a Internet y vuelve a intentarlo.'
     );
-
-
     return;
-
   }
 
+  if (typeof window.html2canvas !== 'function') {
+    alert(
+      'No se pudo cargar el generador visual del PDF. Recarga la página e inténtalo de nuevo.'
+    );
+    return;
+  }
 
-  const {
-    jsPDF
-  } =
-    window.jspdf;
+  const { jsPDF } = window.jspdf;
 
+  const doc = new jsPDF({
+    orientation: 'p',
+    unit: 'mm',
+    format: 'a4',
+    compress: true
+  });
 
-  const doc =
-    new jsPDF(
-      {
-        orientation:
-          'p',
+  const pageW = 210;
+  const pageH = 297;
+  const margin = 8;
+  const contentW = pageW - margin * 2;
+  const contentH = pageH - margin * 2;
+  let firstPage = true;
 
-        unit:
-          'mm',
+  // El PDF se genera capturando el mismo HTML/CSS visual de la app.
+  // Así deja de existir una segunda maquetación PDF distinta de la web.
+  for (let i = 0; i < (bim.weeks || []).length; i++) {
+    const week = bim.weeks[i];
+    const node = buildPdfWeekNode(bim, week);
 
-        format:
-          'a4',
+    node.style.position = 'fixed';
+    node.style.left = '-100000px';
+    node.style.top = '0';
+    node.style.zIndex = '-1';
+    node.style.width = '820px';
+    node.style.background = '#faf6ee';
 
-        compress:
-          true
+    document.body.appendChild(node);
+
+    try {
+      if (document.fonts?.ready) {
+        await document.fonts.ready;
       }
-    );
 
+      const canvas = await window.html2canvas(node, {
+        backgroundColor: '#faf6ee',
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        imageTimeout: 15000,
+        removeContainer: true
+      });
 
-  const pageW =
-    210;
-
-
-  const pageH =
-    297;
-
-
-  const margin =
-    12;
-
-
-  const contentW =
-    pageW -
-    margin * 2;
-
-
-  let y =
-    margin;
-
-
-  function ensureSpace(
-    h
-  ) {
-
-    if (
-      y + h >
-      pageH - margin
-    ) {
-
-      doc.addPage();
-
-      y =
-        margin;
-
-    }
-
-  }
-
-
-  function wrapText(
-    text,
-    maxWidth,
-    fontSize
-  ) {
-
-    doc.setFontSize(
-      fontSize
-    );
-
-
-    return doc.splitTextToSize(
-      String(
-        text || ''
-      ),
-      maxWidth
-    );
-
-  }
-
-
-  function drawHeader(
-    first
-  ) {
-
-    const h =
-      20;
-
-
-    ensureSpace(
-      h + 8
-    );
-
-
-    doc.setFillColor(
-      18,
-      51,
-      56
-    );
-
-
-    doc.roundedRect(
-      margin,
-      y,
-      contentW,
-      h,
-      3,
-      3,
-      'F'
-    );
-
-
-    doc.setTextColor(
-      255,
-      255,
-      255
-    );
-
-
-    doc.setFont(
-      'helvetica',
-      'bold'
-    );
-
-
-    doc.setFontSize(
-      15
-    );
-
-
-    doc.text(
-      'Vida y Ministerio — Villa Concha',
-      margin + 6,
-      y + 8
-    );
-
-
-    doc.setFont(
-      'helvetica',
-      'normal'
-    );
-
-
-    doc.setFontSize(
-      8.5
-    );
-
-
-    doc.text(
-      String(
-        bim.bimestre
-      ),
-      margin + 6,
-      y + 14
-    );
-
-
-    doc.setTextColor(
-      27,
-      46,
-      53
-    );
-
-
-    y +=
-      h + 7;
-
-  }
-
-
-  async function drawWeek(
-    w,
-    index
-  ) {
-
-    const title =
-      String(
-        w.semana ||
-        ''
-      ).toLowerCase();
-
-
-    const lectura =
-      String(
-        w.lectura_semanal ||
-        ''
+      const pagePxH = Math.max(
+        1,
+        Math.floor(canvas.width * contentH / contentW)
       );
 
+      let offsetPx = 0;
 
-    let rows =
-      [];
-
-
-    let lastSection =
-      null;
-
-
-    (
-      w.items ||
-      []
-    ).forEach(
-      it => {
-
-        const sec =
-          [
-            'TESOROS',
-            'MAESTROS',
-            'NVC'
-          ].includes(
-            it.section
-          )
-            ? it.section
-            : null;
-
-
-        if (
-          sec &&
-          sec !== lastSection
-        ) {
-
-          rows.push({
-            type:
-              'section',
-
-            text:
-              sectionLabelText(
-                sec
-              ),
-
-            sec
-
-          });
-
+      while (offsetPx < canvas.height) {
+        if (!firstPage) {
+          doc.addPage();
         }
-
-
-        if (
-          !sec
-        ) {
-
-          lastSection =
-            null;
-
-        } else {
-
-          lastSection =
-            sec;
-
-        }
-
-
-        if (
-          isPureSongLine(it)
-        ) {
-
-          rows.push({
-            type:
-              'row',
-
-            label:
-              getSongDisplayLabel(
-                it
-              ),
-
-            name:
-              '',
-
-            song:
-              true
-
-          });
-
-        } else if (
-          Object.prototype.hasOwnProperty.call(
-            it,
-            'conductor'
-          )
-        ) {
-
-          rows.push({
-            type:
-              'row',
-
-            label:
-              it.label,
-
-            name:
-              it.conductor,
-
-            role:
-              'Conductor'
-          });
-
-
-          rows.push({
-            type:
-              'row',
-
-            label:
-              it.label,
-
-            name:
-              it.lector,
-
-            role:
-              'Lector'
-          });
-
-        } else if (
-          Array.isArray(
-            it.subs
-          )
-        ) {
-
-          it.subs.forEach(
-            sub => {
-
-              rows.push({
-                type:
-                  'row',
-
-                label:
-                  it.label,
-
-                name:
-                  sub.name,
-
-                role:
-                  sub.role
-
-              });
-
-            }
-          );
-
-        } else {
-
-          rows.push({
-            type:
-              'row',
-
-            label:
-              it.label,
-
-            name:
-              it.name
-
-          });
-
-        }
-
-      }
-    );
-
-
-    let estimate =
-      18;
-
-
-    rows.forEach(
-      r => {
-
-        if (
-          r.type ===
-          'section'
-        ) {
-
-          estimate +=
-            9;
-
-        } else {
-
-          estimate +=
-            10;
-
-        }
-
-      }
-    );
-
-
-    estimate +=
-      18;
-
-
-    if (
-      y +
-        Math.min(
-          estimate,
-          pageH -
-            margin * 2
-        ) >
-        pageH -
-          margin &&
-      y >
-        margin + 25
-    ) {
-
-      doc.addPage();
-
-      y =
-        margin;
-
-    }
-
-
-    doc.setFillColor(
-      255,
-      255,
-      255
-    );
-
-
-    doc.setDrawColor(
-      227,
-      217,
-      196
-    );
-
-
-    const top =
-      y;
-
-
-    doc.roundedRect(
-      margin,
-      y,
-      contentW,
-      16,
-      3,
-      3,
-      'FD'
-    );
-
-
-    doc.setTextColor(
-      18,
-      51,
-      56
-    );
-
-
-    doc.setFont(
-      'helvetica',
-      'bold'
-    );
-
-
-    doc.setFontSize(
-      12
-    );
-
-
-    doc.text(
-      title,
-      margin + 5,
-      y + 7
-    );
-
-
-    doc.setTextColor(
-      124,
-      114,
-      99
-    );
-
-
-    doc.setFont(
-      'courier',
-      'normal'
-    );
-
-
-    doc.setFontSize(
-      7.5
-    );
-
-
-    const lectLines =
-      wrapText(
-        lectura,
-        contentW - 10,
-        7.5
-      );
-
-
-    doc.text(
-      lectLines.slice(
-        0,
-        2
-      ),
-      margin + 5,
-      y + 12
-    );
-
-
-    y +=
-      20;
-
-
-    for (
-      const r of rows
-    ) {
-
-      if (
-        r.type ===
-        'section'
-      ) {
-
-        ensureSpace(
-          10
+        firstPage = false;
+
+        const sliceH = Math.min(
+          pagePxH,
+          canvas.height - offsetPx
         );
 
+        const slice = document.createElement('canvas');
+        slice.width = canvas.width;
+        slice.height = sliceH;
 
-        const label =
-          String(
-            r.text || ''
-          ).toUpperCase();
-
-
-        const colors = {
-
-          TESOROS:
-            [
-              87,
-              90,
-              93
-            ],
-
-          MAESTROS:
-            [
-              190,
-              137,
-              0
-            ],
-
-          NVC:
-            [
-              126,
-              0,
-              36
-            ]
-
-        };
-
-
-        const fill =
-          colors[
-            r.sec
-          ] ||
-          [
-            138,
-            131,
-            117
-          ];
-
-
-        doc.setFillColor(
-          ...fill
+        const ctx = slice.getContext('2d');
+        ctx.fillStyle = '#faf6ee';
+        ctx.fillRect(0, 0, slice.width, slice.height);
+        ctx.drawImage(
+          canvas,
+          0, offsetPx,
+          canvas.width, sliceH,
+          0, 0,
+          slice.width, slice.height
         );
 
-
-        doc.setFont(
-          'times',
-          'bold'
-        );
-
-
-        doc.setFontSize(
-          7.0
-        );
-
-
-        const textW =
-          doc.getTextWidth(
-            label
-          );
-
-
-        const iconW =
-          7;
-
-
-        const tw =
-          Math.min(
-            contentW - 8,
-            textW +
-              iconW +
-              13
-          );
-
-
-        doc.roundedRect(
-          margin + 3,
-          y,
-          tw,
-          7,
-          1.5,
-          1.5,
-          'F'
-        );
-
-
-        doc.setTextColor(
-          255,
-          255,
-          255
-        );
-
-
-        const iconData =
-          await svgToPngDataUrl(
-            PDF_ICON_SVG[
-              r.sec
-            ],
-            48,
-            48
-          );
-
+        const sliceHmm =
+          slice.height * contentW / slice.width;
 
         doc.addImage(
-          iconData,
-          'PNG',
-          margin + 5.0,
-          y + 0.9,
-          6.0,
-          6.0,
+          slice.toDataURL('image/jpeg', 0.94),
+          'JPEG',
+          margin,
+          margin,
+          contentW,
+          sliceHmm,
           undefined,
           'FAST'
         );
 
-
-        doc.text(
-          label,
-          margin + 13,
-          y + 4.8
-        );
-
-
-        y +=
-          10;
-
-
-        continue;
-
+        offsetPx += sliceH;
       }
-
-
-      const labelLines =
-        wrapText(
-          r.label,
-          r.song
-            ? contentW - 64
-            : contentW - 62,
-          8.2
-        );
-
-
-      const rowH =
-        Math.max(
-          9,
-          labelLines.length *
-            4.2 +
-            4
-        );
-
-
-      ensureSpace(
-        rowH
-      );
-
-
-      doc.setDrawColor(
-        241,
-        235,
-        221
-      );
-
-
-      doc.line(
-        margin + 3,
-        y + rowH,
-        margin +
-          contentW -
-          3,
-        y + rowH
-      );
-
-
-      doc.setTextColor(
-        27,
-        46,
-        53
-      );
-
-
-      doc.setFont(
-        'helvetica',
-        'normal'
-      );
-
-
-      doc.setFontSize(
-        8.2
-      );
-
-
-      const labelX =
-        r.song
-          ? margin + 11
-          : margin + 4;
-
-
-      if (
-        r.song
-      ) {
-
-        const songData =
-          await svgToPngDataUrl(
-            PDF_ICON_SVG.SONG,
-            36,
-            36
-          );
-
-
-        doc.addImage(
-          songData,
-          'PNG',
-          margin + 4.0,
-          y + 1.0,
-          4.8,
-          4.8,
-          undefined,
-          'FAST'
-        );
-
-      }
-
-
-      doc.text(
-        labelLines,
-        labelX,
-        y + 5
-      );
-
-
-      const right =
-        r.name
-          ? String(
-              r.name
-            )
-          : 'Sin asignar';
-
-
-      doc.setTextColor(
-        r.name
-          ? 18
-          : 181,
-        r.name
-          ? 51
-          : 80,
-        r.name
-          ? 56
-          : 46
-      );
-
-
-      doc.setFont(
-        'helvetica',
-        r.name
-          ? 'bold'
-          : 'italic'
-      );
-
-
-      doc.setFontSize(
-        7.8
-      );
-
-
-      const nameLines =
-        wrapText(
-          right,
-          50,
-          7.8
-        ).slice(
-          0,
-          2
-        );
-
-
-      const nx =
-        margin +
-        contentW -
-        4;
-
-
-      nameLines.forEach(
-        (
-          line,
-          ii
-        ) =>
-          doc.text(
-            line,
-            nx,
-            y +
-              5 +
-              ii * 4,
-            {
-              align:
-                'right'
-            }
-          )
-      );
-
-
-      if (
-        r.role
-      ) {
-
-        doc.setTextColor(
-          124,
-          114,
-          99
-        );
-
-
-        doc.setFont(
-          'courier',
-          'normal'
-        );
-
-
-        doc.setFontSize(
-          6.3
-        );
-
-
-        doc.text(
-          '— ' +
-            String(
-              r.role
-            ),
-          margin + 4,
-          y +
-            rowH -
-            2
-        );
-
-      }
-
-
-      y +=
-        rowH;
-
+    } finally {
+      node.remove();
     }
-
-
-    y +=
-      6;
-
   }
-
-
-  drawHeader(
-    true
-  );
-
-
-  for (
-    let i = 0;
-    i <
-      (
-        bim.weeks ||
-        []
-      ).length;
-    i++
-  ) {
-
-    const w =
-      bim.weeks[i];
-
-
-    if (
-      y >
-      pageH -
-        margin -
-        25
-    ) {
-
-      doc.addPage();
-
-      y =
-        margin;
-
-    }
-
-
-    await drawWeek(
-      w,
-      i
-    );
-
-  }
-
 
   const safeName =
-    String(
-      bim.bimestre
-    )
+    String(bim.bimestre)
       .replace(
         /[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ -]/g,
         ''
       )
       .trim()
-      .replace(
-        /\s+/g,
-        '_'
-      );
-
+      .replace(/\s+/g, '_');
 
   doc.save(
     `Vida_y_Ministerio_${safeName}.pdf`
   );
-
 }
 
 
@@ -5125,21 +4568,93 @@ function renderWeekCard(
   }
 
 
+  const bodyEl =
+    card.querySelector(
+      '.week-body'
+    );
+
+
   if (
     isOpen
   ) {
 
-    const bodyEl =
-      card.querySelector(
-        '.week-body'
-      );
-
-
     let lastSection =
       null;
 
+    let maestrosRendered =
+      false;
 
-    w.items.forEach(
+    let maestrosAddShown =
+      false;
+
+
+    const appendMaestrosAddControl =
+      () => {
+
+        if (
+          !isAdmin ||
+          maestrosAddShown
+        ) {
+
+          return;
+
+        }
+
+        const addBox =
+          el(`
+            <div
+              style="
+                padding:8px 0 12px;
+                margin-top:2px;
+              "
+            >
+
+              <button
+                type="button"
+                class="btn btn-ghost btn-sm"
+                style="width:100%;"
+              >
+                + Agregar asignación de Seamos Mejores Maestros
+              </button>
+
+            </div>
+          `);
+
+
+        addBox
+          .querySelector(
+            'button'
+          )
+          .addEventListener(
+            'click',
+            e => {
+
+              e.stopPropagation();
+
+              openAddMaestrosAssignmentModal(
+                bim,
+                w
+              );
+
+            }
+          );
+
+
+        bodyEl.appendChild(
+          addBox
+        );
+
+
+        maestrosAddShown =
+          true;
+
+      };
+
+
+    (
+      w.items ||
+      []
+    ).forEach(
       (
         it,
         idx
@@ -5155,6 +4670,21 @@ function renderWeekCard(
           )
             ? it.section
             : null;
+
+
+        /*
+         * Si estamos saliendo de MAESTROS para entrar
+         * a otra sección, ponemos el botón de agregar
+         * justo al final de MAESTROS.
+         */
+        if (
+          maestrosRendered &&
+          sec !== 'MAESTROS'
+        ) {
+
+          appendMaestrosAddControl();
+
+        }
 
 
         if (
@@ -5185,6 +4715,17 @@ function renderWeekCard(
         }
 
 
+        if (
+          sec ===
+          'MAESTROS'
+        ) {
+
+          maestrosRendered =
+            true;
+
+        }
+
+
         bodyEl.appendChild(
           renderItemRow(
             bim,
@@ -5197,13 +4738,25 @@ function renderWeekCard(
       }
     );
 
+
+    /*
+     * Si MAESTROS es la última sección de la semana,
+     * agregamos el botón al final.
+     */
+    if (
+      maestrosRendered
+    ) {
+
+      appendMaestrosAddControl();
+
+    }
+
   }
 
 
   return card;
 
 }
-
 
 // ============================================================
 // CANCIÓN
@@ -5213,101 +4766,122 @@ function getSongDisplayLabel(
   it
 ) {
 
-  let text =
-    String(
-      it &&
-      it.label ||
-      ''
-    ).trim();
-
-
-  text =
-    text
-      .replace(
-        /^[•·▪◦\-\s]+/,
-        ''
-      )
-      .trim();
-
-
-  const match =
-    text.match(
-      /canc[ií]ó[nn]\s*(?:n[º°.]?\s*)?(\d+)/i
-    );
-
-
-  if (
-    match
-  ) {
-
-    return (
-      'Canción ' +
-      match[1]
-    );
-
+  if (!it) {
+    return 'Canción';
   }
 
+  /*
+   * La canción intermedia puede venir con distintas estructuras
+   * según el bimestre. Primero revisamos todos los campos que
+   * normalmente contienen el texto visible de la canción.
+   */
+  const candidates = [
+    it.label,
+    it.title,
+    it.text,
+    it.description,
+    it.nombreCancion,
+    it.tituloCancion,
+    it.cancionTitulo
+  ];
 
+  for (const candidate of candidates) {
+
+    const value =
+      String(
+        candidate ?? ''
+      )
+      .trim()
+      .replace(/^[•·▪◦\-\s🎵🎶]+/, '')
+      .trim();
+
+    if (!value) {
+      continue;
+    }
+
+    const match =
+      value.match(
+        /canc[ií]ó[nn]\s*(?:n[º°.]?\s*)?(\d+)/i
+      );
+
+    if (match) {
+      return 'Canción ' + match[1];
+    }
+
+    const onlyNumber =
+      value.match(
+        /^\d+$/
+      );
+
+    if (onlyNumber) {
+      return 'Canción ' + onlyNumber[0];
+    }
+
+    /*
+     * Si ya contiene la palabra canción pero no pudimos extraer
+     * el número, mostramos el texto original en vez de ocultarlo.
+     */
+    if (
+      /canc[ií]ó[nn]/i.test(
+        value
+      )
+    ) {
+      return value;
+    }
+  }
+
+  /*
+   * Compatibilidad con estructuras donde el número está separado.
+   */
   const possibleNumber =
-    it &&
-    (
-      it.cancionNumero ??
-      it.numeroCancion ??
-      it.songNumber ??
-      it.cancion ??
-      it.song ??
-      it.numCancion ??
-      ''
-    );
+    it.cancionNumero ??
+    it.numeroCancion ??
+    it.songNumber ??
+    it.cancion ??
+    it.song ??
+    it.numCancion ??
+    it.numero ??
+    it.num ??
+    '';
 
+  if (
+    typeof possibleNumber === 'object' &&
+    possibleNumber !== null
+  ) {
+
+    const objectNumber =
+      possibleNumber.numero ??
+      possibleNumber.number ??
+      possibleNumber.num ??
+      possibleNumber.id ??
+      '';
+
+    const objectMatch =
+      String(
+        objectNumber || ''
+      ).match(
+        /\d+/
+      );
+
+    if (objectMatch) {
+      return 'Canción ' + objectMatch[0];
+    }
+  }
 
   const numberMatch =
     String(
-      possibleNumber ||
-      ''
+      possibleNumber || ''
     ).match(
       /\d+/
     );
 
-
-  if (
-    numberMatch
-  ) {
-
-    return (
-      'Canción ' +
-      numberMatch[0]
-    );
-
+  if (numberMatch) {
+    return 'Canción ' + numberMatch[0];
   }
 
-
-  const onlyNumber =
-    text.match(
-      /^\d+$/
-    );
-
-
-  if (
-    onlyNumber
-  ) {
-
-    return (
-      'Canción ' +
-      onlyNumber[0]
-    );
-
-  }
-
-
-  return /canc[ií]ó[nn]/i.test(
-    text
-  )
-    ? text
-    : 'Canción';
+  return 'Canción';
 
 }
-
 
 function saveSongLabel(
   it,
@@ -5390,6 +4964,11 @@ function renderItemRow(
 
           <div
             class="item-label song-label"
+            style="
+              display:flex;
+              align-items:center;
+              gap:8px;
+            "
           ></div>
 
         </div>
@@ -5402,12 +4981,15 @@ function renderItemRow(
       );
 
 
-    labelDiv.innerHTML =
-      songIconSvg();
-
+    /*
+     * El texto se fuerza visible con estilo inline para
+     * evitar que un CSS anterior oculte .song-text.
+     */
     labelDiv.appendChild(
-      document.createTextNode(
-        ' ' + songLabel
+      el(
+        `<span style="display:inline-flex;align-items:center;gap:8px;">${songIconSvg()}<span style="display:inline !important;visibility:visible !important;opacity:1 !important;color:#363535 !important;font-weight:600 !important;white-space:nowrap !important;">${esc(
+          songLabel || 'Canción'
+        )}</span></span>`
       )
     );
 
@@ -5427,9 +5009,7 @@ function renderItemRow(
               v
             );
 
-
             saveProgram();
-
 
             render();
 
@@ -5452,19 +5032,20 @@ function renderItemRow(
 
 
   if (
-    it.hasOwnProperty(
+    Object.prototype.hasOwnProperty.call(
+      it,
       'conductor'
     )
   ) {
 
     const wrap =
-      el(
+    el(
         `<div></div>`
-      );
+    );
 
 
     wrap.appendChild(
-      renderAssignLine(
+        renderAssignLine(
         bim,
         w,
         it,
@@ -5473,7 +5054,7 @@ function renderItemRow(
         it.label,
         cat,
         it.conductor
-      )
+    )
     );
 
 
@@ -5497,38 +5078,303 @@ function renderItemRow(
   }
 
 
+  /*
+   * SEAMOS MEJORES MAESTROS CON DOS PERSONAS
+   *
+   * Se muestra UNA sola fila:
+   *
+   *  [texto de asignación]   Nombre      Ayudante
+   *                           Alba        Nancy
+   *
+   * Nunca se duplica el texto de la asignación.
+   */
   if (
-    it.subs
+    Array.isArray(
+      it.subs
+    )
   ) {
 
+    const nombre =
+      it.subs.find(
+        s =>
+          normName(
+            s?.role
+          ) ===
+          'nombre'
+      )?.name ||
+      it.subs[0]?.name ||
+      '';
+
+
+    const ayudante =
+      it.subs.find(
+        s =>
+          normName(
+            s?.role
+          ) ===
+          'ayudante'
+      )?.name ||
+      it.subs[1]?.name ||
+      '';
+
+
     const wrap =
-      el(
-        `<div></div>`
-      );
+      el(`
+        <div
+          class="item-row maestros-pair-row"
+          style="
+            display:grid;
+            grid-template-columns:minmax(300px,1fr) minmax(145px,190px) minmax(145px,190px);
+            gap:14px;
+            align-items:end;
+          "
+        >
+
+          <div
+            class="item-label label-with-pencil"
+            style="min-width:0;"
+          >
+
+            <span>
+              ${esc(
+                it.label ||
+                ''
+              )}
+            </span>
+
+          </div>
 
 
-    it.subs.forEach(
-      (
-        s,
-        si
-      ) => {
+          <div
+            class="maestros-person-column"
+            style="
+              display:flex;
+              flex-direction:column;
+              gap:4px;
+              min-width:0;
+            "
+          >
 
-        wrap.appendChild(
-          renderAssignLine(
-            bim,
-            w,
-            it,
-            idx,
-            'sub' +
-              si,
-            it.label,
-            cat,
-            s.name,
-            s.role
+            <span
+              style="
+                font-size:12px;
+                font-weight:700;
+                color:#363535;
+              "
+            >
+              Nombre
+            </span>
+
+            ${
+              isAdmin
+                ? `
+                  <button
+                    type="button"
+                    class="assign-btn ${
+                      nombre
+                        ? ''
+                        : 'empty'
+                    }"
+                    style="font-weight:700;color:#363535;"
+                  >
+                    ${
+                      nombre
+                        ? esc(
+                            nombre
+                          )
+                        : 'Sin asignar'
+                    }
+                  </button>
+                `
+                : `
+                  <span
+                    class="assign-static ${
+                      nombre
+                        ? ''
+                        : 'public-empty'
+                    }"
+                    style="
+                      font-weight:700;
+                      color:#363535;
+                    "
+                  >
+                    ${
+                      nombre
+                        ? esc(
+                            nombre
+                          )
+                        : ''
+                    }
+                  </span>
+                `
+            }
+
+          </div>
+
+
+          <div
+            class="maestros-person-column"
+            style="
+              display:flex;
+              flex-direction:column;
+              gap:4px;
+              min-width:0;
+            "
+          >
+
+            <span
+              style="
+                font-size:12px;
+                font-weight:700;
+                color:#363535;
+              "
+            >
+              Ayudante
+            </span>
+
+            ${
+              isAdmin
+                ? `
+                  <button
+                    type="button"
+                    class="assign-btn ${
+                      ayudante
+                        ? ''
+                        : 'empty'
+                    }"
+                    style="font-weight:700;color:#363535;"
+                  >
+                    ${
+                      ayudante
+                        ? esc(
+                            ayudante
+                          )
+                        : 'Sin asignar'
+                    }
+                  </button>
+                `
+                : `
+                  <span
+                    class="assign-static ${
+                      ayudante
+                        ? ''
+                        : 'public-empty'
+                    }"
+                    style="
+                      font-weight:700;
+                      color:#363535;
+                    "
+                  >
+                    ${
+                      ayudante
+                        ? esc(
+                            ayudante
+                          )
+                        : ''
+                    }
+                  </span>
+                `
+            }
+
+          </div>
+
+        </div>
+      `);
+
+
+    if (
+      isAdmin
+    ) {
+
+      wrap
+        .querySelector(
+          '.label-with-pencil'
+        )
+        .appendChild(
+          editPencil(
+            'Editar texto de la parte',
+            it.label ||
+              '',
+            v => {
+
+              it.label =
+                v;
+
+              saveProgram();
+
+              render();
+
+            }
           )
         );
 
-      }
+
+      const buttons =
+        wrap.querySelectorAll(
+          '.assign-btn'
+        );
+
+
+      buttons[0]?.addEventListener(
+        'click',
+        e => {
+
+          e.stopPropagation();
+
+          openAssignModal(
+            'maestros_lectura',
+            nombre,
+            newName => {
+
+              applyAssignment(
+                bim,
+                w,
+                it,
+                'sub0',
+                newName
+              );
+
+            }
+          );
+
+        }
+      );
+
+
+      buttons[1]?.addEventListener(
+        'click',
+        e => {
+
+          e.stopPropagation();
+
+          openAssignModal(
+            'maestros_lectura',
+            ayudante,
+            newName => {
+
+              applyAssignment(
+                bim,
+                w,
+                it,
+                'sub1',
+                newName
+              );
+
+            }
+          );
+
+        }
+      );
+
+    }
+
+
+    appendMaestrosAdminControls(
+      wrap,
+      bim,
+      w,
+      it,
+      idx
     );
 
 
@@ -5537,19 +5383,35 @@ function renderItemRow(
   }
 
 
-  return renderAssignLine(
+  /*
+   * ASIGNACIÓN DE UNA SOLA PERSONA.
+   */
+  const row =
+    renderAssignLine(
+      bim,
+      w,
+      it,
+      idx,
+      'name',
+      it.label,
+      cat,
+      it.name ||
+        ''
+    );
+
+
+  appendMaestrosAdminControls(
+    row,
     bim,
     w,
     it,
-    idx,
-    'name',
-    it.label,
-    cat,
-    it.name
+    idx
   );
 
-}
 
+  return row;
+
+}
 
 // ============================================================
 // LÍNEA DE ASIGNACIÓN
@@ -5567,35 +5429,22 @@ function renderAssignLine(
   roleTag
 ) {
 
+  const safeCurrentName =
+    String(
+      currentName ??
+      ''
+    ).trim();
+
+
   const nameHtml =
-    currentName
+    safeCurrentName
       ? esc(
-          currentName
+          safeCurrentName
         )
-      : 'Sin asignar';
-
-
-  // Las canciones de apertura y cierre conservan su asignación
-  // normal, pero se muestran con el icono de canción y el texto
-  // unificado: "Canción N y oración".
-  const isSongPrayerLine =
-    (
-      it.section === 'OPEN' ||
-      it.section === 'CLOSE'
-    ) &&
-    /canc[ií]ó[nn]/i.test(
-      label || ''
-    );
-
-
-  const displayLabelHtml =
-    isSongPrayerLine
-      ? `${songIconSvg()}<span class="song-text">${esc(
-          getSongDisplayLabel(it) +
-          ' y oración'
-        )}</span>`
-      : esc(
-          label
+      : (
+          isAdmin
+            ? 'Sin asignar'
+            : ''
         );
 
 
@@ -5604,15 +5453,12 @@ function renderAssignLine(
       <div class="item-row">
 
         <div
-          class="item-label label-with-pencil ${
-            isSongPrayerLine
-              ? 'song-label'
-              : ''
-          }"
+          class="item-label label-with-pencil"
         >
 
-          <span>
-            ${displayLabelHtml}
+          <span style="display:inline-flex;align-items:center;gap:8px;">
+            ${/canc[ií]ó[nn]/i.test(String(label || '')) ? songIconSvg() : ''}
+            <span style="${/canc[ií]ó[nn]/i.test(String(label || '')) ? 'color:#363535 !important;font-weight:600 !important;' : ''}">${esc(/canc[ií]ó[nn]/i.test(String(label || '')) ? String(label || '').trim().replace(/^[•·▪◦\-\s]+/, '') : label)}</span>
 
             ${
               roleTag
@@ -5634,11 +5480,16 @@ function renderAssignLine(
           isAdmin
             ? `
               <button
+                type="button"
                 class="assign-btn ${
-                  currentName
+                  safeCurrentName
                     ? ''
                     : 'empty'
                 }"
+                style="
+                  font-weight:700;
+                  color:#363535;
+                "
               >
                 ${nameHtml}
               </button>
@@ -5646,10 +5497,14 @@ function renderAssignLine(
             : `
               <span
                 class="assign-static ${
-                  currentName
+                  safeCurrentName
                     ? ''
-                    : 'empty'
+                    : 'public-empty'
                 }"
+                style="
+                  font-weight:700;
+                  color:#363535;
+                "
               >
                 ${nameHtml}
               </span>
@@ -5712,7 +5567,7 @@ function renderAssignLine(
 
           openAssignModal(
             cat,
-            currentName,
+            safeCurrentName,
             newName => {
 
               applyAssignment(
@@ -5736,7 +5591,6 @@ function renderAssignLine(
 
 }
 
-
 // ============================================================
 // APLICAR ASIGNACIÓN
 // ============================================================
@@ -5750,12 +5604,32 @@ function applyAssignment(
 ) {
 
   if (
+    !it
+  ) {
+
+    console.warn(
+      'No se pudo aplicar la asignación: elemento inexistente.'
+    );
+
+    return;
+
+  }
+
+
+  const value =
+    String(
+      newName ??
+      ''
+    ).trim();
+
+
+  if (
     slot ===
     'name'
   ) {
 
     it.name =
-      newName;
+      value;
 
   } else if (
     slot ===
@@ -5763,7 +5637,7 @@ function applyAssignment(
   ) {
 
     it.conductor =
-      newName;
+      value;
 
   } else if (
     slot ===
@@ -5771,7 +5645,7 @@ function applyAssignment(
   ) {
 
     it.lector =
-      newName;
+      value;
 
   } else if (
     slot.startsWith(
@@ -5780,14 +5654,76 @@ function applyAssignment(
   ) {
 
     const si =
-      parseInt(
+      Number.parseInt(
         slot.slice(3),
         10
       );
 
 
+    if (
+      !Number.isInteger(
+        si
+      ) ||
+      si < 0
+    ) {
+
+      return;
+
+    }
+
+
+    if (
+      !Array.isArray(
+        it.subs
+      )
+    ) {
+
+      it.subs =
+        [];
+
+    }
+
+
+    while (
+      it.subs.length <=
+      si
+    ) {
+
+      it.subs.push(
+        {
+          role:
+            it.subs.length === 0
+              ? 'Nombre'
+              : 'Ayudante',
+
+          name:
+            ''
+        }
+      );
+
+    }
+
+
+    if (
+      !it.subs[si]
+    ) {
+
+      it.subs[si] =
+        {
+          role:
+            si === 0
+              ? 'Nombre'
+              : 'Ayudante',
+
+          name:
+            ''
+        };
+
+    }
+
+
     it.subs[si].name =
-      newName;
+      value;
 
   }
 
@@ -5797,7 +5733,6 @@ function applyAssignment(
   render();
 
 }
-
 
 // ============================================================
 // MODAL DE ASIGNACIÓN
@@ -5935,8 +5870,20 @@ function openAssignModal(
     }
 
 
+    const previousBimestre =
+      cat === 'maestros_lectura'
+        ? getPreviousBimestreLabel(currentBimestre)
+        : null;
+
     filtered.forEach(
       p => {
+        const usedBefore =
+          cat === 'maestros_lectura' &&
+          wasUsedInPreviousBimestre(p.nombre);
+
+        const previousWarning = usedBefore
+          ? `<span style="display:block;color:#c62828;font-size:12px;font-weight:700;margin-top:2px;">No Disponible — usado en ${esc(previousBimestre || 'el bimestre anterior')}</span>`
+          : '';
 
         const opt =
           el(`
@@ -5950,14 +5897,14 @@ function openAssignModal(
             >
 
               <span>
-                ${esc(
-                  p.nombre
-                )}
+                <strong style="font-weight:700;color:#363535;">
+                  ${esc(p.nombre)}
+                </strong>
+                ${previousWarning}
               </span>
 
             </div>
           `);
-
 
         opt.addEventListener(
           'click',
@@ -6193,18 +6140,10 @@ function renderPublicadoresTab() {
 
             async () => {
 
-              await window.storage
-                .set(
-                  'wm-meta',
-                  JSON.stringify({
-                    varonesMigratedV2:
-                      false
-                  }),
-                  true
-                )
-                .catch(
-                  () => {}
-                );
+              await appStorageSet(
+                'wm-meta',
+                JSON.stringify({ varonesMigratedV2: false })
+              );
 
 
               await migrateVarones();
@@ -7096,7 +7035,7 @@ function addNewPerson() {
           false,
 
         elig_nvc:
-          false,
+            false,
 
         elig_estudio_biblico:
           false,
