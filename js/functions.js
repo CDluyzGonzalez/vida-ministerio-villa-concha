@@ -16,6 +16,12 @@
 // CONFIGURACIÓN DE CATEGORÍAS
 // ============================================================
 
+// PDF: mientras se exporta, las semanas se fuerzan abiertas y los
+// controles de edición (lápices, botones de asignar, agregar/eliminar)
+// se ocultan, mostrando el mismo estilo de solo lectura que ve un
+// publicador — así el PDF queda visualmente idéntico a la app.
+let pdfExportMode = false;
+
 const CAT_LABELS = {
   perlas: 'Busquemos perlas escondidas',
   intro_conclusion: 'Palabras de introducción / conclusión',
@@ -43,6 +49,28 @@ const FIXED_INTRO_CONCLUSION = [
   'Anderson Gomez',
   'Sergio Rojas',
   'Alirio Calderón'
+];
+
+
+// ============================================================
+// HERMANOS APROBADOS PARA LEER EN ESTUDIO BÍBLICO
+// (columna "LECTORES ATALAYA Y LIBRO" del sheet Prueba de Varones Villaconcha)
+// ============================================================
+
+const FIXED_LECTOR_ESTUDIO = [
+  'Alirio Calderón',
+  'Eduardo Parra',
+  'Nicolas Medina',
+  'Anderson Gomez',
+  "Carlos D' Luyz",
+  'Johan Duarte',
+  'Oscar Duarte',
+  'Eliu Rodriguez',
+  'Esteban Santacruz',
+  'Sergio Rojas',
+  'Sergio Cespedes',
+  'David Obando',
+  'Andres Herrera'
 ];
 
 
@@ -1009,7 +1037,7 @@ async function migrateVarones() {
 
   if (
     meta &&
-    meta.varonesMigratedV2
+    meta.varonesMigratedV3
   ) {
 
     const sane =
@@ -1024,6 +1052,10 @@ async function migrateVarones() {
       PEOPLE.some(
         p =>
           p.elig_intro_conclusion
+      ) &&
+      PEOPLE.some(
+        p =>
+          p.elig_lector_estudio
       );
 
 
@@ -1160,6 +1192,10 @@ async function migrateVarones() {
       p.elig_oraciones =
         !!v.orar_publico;
 
+
+      p.elig_lector_estudio =
+        !!v.lectores_atalaya;
+
     }
   );
 
@@ -1192,6 +1228,53 @@ async function migrateVarones() {
   );
 
 
+  // Sembrado ÚNICO de la lista inicial de 13 hermanos aprobados para leer
+  // en el Estudio bíblico. Usa una bandera propia (independiente de la
+  // migración general de Varones) para que, una vez sembrada, la persona
+  // administradora pueda agregar, quitar o modificar esta lista desde el
+  // checkbox "Lector — Estudio bíblico" en Publicadores, sin que vuelva a
+  // sobrescribirse en cargas futuras ni al usar "Re-sincronizar Varones".
+  if (!meta || !meta.lectorEstudioSeeded) {
+
+    FIXED_LECTOR_ESTUDIO.forEach(
+      nombre => {
+
+        const key =
+          normName(nombre);
+
+        let p =
+          byNorm[key];
+
+        if (!p) {
+
+          p = {
+            id: 'pl_' + key.replace(/\s+/g, '_'),
+            nombre,
+            nota: '',
+            disponibilidad: Object.fromEntries(bimestres.map(b => [b, ''])),
+            elig_perlas: false,
+            elig_maestros_lectura: false,
+            elig_intro_conclusion: false,
+            elig_parte1: false,
+            elig_nvc: false,
+            elig_estudio_biblico: false,
+            elig_oraciones: false,
+            elig_lector_estudio: false
+          };
+
+          PEOPLE.push(p);
+          byNorm[key] = p;
+
+        }
+
+        p.elig_lector_estudio = true;
+
+      }
+    );
+
+  }
+
+
   await savePeople();
 
 
@@ -1199,7 +1282,16 @@ async function migrateVarones() {
 
     await appStorageSet(
       'wm-meta',
-      JSON.stringify({ varonesMigratedV2: true })
+      JSON.stringify(
+        Object.assign(
+          {},
+          meta,
+          {
+            varonesMigratedV3: true,
+            lectorEstudioSeeded: true
+          }
+        )
+      )
     );
 
   } catch (e) {}
@@ -2324,7 +2416,7 @@ function eligibleFor(
   const key =
     cat ===
     'estudio_biblico_lector'
-      ? 'elig_maestros_lectura'
+      ? 'elig_lector_estudio'
       : (
           'elig_' +
           cat
@@ -2384,6 +2476,31 @@ function wasUsedInPreviousBimestre(nombre) {
   const previous = getPreviousBimestreLabel(currentBimestre);
   if (!previous) return false;
   return getUsedNamesInBimestre(previous).has(normName(nombre));
+}
+
+// Devuelve un texto de advertencia (o cadena vacía) indicando si una persona
+// ya fue asignada en el bimestre actual y/o en el anterior. `excludeName`
+// es el valor que ya está en el campo que se está editando, para no marcar
+// a alguien como "repetido" solo por aparecer en su propia asignación.
+function getUsageWarning(nombre, excludeName) {
+  if (!nombre || !currentBimestre) return '';
+  const nameNorm = normName(nombre);
+  const excludeNorm = normName(excludeName || '');
+  const warnings = [];
+
+  if (nameNorm !== excludeNorm) {
+    const usedNowSet = getUsedNamesInBimestre(currentBimestre);
+    if (usedNowSet.has(nameNorm)) {
+      warnings.push(`ya asignado en ${currentBimestre}`);
+    }
+  }
+
+  const previous = getPreviousBimestreLabel(currentBimestre);
+  if (previous && getUsedNamesInBimestre(previous).has(nameNorm)) {
+    warnings.push(`usado en ${previous}`);
+  }
+
+  return warnings.join(' · ');
 }
 
 // ============================================================
@@ -2523,7 +2640,7 @@ function deleteMaestrosAssignment(bim, w, idx) {
 }
 
 function appendMaestrosAdminControls(node, bim, w, it, idx) {
-  if (!isAdmin || !it || it.section !== 'MAESTROS') return;
+  if (!(isAdmin && !pdfExportMode) || !it || it.section !== 'MAESTROS') return;
   const target =
     node?.matches?.('.item-row')
       ? node
@@ -3524,293 +3641,63 @@ function buildPdfWeekNode(
   w
 ) {
 
-  const root =
-    el(`
-      <div
-        class="pdf-week-capture"
-        style="
-          width:820px;
-          background:#faf6ee;
-          padding:18px 0 24px;
-        "
-      ></div>
-    `);
+  // Reutiliza exactamente el mismo renderizador que usa la app en
+  // pantalla (renderWeekCard), en modo solo-lectura y forzada abierta,
+  // para que el PDF sea idéntico al diseño actual de la app.
+  const card = renderWeekCard(bim, w);
+  card.classList.add('open');
 
+  const root = el(`
+    <div
+      class="pdf-week-capture"
+      style="
+        width:820px;
+        background:#faf6ee;
+        padding:18px 0 24px;
+      "
+    ></div>
+  `);
 
-  const header =
-    el(`
+  const header = el(`
+    <div
+      style="
+        font-family:'Fraunces',serif;
+        color:#123338;
+        margin:0 0 12px;
+        padding:0 18px 10px;
+        border-bottom:2px solid #123338;
+      "
+    >
+      <div style="font-size:22px;font-weight:700;">
+        Vida y Ministerio — Villa Concha
+      </div>
       <div
         style="
-          font-family:'Fraunces',serif;
-          color:#123338;
-          margin:0 0 12px;
-          padding:0 18px 10px;
-          border-bottom:2px solid #123338;
+          font-family:'IBM Plex Mono',monospace;
+          font-size:11px;
+          color:#7c7263;
+          margin-top:3px;
         "
       >
-
-        <div
-          style="
-            font-size:22px;
-            font-weight:700;
-          "
-        >
-          Vida y Ministerio — Villa Concha
-        </div>
-
-        <div
-          style="
-            font-family:'IBM Plex Mono',monospace;
-            font-size:11px;
-            color:#7c7263;
-            margin-top:3px;
-          "
-        >
-          ${esc(
+        ${esc(
             bim.bimestre
           )} · Programa completo
-        </div>
-
       </div>
-    `);
+    </div>
+  `);
 
+  root.appendChild(header);
 
-  root.appendChild(
-    header
-  );
+  card.style.margin = '0 18px';
+  card.style.boxShadow =
+    '0 1px 2px rgba(27,46,53,.06), 0 6px 20px -8px rgba(27,46,53,.18)';
 
-
-  const card =
-    el(`
-      <div
-        class="week-card open"
-        style="
-          margin:0 18px;
-          box-shadow:
-            0 1px 2px rgba(27,46,53,.06),
-            0 6px 20px -8px rgba(27,46,53,.18);
-        "
-      >
-
-        <div class="week-head">
-
-          <div class="wk-titles">
-
-            <p
-              class="wk-semana"
-              style="margin:0 0 4px;"
-            >
-              ${esc(
-                (
-                  w.semana ||
-                  ''
-                ).toLowerCase()
-              )}
-            </p>
-
-            <p
-              class="wk-lectura"
-              style="margin:0;"
-            >
-              ${esc(
-                w.lectura_semanal ||
-                ''
-              )}
-            </p>
-
-          </div>
-
-        </div>
-
-        <div
-          class="week-body"
-          style="
-            display:block;
-            padding-top:14px;
-          "
-        ></div>
-
-      </div>
-    `);
-
-
-  const body =
-    card.querySelector(
-      '.week-body'
-    );
-
-
-  let lastSection =
-    null;
-
-
-  (
-    w.items ||
-    []
-  ).forEach(
-    it => {
-
-      const sec =
-        [
-          'TESOROS',
-          'MAESTROS',
-          'NVC'
-        ].includes(
-          it.section
-        )
-          ? it.section
-          : null;
-
-
-      if (
-        sec &&
-        sec !== lastSection
-      ) {
-
-        body.appendChild(
-          el(
-            `<span class="section-label ${sec}">${sectionLabelHtml(
-              sec
-            )}</span>`
-          )
-        );
-
-
-        lastSection =
-          sec;
-
-      } else if (
-        !sec
-      ) {
-
-        lastSection =
-          null;
-
-      }
-
-
-      if (
-        isPureSongLine(it)
-      ) {
-
-        const songLabel =
-          getSongDisplayLabel(
-            it
-          );
-
-
-        body.appendChild(
-          el(
-            `<div class="item-row"><div class="item-label song-label">${songIconSvg()}<span style="display:inline !important;visibility:visible !important;opacity:1 !important;color:#363535 !important;font-weight:600 !important;white-space:nowrap !important;">${esc(
-              songLabel || 'Canción'
-            )}</span></div></div>`
-          )
-        );
-
-
-        return;
-
-      }
-
-
-      if (
-        Object.prototype.hasOwnProperty.call(
-          it,
-          'conductor'
-        )
-      ) {
-
-        body.appendChild(
-          pdfAssignmentLine(
-            it.label,
-            it.conductor,
-            'Conductor'
-          )
-        );
-
-
-        body.appendChild(
-          pdfAssignmentLine(
-            it.label,
-            it.lector,
-            'Lector'
-          )
-        );
-
-      } else if (
-        Array.isArray(
-          it.subs
-        )
-      ) {
-
-        it.subs.forEach(
-          s =>
-            body.appendChild(
-              pdfAssignmentLine(
-                it.label,
-                s.name,
-                s.role
-              )
-            )
-        );
-
-      } else {
-
-        body.appendChild(
-          pdfAssignmentLine(
-            it.label,
-            it.name,
-            ''
-          )
-        );
-
-      }
-
-    }
-  );
-
-
-  root.appendChild(
-    card
-  );
-
+  root.appendChild(card);
 
   return root;
 
 }
 
-
-function pdfAssignmentLine(
-  label,
-  name,
-  role
-) {
-
-  return el(
-    `<div class="item-row"><div class="item-label">${esc(
-      label
-    )}${
-      role
-        ? ` <span class="role-tag">— ${esc(
-            role
-          )}</span>`
-        : ''
-    }</div><span class="print-assignment ${
-      name
-        ? ''
-        : 'empty'
-    }">${esc(
-      name ||
-      'Sin asignar'
-    )}</span></div>`
-  );
-
-}
-
-
-// ============================================================
-// MODAL PDF
-// ============================================================
 
 function openPdfBimestreModal() {
 
@@ -3944,6 +3831,13 @@ async function downloadBimestrePdf(
     return;
   }
 
+  // Mientras se genera el PDF, las semanas se fuerzan abiertas y los
+  // controles de edición (lápices, botones de asignar, agregar/eliminar)
+  // se ocultan — el PDF queda igual a como lo ve un publicador.
+  pdfExportMode = true;
+
+  try {
+
   const { jsPDF } = window.jspdf;
 
   const doc = new jsPDF({
@@ -4055,6 +3949,10 @@ async function downloadBimestrePdf(
   doc.save(
     `Vida_y_Ministerio_${safeName}.pdf`
   );
+
+  } finally {
+    pdfExportMode = false;
+  }
 }
 
 
@@ -4451,6 +4349,7 @@ function renderWeekCard(
 ) {
 
   const isOpen =
+    pdfExportMode ||
     openWeeks.has(
       w.id
     );
@@ -4553,7 +4452,7 @@ function renderWeekCard(
 
 
   if (
-    isAdmin
+    (isAdmin && !pdfExportMode)
   ) {
 
     card
@@ -4627,7 +4526,7 @@ function renderWeekCard(
       () => {
 
         if (
-          !isAdmin ||
+          !(isAdmin && !pdfExportMode) ||
           maestrosAddShown
         ) {
 
@@ -5030,7 +4929,7 @@ function renderItemRow(
 
 
     if (
-      isAdmin
+      (isAdmin && !pdfExportMode)
     ) {
 
       labelDiv.appendChild(
@@ -5201,7 +5100,7 @@ function renderItemRow(
             </span>
 
             ${
-              isAdmin
+              (isAdmin && !pdfExportMode)
                 ? `
                   <button
                     type="button"
@@ -5268,7 +5167,7 @@ function renderItemRow(
             </span>
 
             ${
-              isAdmin
+              (isAdmin && !pdfExportMode)
                 ? `
                   <button
                     type="button"
@@ -5318,7 +5217,7 @@ function renderItemRow(
 
 
     if (
-      isAdmin
+      (isAdmin && !pdfExportMode)
     ) {
 
       wrap
@@ -5477,7 +5376,7 @@ function renderAssignLine(
           safeCurrentName
         )
       : (
-          isAdmin
+          (isAdmin && !pdfExportMode)
             ? 'Sin asignar'
             : ''
         );
@@ -5512,7 +5411,7 @@ function renderAssignLine(
         </div>
 
         ${
-          isAdmin
+          (isAdmin && !pdfExportMode)
             ? `
               <button
                 type="button"
@@ -5551,7 +5450,7 @@ function renderAssignLine(
 
 
   const showPencil =
-    isAdmin &&
+    (isAdmin && !pdfExportMode) &&
     cat !==
       'intro_conclusion' &&
     slot !==
@@ -5589,7 +5488,7 @@ function renderAssignLine(
 
 
   if (
-    isAdmin
+    (isAdmin && !pdfExportMode)
   ) {
 
     row
@@ -5905,19 +5804,12 @@ function openAssignModal(
     }
 
 
-    const previousBimestre =
-      cat === 'maestros_lectura'
-        ? getPreviousBimestreLabel(currentBimestre)
-        : null;
-
     filtered.forEach(
       p => {
-        const usedBefore =
-          cat === 'maestros_lectura' &&
-          wasUsedInPreviousBimestre(p.nombre);
+        const warningText = getUsageWarning(p.nombre, currentName);
 
-        const previousWarning = usedBefore
-          ? `<span style="display:block;color:#c62828;font-size:12px;font-weight:700;margin-top:2px;">No Disponible — usado en ${esc(previousBimestre || 'el bimestre anterior')}</span>`
+        const previousWarning = warningText
+          ? `<span style="display:block;color:#c62828;font-size:12px;font-weight:700;margin-top:2px;">⚠ ${esc(warningText)}</span>`
           : '';
 
         const opt =
@@ -6177,7 +6069,7 @@ function renderPublicadoresTab() {
 
               await appStorageSet(
                 'wm-meta',
-                JSON.stringify({ varonesMigratedV2: false })
+                JSON.stringify({ varonesMigratedV3: false })
               );
 
 
@@ -6398,6 +6290,11 @@ function renderPersonCard(
               ${badgeHtml(
                 p.elig_maestros_lectura,
                 'Maestros/Lectura'
+              )}
+
+              ${badgeHtml(
+                p.elig_lector_estudio,
+                'Lector Estudio'
               )}
 
             </div>
@@ -6738,6 +6635,23 @@ function renderPersonEditForm(
 
             </label>
 
+
+            <label class="check-item">
+
+              <input
+                type="checkbox"
+                data-field="elig_lector_estudio"
+                ${
+                  p.elig_lector_estudio
+                    ? 'checked'
+                    : ''
+                }
+              />
+
+              Lector — Estudio bíblico
+
+            </label>
+
           </div>
 
         </div>
@@ -6908,7 +6822,8 @@ function renderPersonEditForm(
     'elig_nvc',
     'elig_estudio_biblico',
     'elig_intro_conclusion',
-    'elig_maestros_lectura'
+    'elig_maestros_lectura',
+    'elig_lector_estudio'
   ].forEach(
     f => {
 
@@ -7079,6 +6994,9 @@ function addNewPerson() {
           false,
 
         elig_maestros_lectura:
+          false,
+
+        elig_lector_estudio:
           false
 
       };
