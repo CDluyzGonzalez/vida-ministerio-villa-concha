@@ -22,6 +22,13 @@
 // publicador — así el PDF queda visualmente idéntico a la app.
 let pdfExportMode = false;
 
+// Hash SHA-256 del PIN de administrador por defecto. NO es el PIN en
+// texto plano — es su huella criptográfica. Solo se usa si nunca se
+// ha guardado un PIN propio (primer uso de la app). Genera este valor
+// tú mismo si quieres cambiar el PIN por defecto, ver instrucciones
+// al final de este archivo.
+const DEFAULT_PIN_HASH = '79404babda0441a8756da8dc02bae87094fd393739678ccd7f36f90127f651b8';
+
 const CAT_LABELS = {
   perlas: 'Busquemos perlas escondidas',
   intro_conclusion: 'Palabras de introducción / conclusión',
@@ -1375,6 +1382,26 @@ async function savePeople() {
 // OBTENER PIN
 // ============================================================
 
+// ============================================================
+// HASH SHA-256 DEL PIN (Web Crypto API — nativo del navegador)
+// ============================================================
+// El PIN nunca se guarda ni se compara en texto plano: se guarda su
+// huella SHA-256, y para verificarlo se hashea lo que la persona
+// escribe y se compara ese hash contra el guardado. Así, ni mirando
+// el código fuente ni el almacenamiento se puede leer el PIN real.
+
+async function sha256Hex(text) {
+  const data = new TextEncoder().encode(String(text ?? ''));
+  const digest = await crypto.subtle.digest('SHA-256', data);
+  return Array.from(new Uint8Array(digest))
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('');
+}
+
+function looksLikeSha256(value) {
+  return typeof value === 'string' && /^[0-9a-f]{64}$/i.test(value);
+}
+
 async function getAdminPin() {
 
   try {
@@ -1383,15 +1410,28 @@ async function getAdminPin() {
       await appStorageGet('wm-admin-pin');
 
 
-    return r
-      ? JSON.parse(
-          r.value
-        )
-      : DEFAULT_PIN;
+    if (!r) {
+      return DEFAULT_PIN_HASH;
+    }
+
+    const stored = JSON.parse(r.value);
+
+    if (looksLikeSha256(stored)) {
+      // Ya está guardado como hash — se usa tal cual.
+      return stored;
+    }
+
+    // Migración silenciosa: si quedó un PIN viejo en texto plano
+    // (de una versión anterior de la app), se hashea ahora mismo y
+    // se vuelve a guardar como hash, para que nunca más quede
+    // expuesto en el almacenamiento.
+    const migratedHash = await sha256Hex(stored);
+    await setAdminPinHash(migratedHash);
+    return migratedHash;
 
   } catch (e) {
 
-    return DEFAULT_PIN;
+    return DEFAULT_PIN_HASH;
 
   }
 
@@ -1402,15 +1442,27 @@ async function getAdminPin() {
 // GUARDAR PIN
 // ============================================================
 
+// Recibe el PIN en texto plano (lo que la persona escribió), lo
+// convierte a hash y guarda solo el hash.
 async function setAdminPin(
   pin
+) {
+
+  const hash = await sha256Hex(pin);
+  await setAdminPinHash(hash);
+
+}
+
+// Guarda directamente un hash ya calculado (uso interno / migración).
+async function setAdminPinHash(
+  hash
 ) {
 
   try {
 
     await appStorageSet(
       'wm-admin-pin',
-      JSON.stringify(pin)
+      JSON.stringify(hash)
     );
 
   } catch (e) {
@@ -2141,10 +2193,13 @@ async function openPinModal() {
 
 
   const tryEnter =
-    () => {
+    async () => {
+
+      const enteredHash =
+        await sha256Hex(input.value);
 
       if (
-        input.value ===
+        enteredHash ===
         pin
       ) {
 

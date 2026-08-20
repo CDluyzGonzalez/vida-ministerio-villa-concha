@@ -46,8 +46,10 @@ let sheetsConnected = false;
 // CONFIGURACIÓN GENERAL
 // ============================================================
 
-// PIN utilizado cuando todavía no existe uno guardado.
-const DEFAULT_PIN = '51391';
+// El PIN de administrador NO vive aquí en texto plano. Su huella
+// SHA-256 (DEFAULT_PIN_HASH) está en functions.js, y getAdminPin()/
+// setAdminPin() en ese mismo archivo son las únicas funciones que
+// deben tocar el PIN — nunca se guarda ni compara en texto plano.
 
 
 // URL predeterminada del Web App de Google Apps Script.
