@@ -148,6 +148,14 @@ async function appStorageSet(key, value) {
 
 function computeCat(it) {
 
+  // Algunas asignaciones de Nuestra Vida Cristiana pueden marcarse
+  // manualmente como "restringidas" (mismo grupo que Introducción/
+  // Conclusión), por ejemplo un discurso de invitado especial.
+  // Esto tiene prioridad sobre la categoría normal de su sección.
+  if (it.forceCat) {
+    return it.forceCat;
+  }
+
   const sec = it.section;
 
   const label =
@@ -2722,6 +2730,187 @@ window.deleteMaestrosAssignment = deleteMaestrosAssignment;
 
 
 // ============================================================
+// NUESTRA VIDA CRISTIANA — GESTIÓN DE ASIGNACIONES ADICIONALES
+// ============================================================
+// Permite agregar asignaciones extra dentro de Nuestra Vida Cristiana
+// (por ejemplo un discurso de invitado especial), ubicándolas siempre
+// justo antes del Estudio bíblico de la congregación. Cada una puede
+// ser "normal" (mismo grupo que las demás partes de NVC) o
+// "restringida" (mismo grupo que Introducción/Conclusión) — útil para
+// discursos que solo pueden dar ciertos hermanos, como una visita del
+// superintendente de circuito.
+
+function insertNvcItem_(w, newItem) {
+  if (!Array.isArray(w.items)) w.items = [];
+  // Se inserta justo antes del Estudio bíblico de la congregación
+  // (el único ítem de NVC con la propiedad "conductor"). Si esa
+  // semana no la tiene (fue eliminada), se inserta antes de
+  // Palabras de conclusión, o al final si tampoco existe.
+  let insertAt = w.items.findIndex(x => x?.hasOwnProperty?.('conductor'));
+  if (insertAt === -1) {
+    insertAt = w.items.findIndex(x => x?.section === 'CONCLUSION');
+  }
+  if (insertAt === -1) {
+    insertAt = w.items.length;
+  }
+  const nvcNums = w.items
+    .filter(x => x?.section === 'NVC' && Number.isFinite(Number(x?.num)))
+    .map(x => Number(x.num));
+  if (nvcNums.length) {
+    newItem.num = Math.max(...nvcNums) + 1;
+  }
+  w.items.splice(insertAt, 0, newItem);
+}
+
+function openAddNvcAssignmentModal(bim, w) {
+  const overlay = openOverlay(`
+    <div class="modal-head">
+      <h3>Agregar asignación</h3>
+      <p>Nuestra Vida Cristiana · ${esc(w.semana || '')}</p>
+    </div>
+    <div class="field">
+      <label>Tipo de asignación</label>
+      <select class="search-input" id="new-nvc-type">
+        <option value="single">Asignación individual (un discurso, una parte)</option>
+        <option value="estudio">Estudio bíblico de la congregación (Conductor + Lector)</option>
+      </select>
+    </div>
+    <div class="field" style="margin-top:12px;">
+      <label>Texto de la asignación</label>
+      <input class="search-input" id="new-nvc-label" placeholder="Ej.: Discurso del superintendente de circuito (30 mins.)" />
+    </div>
+    <div class="field" id="new-nvc-restrict-wrap" style="margin-top:12px;">
+      <label>¿Quién puede dar esta parte?</label>
+      <select class="search-input" id="new-nvc-restrict">
+        <option value="no">Igual que las demás partes de Nuestra Vida Cristiana</option>
+        <option value="si">Restringido — solo quienes dan Introducción/Conclusión</option>
+      </select>
+    </div>
+    <div class="modal-foot" style="margin-top:16px;">
+      <button class="btn btn-ghost btn-sm" data-action="close">Cancelar</button>
+      <button class="btn btn-primary btn-sm" data-action="save">Agregar</button>
+    </div>
+  `);
+  const input = overlay.querySelector('#new-nvc-label');
+  const typeSelect = overlay.querySelector('#new-nvc-type');
+  const restrictWrap = overlay.querySelector('#new-nvc-restrict-wrap');
+  input.focus();
+
+  const syncFieldsToType = () => {
+    const isEstudio = typeSelect.value === 'estudio';
+    // El Estudio bíblico usa categorías fijas (Conductor / Lector),
+    // así que la restricción de "quién puede darla" no aplica ahí.
+    restrictWrap.style.display = isEstudio ? 'none' : '';
+    if (isEstudio && !input.value.trim()) {
+      input.value = 'Estudio bíblico de la congregación (30 mins.)';
+    }
+  };
+  typeSelect.addEventListener('change', syncFieldsToType);
+  syncFieldsToType();
+
+  overlay.querySelector('[data-action="close"]').addEventListener('click', () => overlay.remove());
+  overlay.querySelector('[data-action="save"]').addEventListener('click', async () => {
+    const label = String(input.value || '').trim();
+    if (!label) { input.focus(); return; }
+    let item;
+    if (typeSelect.value === 'estudio') {
+      item = { section: 'NVC', label, conductor: '', lector: '' };
+    } else {
+      const restrict = overlay.querySelector('#new-nvc-restrict').value === 'si';
+      item = { section: 'NVC', label, name: '' };
+      if (restrict) item.forceCat = 'intro_conclusion';
+    }
+    insertNvcItem_(w, item);
+    await saveProgram();
+    overlay.remove();
+    openWeeks.add(w.id);
+    render();
+  });
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+}
+
+function changeNvcAssignmentCategory(bim, w, it) {
+  const restricted = it.forceCat === 'intro_conclusion';
+  const overlay = openOverlay(`
+    <div class="modal-head">
+      <h3>¿Quién puede dar esta parte?</h3>
+      <p>${esc(it.label || '')}</p>
+    </div>
+    <div class="field">
+      <select class="search-input" id="edit-nvc-restrict">
+        <option value="no" ${!restricted ? 'selected' : ''}>Igual que las demás partes de Nuestra Vida Cristiana</option>
+        <option value="si" ${restricted ? 'selected' : ''}>Restringido — solo quienes dan Introducción/Conclusión</option>
+      </select>
+    </div>
+    <div class="modal-foot" style="margin-top:16px;">
+      <button class="btn btn-ghost btn-sm" data-action="close">Cancelar</button>
+      <button class="btn btn-primary btn-sm" data-action="save">Guardar</button>
+    </div>
+  `);
+  overlay.querySelector('[data-action="close"]').addEventListener('click', () => overlay.remove());
+  overlay.querySelector('[data-action="save"]').addEventListener('click', () => {
+    const restrict = overlay.querySelector('#edit-nvc-restrict').value === 'si';
+    if (restrict) it.forceCat = 'intro_conclusion';
+    else delete it.forceCat;
+    saveProgram();
+    overlay.remove();
+    render();
+  });
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+}
+
+function deleteNvcAssignment(bim, w, idx) {
+  const item = w.items?.[idx];
+  if (!item) return;
+  const isEstudioBiblico = item.hasOwnProperty('conductor');
+  const message = isEstudioBiblico
+    ? `¿Eliminar el Estudio bíblico de la congregación de esta semana?\n\n${item.label || ''}`
+    : `¿Eliminar esta asignación?\n\n${item.label || ''}`;
+  openConfirmModal(
+    message,
+    () => {
+      if (Array.isArray(w.items) && idx >= 0 && idx < w.items.length) {
+        w.items.splice(idx, 1);
+        saveProgram();
+        render();
+      }
+    },
+    { title: 'Eliminar asignación', okLabel: 'Eliminar' }
+  );
+}
+
+function appendNvcAdminControls(node, bim, w, it, idx, opts) {
+  if (!(isAdmin && !pdfExportMode) || !it || it.section !== 'NVC') return;
+  opts = opts || {};
+  const target =
+    node?.matches?.('.item-row')
+      ? node
+      : node?.querySelector?.('.item-row');
+  if (!target) return;
+  const showCategoryToggle = !opts.hideCategoryToggle;
+  const controls = el(`
+    <span style="display:inline-flex;gap:4px;margin-left:8px;align-items:center;">
+      ${showCategoryToggle ? `<button type="button" class="edit-pencil" title="Cambiar quién puede dar esta parte">⚙</button>` : ''}
+      <button type="button" class="edit-pencil" title="Eliminar asignación" style="color:#b42318;">×</button>
+    </span>
+  `);
+  const buttons = controls.querySelectorAll('button');
+  let btnIdx = 0;
+  if (showCategoryToggle) {
+    buttons[btnIdx++].addEventListener('click', e => { e.stopPropagation(); changeNvcAssignmentCategory(bim, w, it); });
+  }
+  buttons[btnIdx].addEventListener('click', e => { e.stopPropagation(); deleteNvcAssignment(bim, w, idx); });
+  const label = target.querySelector('.item-label');
+  if (label) label.appendChild(controls);
+}
+
+window.appendNvcAdminControls = appendNvcAdminControls;
+window.openAddNvcAssignmentModal = openAddNvcAssignmentModal;
+window.changeNvcAssignmentCategory = changeNvcAssignmentCategory;
+window.deleteNvcAssignment = deleteNvcAssignment;
+
+
+// ============================================================
 // RESPONSIVE: apila Nombre/Ayudante en pantallas angostas (celular)
 // ============================================================
 // La fila de Seamos Mejores Maestros usa una grilla de 3 columnas con
@@ -4576,6 +4765,75 @@ function renderWeekCard(
     let maestrosAddShown =
       false;
 
+    let nvcRendered =
+      false;
+
+    let nvcAddShown =
+      false;
+
+
+    const appendNvcAddControl =
+      () => {
+
+        if (
+          !(isAdmin && !pdfExportMode) ||
+          nvcAddShown
+        ) {
+
+          return;
+
+        }
+
+        const addBox =
+          el(`
+            <div
+              style="
+                padding:8px 0 12px;
+                margin-top:2px;
+              "
+            >
+
+              <button
+                type="button"
+                class="btn btn-ghost btn-sm"
+                style="width:100%;"
+              >
+                + Agregar asignación de Nuestra Vida Cristiana
+              </button>
+
+            </div>
+          `);
+
+
+        addBox
+          .querySelector(
+            'button'
+          )
+          .addEventListener(
+            'click',
+            e => {
+
+              e.stopPropagation();
+
+              openAddNvcAssignmentModal(
+                bim,
+                w
+              );
+
+            }
+          );
+
+
+        bodyEl.appendChild(
+          addBox
+        );
+
+
+        nvcAddShown =
+          true;
+
+      };
+
 
     const appendMaestrosAddControl =
       () => {
@@ -4676,6 +4934,22 @@ function renderWeekCard(
         }
 
 
+        /*
+         * Lo mismo para Nuestra Vida Cristiana: el botón
+         * de agregar se muestra justo antes de salir de
+         * esa sección (normalmente antes de Palabras de
+         * conclusión).
+         */
+        if (
+          nvcRendered &&
+          sec !== 'NVC'
+        ) {
+
+          appendNvcAddControl();
+
+        }
+
+
         if (
           sec &&
           sec !==
@@ -4715,6 +4989,17 @@ function renderWeekCard(
         }
 
 
+        if (
+          sec ===
+          'NVC'
+        ) {
+
+          nvcRendered =
+            true;
+
+        }
+
+
         bodyEl.appendChild(
           renderItemRow(
             bim,
@@ -4737,6 +5022,19 @@ function renderWeekCard(
     ) {
 
       appendMaestrosAddControl();
+
+    }
+
+
+    /*
+     * Lo mismo para Nuestra Vida Cristiana, por si fuera
+     * la última sección de la semana.
+     */
+    if (
+      nvcRendered
+    ) {
+
+      appendNvcAddControl();
 
     }
 
@@ -5059,6 +5357,16 @@ function renderItemRow(
         it.lector,
         'Lector'
       )
+    );
+
+
+    appendNvcAdminControls(
+      wrap,
+      bim,
+      w,
+      it,
+      idx,
+      { hideCategoryToggle: true }
     );
 
 
@@ -5390,6 +5698,15 @@ function renderItemRow(
 
 
   appendMaestrosAdminControls(
+    row,
+    bim,
+    w,
+    it,
+    idx
+  );
+
+
+  appendNvcAdminControls(
     row,
     bim,
     w,
