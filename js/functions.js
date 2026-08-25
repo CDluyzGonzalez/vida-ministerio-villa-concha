@@ -11,7 +11,6 @@
 // js/app.js
 // ============================================================
 
-
 // ============================================================
 // CONFIGURACIÓN DE CATEGORÍAS
 // ============================================================
@@ -27,37 +26,36 @@ let pdfExportMode = false;
 // ha guardado un PIN propio (primer uso de la app). Genera este valor
 // tú mismo si quieres cambiar el PIN por defecto, ver instrucciones
 // al final de este archivo.
-const DEFAULT_PIN_HASH = '79404babda0441a8756da8dc02bae87094fd393739678ccd7f36f90127f651b8';
+const DEFAULT_PIN_HASH =
+  "79404babda0441a8756da8dc02bae87094fd393739678ccd7f36f90127f651b8";
 
 const CAT_LABELS = {
-  perlas: 'Busquemos perlas escondidas',
-  intro_conclusion: 'Palabras de introducción / conclusión',
-  parte1: 'Asignación #1 (Tesoros de la Biblia)',
-  nvc: 'Nuestra Vida Cristiana',
-  estudio_biblico: 'Estudio bíblico de la congregación (conductor)',
-  maestros_lectura: 'Seamos Mejores Maestros / Lectura de la Biblia',
-  estudio_biblico_lector: 'Lector — Estudio bíblico',
-  oraciones: 'Oraciones (cánticos de apertura y cierre)',
-  libre: 'Sin restricción'
+  perlas: "Busquemos perlas escondidas",
+  intro_conclusion: "Palabras de introducción / conclusión",
+  parte1: "Asignación #1 (Tesoros de la Biblia)",
+  nvc: "Nuestra Vida Cristiana",
+  estudio_biblico: "Estudio bíblico de la congregación (conductor)",
+  maestros_lectura: "Seamos Mejores Maestros / Lectura de la Biblia",
+  estudio_biblico_lector: "Lector — Estudio bíblico",
+  oraciones: "Oraciones (cánticos de apertura y cierre)",
+  libre: "Sin restricción",
 };
-
 
 // ============================================================
 // PERSONAS FIJAS PARA INTRODUCCIÓN Y CONCLUSIÓN
 // ============================================================
 
 const FIXED_INTRO_CONCLUSION = [
-  'Eduardo Parra',
-  'Eliu Rodríguez',
+  "Eduardo Parra",
+  "Eliu Rodríguez",
   "Carlos D' Luyz",
-  'Sergio Cespedes',
-  'Johan Duarte',
-  'Nicolas Medina',
-  'Anderson Gomez',
-  'Sergio Rojas',
-  'Alirio Calderón'
+  "Sergio Cespedes",
+  "Johan Duarte",
+  "Nicolas Medina",
+  "Anderson Gomez",
+  "Sergio Rojas",
+  "Alirio Calderón",
 ];
-
 
 // ============================================================
 // HERMANOS APROBADOS PARA LEER EN ESTUDIO BÍBLICO
@@ -65,38 +63,34 @@ const FIXED_INTRO_CONCLUSION = [
 // ============================================================
 
 const FIXED_LECTOR_ESTUDIO = [
-  'Alirio Calderón',
-  'Eduardo Parra',
-  'Nicolas Medina',
-  'Anderson Gomez',
+  "Alirio Calderón",
+  "Eduardo Parra",
+  "Nicolas Medina",
+  "Anderson Gomez",
   "Carlos D' Luyz",
-  'Johan Duarte',
-  'Oscar Duarte',
-  'Eliu Rodriguez',
-  'Esteban Santacruz',
-  'Sergio Rojas',
-  'Sergio Cespedes',
-  'David Obando',
-  'Andres Herrera'
+  "Johan Duarte",
+  "Oscar Duarte",
+  "Eliu Rodriguez",
+  "Esteban Santacruz",
+  "Sergio Rojas",
+  "Sergio Cespedes",
+  "David Obando",
+  "Andres Herrera",
 ];
-
 
 // ============================================================
 // NORMALIZAR NOMBRES
 // ============================================================
 
 function normName(s) {
-
-  return (s || '')
+  return (s || "")
     .trim()
     .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[´'`.]/g, '')
-    .replace(/\s+/g, ' ');
-
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[´'`.]/g, "")
+    .replace(/\s+/g, " ");
 }
-
 
 // ============================================================
 // ALMACENAMIENTO LOCAL COMPATIBLE CON LIVE SERVER
@@ -107,7 +101,7 @@ function normName(s) {
 
 async function appStorageGet(key) {
   try {
-    if (window.storage && typeof window.storage.get === 'function') {
+    if (window.storage && typeof window.storage.get === "function") {
       const result = await window.storage.get(key, true);
       if (result) return result;
     }
@@ -125,7 +119,7 @@ async function appStorageGet(key) {
 
 async function appStorageSet(key, value) {
   try {
-    if (window.storage && typeof window.storage.set === 'function') {
+    if (window.storage && typeof window.storage.set === "function") {
       await window.storage.set(key, value, true);
       return true;
     }
@@ -141,13 +135,11 @@ async function appStorageSet(key, value) {
   return false;
 }
 
-
 // ============================================================
 // CALCULAR CATEGORÍA DE UNA ASIGNACIÓN
 // ============================================================
 
 function computeCat(it) {
-
   // Algunas asignaciones de Nuestra Vida Cristiana pueden marcarse
   // manualmente como "restringidas" (mismo grupo que Introducción/
   // Conclusión), por ejemplo un discurso de invitado especial.
@@ -158,110 +150,50 @@ function computeCat(it) {
 
   const sec = it.section;
 
-  const label =
-    (it.label || '').toLowerCase();
+  const label = (it.label || "").toLowerCase();
 
-
-  if (
-    sec === 'OPEN' ||
-    sec === 'CLOSE'
-  ) {
-
-    return 'oraciones';
-
+  if (sec === "OPEN" || sec === "CLOSE") {
+    return "oraciones";
   }
 
-
-  if (
-    sec === 'MID'
-  ) {
-
-    return 'libre';
-
+  if (sec === "MID") {
+    return "libre";
   }
 
-
-  if (
-    sec === 'INTRO' ||
-    sec === 'CONCLUSION'
-  ) {
-
-    return 'intro_conclusion';
-
+  if (sec === "INTRO" || sec === "CONCLUSION") {
+    return "intro_conclusion";
   }
 
-
-  if (
-    sec === 'TESOROS'
-  ) {
-
-    if (
-      it.num === 1
-    ) {
-
-      return 'parte1';
-
+  if (sec === "TESOROS") {
+    if (it.num === 1) {
+      return "parte1";
     }
 
-
-    if (
-      label.includes('perlas')
-    ) {
-
-      return 'perlas';
-
+    if (label.includes("perlas")) {
+      return "perlas";
     }
 
-
-    if (
-      label.includes(
-        'lectura de la biblia'
-      )
-    ) {
-
-      return 'maestros_lectura';
-
+    if (label.includes("lectura de la biblia")) {
+      return "maestros_lectura";
     }
 
-
-    return 'parte1';
-
+    return "parte1";
   }
 
-
-  if (
-    sec === 'MAESTROS'
-  ) {
-
-    return 'maestros_lectura';
-
+  if (sec === "MAESTROS") {
+    return "maestros_lectura";
   }
 
-
-  if (
-    sec === 'NVC'
-  ) {
-
-    if (
-      it.hasOwnProperty(
-        'conductor'
-      )
-    ) {
-
-      return 'estudio_biblico';
-
+  if (sec === "NVC") {
+    if (it.hasOwnProperty("conductor")) {
+      return "estudio_biblico";
     }
 
-
-    return 'nvc';
-
+    return "nvc";
   }
 
-
-  return 'libre';
-
+  return "libre";
 }
-
 
 // ============================================================
 // LÍNEA DE CANCIÓN SIN ASIGNACIÓN
@@ -270,27 +202,23 @@ function computeCat(it) {
 function isPureSongLine(it) {
   if (!it) return false;
 
-  const label =
-    String(it.label || '')
-      .trim()
-      .replace(/^[•·▪◦\-\s]+/, '')
-      .trim();
+  const label = String(it.label || "")
+    .trim()
+    .replace(/^[•·▪◦\-\s]+/, "")
+    .trim();
 
   // Canción independiente: puede venir en MID o NVC.
   // Una canción acompañada de "y oración" sigue siendo una asignación normal.
   const looksLikeStandaloneSong =
-    /^canc[ií]ó[nn]\s*(?:n[º°.]?\s*)?\d+$/i.test(label) ||
-    /^\d+$/.test(label);
+    /^canc[ií]ó[nn]\s*(?:n[º°.]?\s*)?\d+$/i.test(label) || /^\d+$/.test(label);
 
   if (looksLikeStandaloneSong) {
     const hasAssignment =
-      !!String(it.name || '').trim() ||
-      !!String(it.conductor || '').trim() ||
-      !!String(it.lector || '').trim() ||
+      !!String(it.name || "").trim() ||
+      !!String(it.conductor || "").trim() ||
+      !!String(it.lector || "").trim() ||
       (Array.isArray(it.subs) &&
-        it.subs.some(
-          s => String(s?.name || '').trim()
-        ));
+        it.subs.some((s) => String(s?.name || "").trim()));
 
     return !hasAssignment;
   }
@@ -298,620 +226,292 @@ function isPureSongLine(it) {
   // Compatibilidad con líneas antiguas MID que no traían el número
   // dentro del texto, pero sí representaban una canción independiente.
   return (
-    it.section === 'MID' &&
+    it.section === "MID" &&
     !/oraci[oó]n/i.test(label) &&
-    !String(it.name || '').trim() &&
+    !String(it.name || "").trim() &&
     !Array.isArray(it.subs)
   );
 }
-
 
 // ============================================================
 // BIMESTRES VISIBLES PARA EL PUBLICADOR
 // ============================================================
 
 const BIMESTRE_MONTH_LABELS = {
+  1: "Enero - Febrero",
 
-  1: 'Enero - Febrero',
+  3: "Marzo - Abril",
 
-  3: 'Marzo - Abril',
+  5: "Mayo - Junio",
 
-  5: 'Mayo - Junio',
+  7: "Julio - Agosto",
 
-  7: 'Julio - Agosto',
+  9: "Septiembre - Octubre",
 
-  9: 'Septiembre - Octubre',
-
-  11: 'Noviembre - Diciembre'
-
+  11: "Noviembre - Diciembre",
 };
-
 
 // ============================================================
 // OBTENER BIMESTRES VISIBLES
 // ============================================================
 
-function computeViewerBimestres(
-  date
-) {
+function computeViewerBimestres(date) {
+  const m = (date || new Date()).getMonth() + 1;
 
-  const m =
-    (date || new Date())
-      .getMonth() + 1;
+  const pairStart = m % 2 === 1 ? m : m - 1;
 
-
-  const pairStart =
-    m % 2 === 1
-      ? m
-      : m - 1;
-
-
-  const nextStart =
-    pairStart === 11
-      ? 1
-      : pairStart + 2;
-
+  const nextStart = pairStart === 11 ? 1 : pairStart + 2;
 
   return [
     BIMESTRE_MONTH_LABELS[pairStart],
-    BIMESTRE_MONTH_LABELS[nextStart]
+    BIMESTRE_MONTH_LABELS[nextStart],
   ].filter(Boolean);
-
 }
-
 
 // ============================================================
 // OBTENER BIMESTRE ACTUAL
 // ============================================================
 
-function computeViewerBimestreLabel(
-  date
-) {
-
-  return computeViewerBimestres(
-    date
-  )[0];
-
+function computeViewerBimestreLabel(date) {
+  return computeViewerBimestres(date)[0];
 }
-
 
 // ============================================================
 // GOOGLE SHEETS
 // ============================================================
 
 async function getSheetsUrl() {
-
-  APPS_SCRIPT_URL =
-    APPS_SCRIPT_URL_DEFAULT || '';
-
+  APPS_SCRIPT_URL = APPS_SCRIPT_URL_DEFAULT || "";
 
   try {
+    if (window.localStorage) {
+      const v = window.localStorage.getItem("wm-sheets-url");
 
-    if (
-      window.localStorage
-    ) {
-
-      const v =
-        window.localStorage.getItem(
-          'wm-sheets-url'
-        );
-
-
-      if (
-        v
-      ) {
-
-        APPS_SCRIPT_URL =
-          JSON.parse(v);
-
+      if (v) {
+        APPS_SCRIPT_URL = JSON.parse(v);
       }
-
     }
-
   } catch (e) {}
-
 
   try {
+    if (window.storage && typeof window.storage.get === "function") {
+      const r = await Promise.race([
+        window.storage.get("wm-sheets-url", true),
 
-    if (
-      window.storage &&
-      typeof window.storage.get ===
-        'function'
-    ) {
+        new Promise((resolve) => setTimeout(() => resolve(null), 800)),
+      ]);
 
-      const r =
-        await Promise.race([
-
-          window.storage.get(
-            'wm-sheets-url',
-            true
-          ),
-
-          new Promise(
-            resolve =>
-              setTimeout(
-                () => resolve(null),
-                800
-              )
-          )
-
-        ]);
-
-
-      if (
-        r &&
-        r.value
-      ) {
-
-        APPS_SCRIPT_URL =
-          JSON.parse(
-            r.value
-          );
-
+      if (r && r.value) {
+        APPS_SCRIPT_URL = JSON.parse(r.value);
       }
-
     }
-
   } catch (e) {}
-
 
   return APPS_SCRIPT_URL;
-
 }
-
 
 // ============================================================
 // ESTADO DE GOOGLE SHEETS
 // ============================================================
 
-function setSheetsStatus(
-  connected,
-  message
-) {
+function setSheetsStatus(connected, message) {
+  sheetsConnected = !!connected;
 
-  sheetsConnected =
-    !!connected;
+  const badge = document.getElementById("sheets-status");
 
-
-  const badge =
-    document.getElementById(
-      'sheets-status'
-    );
-
-
-  if (
-    !badge
-  ) {
-
+  if (!badge) {
     return;
-
   }
 
+  badge.className = "sheets-status " + (connected ? "connected" : "offline");
 
-  badge.className =
-    'sheets-status ' +
-    (
-      connected
-        ? 'connected'
-        : 'offline'
-    );
-
-
-  badge.textContent =
-    connected
-      ? '☁ Sheets conectado'
-      : (
-          message ||
-          '☁ Sheets no conectado'
-        );
-
+  badge.textContent = connected
+    ? "☁ Sheets conectado"
+    : message || "☁ Sheets no conectado";
 }
-
 
 // ============================================================
 // CARGAR DATOS MEDIANTE JSONP
 // ============================================================
 
-function jsonpLoad(
-  url
-) {
+function jsonpLoad(url) {
+  return new Promise((resolve, reject) => {
+    const cb =
+      "__wmSheetsCallback_" +
+      Date.now() +
+      "_" +
+      Math.floor(Math.random() * 10000);
 
-  return new Promise(
-    (
-      resolve,
-      reject
-    ) => {
+    const script = document.createElement("script");
 
-      const cb =
-        '__wmSheetsCallback_' +
-        Date.now() +
-        '_' +
-        Math.floor(
-          Math.random() * 10000
-        );
+    const timer = setTimeout(() => {
+      cleanup();
 
+      reject(new Error("Tiempo de espera conectando con Google Sheets"));
+    }, 12000);
 
-      const script =
-        document.createElement(
-          'script'
-        );
+    function cleanup() {
+      clearTimeout(timer);
 
+      script.remove();
 
-      const timer =
-        setTimeout(
-          () => {
-
-            cleanup();
-
-            reject(
-              new Error(
-                'Tiempo de espera conectando con Google Sheets'
-              )
-            );
-
-          },
-          12000
-        );
-
-
-      function cleanup() {
-
-        clearTimeout(
-          timer
-        );
-
-
-        script.remove();
-
-
-        try {
-
-          delete window[cb];
-
-        } catch (e) {
-
-          window[cb] =
-            undefined;
-
-        }
-
+      try {
+        delete window[cb];
+      } catch (e) {
+        window[cb] = undefined;
       }
-
-
-      window[cb] =
-        data => {
-
-          cleanup();
-
-          resolve(
-            data
-          );
-
-        };
-
-
-      script.onerror =
-        () => {
-
-          cleanup();
-
-          reject(
-            new Error(
-              'No se pudo conectar con Google Sheets'
-            )
-          );
-
-        };
-
-
-      script.src =
-        url +
-        (
-          url.includes('?')
-            ? '&'
-            : '?'
-        ) +
-        'action=load&callback=' +
-        encodeURIComponent(cb);
-
-
-      document.head.appendChild(
-        script
-      );
-
     }
-  );
 
+    window[cb] = (data) => {
+      cleanup();
+
+      resolve(data);
+    };
+
+    script.onerror = () => {
+      cleanup();
+
+      reject(new Error("No se pudo conectar con Google Sheets"));
+    };
+
+    script.src =
+      url +
+      (url.includes("?") ? "&" : "?") +
+      "action=load&callback=" +
+      encodeURIComponent(cb);
+
+    document.head.appendChild(script);
+  });
 }
-
 
 // ============================================================
 // CARGAR DATOS REMOTOS
 // ============================================================
 
 async function loadRemoteData() {
-
   await getSheetsUrl();
 
-
-  if (
-    !APPS_SCRIPT_URL
-  ) {
-
+  if (!APPS_SCRIPT_URL) {
     return null;
-
   }
-
 
   try {
+    const data = await jsonpLoad(APPS_SCRIPT_URL);
 
-    const data =
-      await jsonpLoad(
-        APPS_SCRIPT_URL
-      );
-
-
-    if (
-      !data ||
-      !data.ok
-    ) {
-
-      throw new Error(
-        data?.error ||
-        'Respuesta inválida'
-      );
-
+    if (!data || !data.ok) {
+      throw new Error(data?.error || "Respuesta inválida");
     }
 
-
-    setSheetsStatus(
-      true
-    );
-
+    setSheetsStatus(true);
 
     return data;
-
   } catch (e) {
+    setSheetsStatus(false, "☁ Sheets error");
 
-    setSheetsStatus(
-      false,
-      '☁ Sheets error'
-    );
-
-
-    console.warn(
-      e
-    );
-
+    console.warn(e);
 
     return null;
-
   }
-
 }
-
 
 // ============================================================
 // ENVIAR DATOS A GOOGLE SHEETS
 // ============================================================
 
-async function postRemote(
-  action,
-  payload
-) {
-
-  if (
-    !APPS_SCRIPT_URL
-  ) {
-
+async function postRemote(action, payload) {
+  if (!APPS_SCRIPT_URL) {
     return false;
-
   }
-
-
-  // Sin PIN correcto no hay token, y sin token el Apps Script
-  // rechaza el guardado (ver REQUIRE_WRITE_TOKEN en codigo.gs).
-  // Evitamos la petición de red inútil y, sobre todo, evitamos
-  // molestar a un publicador que solo está viendo el programa con
-  // un aviso de "no se pudo guardar" que no le corresponde a él.
-  if (
-    !writeToken
-  ) {
-
-    return false;
-
-  }
-
 
   try {
+    const response = await fetch(APPS_SCRIPT_URL, {
+      method: "POST",
 
-    await fetch(
-      APPS_SCRIPT_URL,
-      {
+      mode: "no-cors",
 
-        method: 'POST',
+      headers: {
+        "Content-Type": "text/plain;charset=UTF-8",
+      },
 
-        mode: 'no-cors',
+      body: JSON.stringify({
+        action,
 
-        headers: {
-          'Content-Type':
-            'text/plain;charset=UTF-8'
-        },
+        payload,
 
-        body:
-          JSON.stringify({
-            action,
-            payload,
-            token: writeToken
-          })
+        /*
+         * IMPORTANTE:
+         * El Apps Script exige este token
+         * cuando REQUIRE_WRITE_TOKEN = true.
+         */
+        token: writeToken,
+      }),
+    });
 
-      }
-    );
-
-
-    setSheetsStatus(
-      true
-    );
-
+    setSheetsStatus(true);
 
     return true;
-
   } catch (e) {
+    setSheetsStatus(false, "☁ Sheets error");
 
-    setSheetsStatus(
-      false,
-      '☁ Sheets error'
-    );
-
-
-    console.warn(
-      e
-    );
-
+    console.warn(e);
 
     return false;
-
   }
-
 }
-
 
 // ============================================================
 // CARGAR DATOS DE LA APLICACIÓN
 // ============================================================
 
 async function loadData() {
-
-  const remote =
-    await loadRemoteData();
-
+  const remote = await loadRemoteData();
 
   try {
+    const p = await appStorageGet("wm-program");
 
-    const p =
-      await appStorageGet('wm-program');
-
-
-    PROGRAM =
-      p
-        ? JSON.parse(
-            p.value
-          )
-        : JSON.parse(
-            JSON.stringify(
-              DEFAULT_PROGRAM
-            )
-          );
-
+    PROGRAM = p
+      ? JSON.parse(p.value)
+      : JSON.parse(JSON.stringify(DEFAULT_PROGRAM));
   } catch (e) {
-
-    PROGRAM =
-      JSON.parse(
-        JSON.stringify(
-          DEFAULT_PROGRAM
-        )
-      );
-
+    PROGRAM = JSON.parse(JSON.stringify(DEFAULT_PROGRAM));
   }
-
 
   try {
+    const pe = await appStorageGet("wm-people");
 
-    const pe =
-      await appStorageGet('wm-people');
-
-
-    PEOPLE =
-      pe
-        ? JSON.parse(
-            pe.value
-          )
-        : JSON.parse(
-            JSON.stringify(
-              DEFAULT_PEOPLE
-            )
-          );
-
+    PEOPLE = pe
+      ? JSON.parse(pe.value)
+      : JSON.parse(JSON.stringify(DEFAULT_PEOPLE));
   } catch (e) {
-
-    PEOPLE =
-      JSON.parse(
-        JSON.stringify(
-          DEFAULT_PEOPLE
-        )
-      );
-
+    PEOPLE = JSON.parse(JSON.stringify(DEFAULT_PEOPLE));
   }
 
+  const localProgram = PROGRAM || [];
 
-  const localProgram =
-    PROGRAM || [];
+  const localPeople = PEOPLE || [];
 
+  const hadRemoteProgram = !!remote?.program;
 
-  const localPeople =
-    PEOPLE || [];
+  const hadRemotePeople = !!remote?.people;
 
+  if (hadRemoteProgram) {
+    const remoteLabels = new Set(remote.program.map((b) => b.bimestre));
 
-  const hadRemoteProgram =
-    !!remote?.program;
+    const localExtras = localProgram.filter(
+      (b) => !remoteLabels.has(b.bimestre),
+    );
 
+    PROGRAM = remote.program.concat(localExtras);
 
-  const hadRemotePeople =
-    !!remote?.people;
-
-
-  if (
-    hadRemoteProgram
-  ) {
-
-    const remoteLabels =
-      new Set(
-        remote.program.map(
-          b =>
-            b.bimestre
-        )
-      );
-
-
-    const localExtras =
-      localProgram.filter(
-        b =>
-          !remoteLabels.has(
-            b.bimestre
-          )
-      );
-
-
-    PROGRAM =
-      remote.program.concat(
-        localExtras
-      );
-
-
-    if (
-      localExtras.length &&
-      APPS_SCRIPT_URL
-    ) {
-
-      setTimeout(
-        () =>
-          saveProgram(),
-        0
-      );
-
+    if (localExtras.length && APPS_SCRIPT_URL) {
+      setTimeout(() => saveProgram(), 0);
     }
-
   }
 
-
-  if (
-    hadRemotePeople
-  ) {
-
-    const basePeople =
-      Array.isArray(localPeople)
-        ? localPeople.map(p => ({ ...p }))
-        : [];
+  if (hadRemotePeople) {
+    const basePeople = Array.isArray(localPeople)
+      ? localPeople.map((p) => ({ ...p }))
+      : [];
 
     const indexById = new Map();
     const indexByName = new Map();
@@ -921,342 +521,156 @@ async function loadData() {
       if (p?.nombre) indexByName.set(normName(p.nombre), index);
     });
 
-    (Array.isArray(remote.people) ? remote.people : []).forEach(remotePerson => {
-      const idKey = remotePerson?.id ? String(remotePerson.id) : '';
-      const nameKey = normName(remotePerson?.nombre || '');
-      let index = idKey && indexById.has(idKey)
-        ? indexById.get(idKey)
-        : indexByName.get(nameKey);
+    (Array.isArray(remote.people) ? remote.people : []).forEach(
+      (remotePerson) => {
+        const idKey = remotePerson?.id ? String(remotePerson.id) : "";
+        const nameKey = normName(remotePerson?.nombre || "");
+        let index =
+          idKey && indexById.has(idKey)
+            ? indexById.get(idKey)
+            : indexByName.get(nameKey);
 
-      if (index === undefined) {
-        index = basePeople.length;
-        basePeople.push({ ...remotePerson });
-        if (idKey) indexById.set(idKey, index);
-        if (nameKey) indexByName.set(nameKey, index);
-      } else {
-        basePeople[index] = { ...basePeople[index], ...remotePerson };
-      }
-    });
+        if (index === undefined) {
+          index = basePeople.length;
+          basePeople.push({ ...remotePerson });
+          if (idKey) indexById.set(idKey, index);
+          if (nameKey) indexByName.set(nameKey, index);
+        } else {
+          basePeople[index] = { ...basePeople[index], ...remotePerson };
+        }
+      },
+    );
 
     PEOPLE = basePeople;
-
   }
-
 
   ensurePeopleBimestreKeys();
 
-
-  if (
-    !currentBimestre
-  ) {
-
-    currentBimestre =
-      PROGRAM[0]?.bimestre ||
-      null;
-
+  if (!currentBimestre) {
+    currentBimestre = PROGRAM[0]?.bimestre || null;
   }
-
 
   await migrateVarones();
 
-
-  if (
-    APPS_SCRIPT_URL &&
-    remote &&
-    !hadRemoteProgram
-  ) {
-
+  if (APPS_SCRIPT_URL && remote && !hadRemoteProgram) {
     await saveProgram();
-
   }
 
-
-  if (
-    APPS_SCRIPT_URL &&
-    remote &&
-    !hadRemotePeople
-  ) {
-
+  if (APPS_SCRIPT_URL && remote && !hadRemotePeople) {
     await savePeople();
-
   }
-
 }
-
 
 // ============================================================
 // ASEGURAR CLAVES DE BIMESTRE
 // ============================================================
 
 function ensurePeopleBimestreKeys() {
+  const bimestres = PROGRAM.map((b) => b.bimestre);
 
-  const bimestres =
-    PROGRAM.map(
-      b =>
-        b.bimestre
-    );
-
-
-  PEOPLE.forEach(
-    p => {
-
-      if (
-        !p.disponibilidad
-      ) {
-
-        p.disponibilidad =
-          {};
-
-      }
-
-
-      bimestres.forEach(
-        b => {
-
-          if (
-            !Object.prototype.hasOwnProperty.call(
-              p.disponibilidad,
-              b
-            )
-          ) {
-
-            p.disponibilidad[b] =
-              'Disponible';
-
-          }
-
-        }
-      );
-
+  PEOPLE.forEach((p) => {
+    if (!p.disponibilidad) {
+      p.disponibilidad = {};
     }
-  );
 
+    bimestres.forEach((b) => {
+      if (!Object.prototype.hasOwnProperty.call(p.disponibilidad, b)) {
+        p.disponibilidad[b] = "Disponible";
+      }
+    });
+  });
 }
-
 
 // ============================================================
 // MIGRACIÓN DE VARONES
 // ============================================================
 
 async function migrateVarones() {
-
-  let meta =
-    null;
-
+  let meta = null;
 
   try {
+    const m = await appStorageGet("wm-meta");
 
-    const m =
-      await appStorageGet('wm-meta');
-
-
-    meta =
-      m
-        ? JSON.parse(
-            m.value
-          )
-        : null;
-
+    meta = m ? JSON.parse(m.value) : null;
   } catch (e) {
-
-    meta =
-      null;
-
+    meta = null;
   }
 
-
-  if (
-    meta &&
-    meta.varonesMigratedV3
-  ) {
-
+  if (meta && meta.varonesMigratedV3) {
     const sane =
-      PEOPLE.some(
-        p =>
-          p.elig_parte1
-      ) &&
-      PEOPLE.some(
-        p =>
-          p.elig_nvc
-      ) &&
-      PEOPLE.some(
-        p =>
-          p.elig_intro_conclusion
-      ) &&
-      PEOPLE.some(
-        p =>
-          p.elig_lector_estudio
-      );
+      PEOPLE.some((p) => p.elig_parte1) &&
+      PEOPLE.some((p) => p.elig_nvc) &&
+      PEOPLE.some((p) => p.elig_intro_conclusion) &&
+      PEOPLE.some((p) => p.elig_lector_estudio);
 
-
-    if (
-      sane
-    ) {
-
+    if (sane) {
       return;
-
     }
-
   }
 
+  const byNorm = {};
 
-  const byNorm =
-    {};
+  PEOPLE.forEach((p) => {
+    byNorm[normName(p.nombre)] = p;
+  });
 
+  const bimestres = PROGRAM.map((b) => b.bimestre);
 
-  PEOPLE.forEach(
-    p => {
+  VARONES_DATA.forEach((v) => {
+    const key = normName(v.nombre);
 
-      byNorm[
-        normName(
-          p.nombre
-        )
-      ] =
-        p;
+    let p = byNorm[key];
 
+    if (!p) {
+      p = {
+        id: "pv_" + key.replace(/\s+/g, "_"),
+
+        nombre: v.nombre,
+
+        nota: "",
+
+        disponibilidad: Object.fromEntries(bimestres.map((b) => [b, ""])),
+
+        elig_perlas: false,
+
+        elig_maestros_lectura: false,
+
+        elig_intro_conclusion: false,
+
+        elig_parte1: false,
+
+        elig_nvc: false,
+
+        elig_estudio_biblico: false,
+
+        elig_oraciones: false,
+      };
+
+      PEOPLE.push(p);
+
+      byNorm[key] = p;
     }
-  );
 
+    p.elig_perlas = !!v.perlas;
 
-  const bimestres =
-    PROGRAM.map(
-      b =>
-        b.bimestre
-    );
+    p.elig_parte1 = !!v.tesoros;
 
+    p.elig_nvc = !!v.oradores;
 
-  VARONES_DATA.forEach(
-    v => {
+    p.elig_estudio_biblico = !!v.dirigir_estudio;
 
-      const key =
-        normName(
-          v.nombre
-        );
+    p.elig_oraciones = !!v.orar_publico;
 
+    p.elig_lector_estudio = !!v.lectores_atalaya;
+  });
 
-      let p =
-        byNorm[key];
+  const fixedNorm = new Set(FIXED_INTRO_CONCLUSION.map(normName));
 
-
-      if (
-        !p
-      ) {
-
-        p = {
-
-          id:
-            'pv_' +
-            key.replace(
-              /\s+/g,
-              '_'
-            ),
-
-          nombre:
-            v.nombre,
-
-          nota:
-            '',
-
-          disponibilidad:
-            Object.fromEntries(
-              bimestres.map(
-                b =>
-                  [
-                    b,
-                    ''
-                  ]
-              )
-            ),
-
-          elig_perlas:
-            false,
-
-          elig_maestros_lectura:
-            false,
-
-          elig_intro_conclusion:
-            false,
-
-          elig_parte1:
-            false,
-
-          elig_nvc:
-            false,
-
-          elig_estudio_biblico:
-            false,
-
-          elig_oraciones:
-            false
-
-        };
-
-
-        PEOPLE.push(
-          p
-        );
-
-
-        byNorm[key] =
-          p;
-
-      }
-
-
-      p.elig_perlas =
-        !!v.perlas;
-
-
-      p.elig_parte1 =
-        !!v.tesoros;
-
-
-      p.elig_nvc =
-        !!v.oradores;
-
-
-      p.elig_estudio_biblico =
-        !!v.dirigir_estudio;
-
-
-      p.elig_oraciones =
-        !!v.orar_publico;
-
-
-      p.elig_lector_estudio =
-        !!v.lectores_atalaya;
-
+  PEOPLE.forEach((p) => {
+    if (fixedNorm.has(normName(p.nombre))) {
+      p.elig_intro_conclusion = true;
     }
-  );
-
-
-  const fixedNorm =
-    new Set(
-      FIXED_INTRO_CONCLUSION.map(
-        normName
-      )
-    );
-
-
-  PEOPLE.forEach(
-    p => {
-
-      if (
-        fixedNorm.has(
-          normName(
-            p.nombre
-          )
-        )
-      ) {
-
-        p.elig_intro_conclusion =
-          true;
-
-      }
-
-    }
-  );
-
+  });
 
   // Sembrado ÚNICO de la lista inicial de 13 hermanos aprobados para leer
   // en el Estudio bíblico. Usa una bandera propia (independiente de la
@@ -1265,249 +679,81 @@ async function migrateVarones() {
   // checkbox "Lector — Estudio bíblico" en Publicadores, sin que vuelva a
   // sobrescribirse en cargas futuras ni al usar "Re-sincronizar Varones".
   if (!meta || !meta.lectorEstudioSeeded) {
+    FIXED_LECTOR_ESTUDIO.forEach((nombre) => {
+      const key = normName(nombre);
 
-    FIXED_LECTOR_ESTUDIO.forEach(
-      nombre => {
+      let p = byNorm[key];
 
-        const key =
-          normName(nombre);
+      if (!p) {
+        p = {
+          id: "pl_" + key.replace(/\s+/g, "_"),
+          nombre,
+          nota: "",
+          disponibilidad: Object.fromEntries(bimestres.map((b) => [b, ""])),
+          elig_perlas: false,
+          elig_maestros_lectura: false,
+          elig_intro_conclusion: false,
+          elig_parte1: false,
+          elig_nvc: false,
+          elig_estudio_biblico: false,
+          elig_oraciones: false,
+          elig_lector_estudio: false,
+        };
 
-        let p =
-          byNorm[key];
-
-        if (!p) {
-
-          p = {
-            id: 'pl_' + key.replace(/\s+/g, '_'),
-            nombre,
-            nota: '',
-            disponibilidad: Object.fromEntries(bimestres.map(b => [b, ''])),
-            elig_perlas: false,
-            elig_maestros_lectura: false,
-            elig_intro_conclusion: false,
-            elig_parte1: false,
-            elig_nvc: false,
-            elig_estudio_biblico: false,
-            elig_oraciones: false,
-            elig_lector_estudio: false
-          };
-
-          PEOPLE.push(p);
-          byNorm[key] = p;
-
-        }
-
-        p.elig_lector_estudio = true;
-
+        PEOPLE.push(p);
+        byNorm[key] = p;
       }
-    );
 
+      p.elig_lector_estudio = true;
+    });
   }
-
 
   await savePeople();
 
-
   try {
-
     await appStorageSet(
-      'wm-meta',
+      "wm-meta",
       JSON.stringify(
-        Object.assign(
-          {},
-          meta,
-          {
-            varonesMigratedV3: true,
-            lectorEstudioSeeded: true
-          }
-        )
-      )
+        Object.assign({}, meta, {
+          varonesMigratedV3: true,
+          lectorEstudioSeeded: true,
+        }),
+      ),
     );
-
   } catch (e) {}
-
 }
-
-
-// ============================================================
-// AVISO VISUAL DE GUARDADO (toast)
-// ============================================================
-// Antes, si un guardado fallaba (sin internet, Sheets caído, storage
-// bloqueado), el único rastro quedaba en la consola del navegador —
-// nadie lo veía. Estas funciones muestran un aviso visible cuando el
-// guardado NO se completó del todo, para que quien esté editando lo
-// note de inmediato y no crea que su cambio quedó guardado sin serlo.
-
-let saveToastTimer_ = null;
-
-function showSaveToast_(message, type) {
-
-  let toast = document.getElementById('wm-save-toast');
-
-  if (!toast) {
-    toast = document.createElement('div');
-    toast.id = 'wm-save-toast';
-    document.body.appendChild(toast);
-  }
-
-  toast.className = 'save-toast ' + (type || 'error');
-
-  toast.innerHTML = `
-    <span>${esc(message)}</span>
-    <button type="button" aria-label="Cerrar aviso">×</button>
-  `;
-
-  toast.querySelector('button').addEventListener('click', hideSaveToast_);
-
-  // Forzar reflow para que la transición de entrada se aplique
-  // incluso si el toast ya estaba visible con otro mensaje.
-  void toast.offsetWidth;
-  toast.classList.add('show');
-
-  clearTimeout(saveToastTimer_);
-  const duration = type === 'error' ? 9000 : 6000;
-  saveToastTimer_ = setTimeout(hideSaveToast_, duration);
-
-}
-
-function hideSaveToast_() {
-
-  const toast = document.getElementById('wm-save-toast');
-  if (toast) toast.classList.remove('show');
-
-}
-
-// Traduce el resultado de un guardado (local + remoto) a un aviso
-// visible solo cuando algo no se completó — el guardado exitoso
-// sigue siendo silencioso, para no llenar la pantalla de avisos.
-function reportSaveOutcome_(localOk, remoteOk, queSeGuardaba) {
-
-  if (localOk && remoteOk) {
-    return;
-  }
-
-  // Un publicador que solo está viendo el programa (sin sesión de
-  // Admin) puede disparar guardados de fondo (ej. el auto-ajuste de
-  // Varones). Nunca le mostramos avisos de guardado a él — solo le
-  // corresponden a quien realmente está editando.
-  if (!isAdmin) {
-    return;
-  }
-
-  if (!localOk && !remoteOk) {
-    showSaveToast_(
-      `⚠ No se pudo guardar ${queSeGuardaba}. Revisa tu conexión e inténtalo de nuevo — el cambio podría perderse.`,
-      'error'
-    );
-    return;
-  }
-
-  if (!remoteOk) {
-    showSaveToast_(
-      `⚠ Se guardó en este dispositivo, pero no se sincronizó con Google Sheets. Otros dispositivos no verán este cambio todavía.`,
-      'warn'
-    );
-    return;
-  }
-
-  // !localOk && remoteOk
-  showSaveToast_(
-    `⚠ Se sincronizó con Google Sheets, pero no se guardó una copia en este dispositivo.`,
-    'warn'
-  );
-
-}
-
 
 // ============================================================
 // GUARDAR PROGRAMA
 // ============================================================
 
 async function saveProgram() {
-
-  let localOk = true;
-
   try {
-
-    localOk = await appStorageSet(
-      'wm-program',
-      JSON.stringify(PROGRAM)
-    );
-
+    await appStorageSet("wm-program", JSON.stringify(PROGRAM));
   } catch (e) {
-
-    localOk = false;
-
-    console.error(
-      e
-    );
-
+    console.error(e);
   }
 
-
-  let remoteOk = true;
-
-  if (
-    APPS_SCRIPT_URL
-  ) {
-
-    remoteOk = await postRemote(
-      'saveProgram',
-      PROGRAM
-    );
-
+  if (APPS_SCRIPT_URL) {
+    await postRemote("saveProgram", PROGRAM);
   }
-
-
-  reportSaveOutcome_(localOk, remoteOk, 'el programa');
-
 }
-
 
 // ============================================================
 // GUARDAR PUBLICADORES
 // ============================================================
 
 async function savePeople() {
-
-  let localOk = true;
-
   try {
-
-    localOk = await appStorageSet(
-      'wm-people',
-      JSON.stringify(PEOPLE)
-    );
-
+    await appStorageSet("wm-people", JSON.stringify(PEOPLE));
   } catch (e) {
-
-    localOk = false;
-
-    console.error(
-      e
-    );
-
+    console.error(e);
   }
 
-
-  let remoteOk = true;
-
-  if (
-    APPS_SCRIPT_URL
-  ) {
-
-    remoteOk = await postRemote(
-      'savePeople',
-      PEOPLE
-    );
-
+  if (APPS_SCRIPT_URL) {
+    await postRemote("savePeople", PEOPLE);
   }
-
-
-  reportSaveOutcome_(localOk, remoteOk, 'la base de datos');
-
 }
-
 
 // ============================================================
 // OBTENER PIN
@@ -1522,24 +768,20 @@ async function savePeople() {
 // el código fuente ni el almacenamiento se puede leer el PIN real.
 
 async function sha256Hex(text) {
-  const data = new TextEncoder().encode(String(text ?? ''));
-  const digest = await crypto.subtle.digest('SHA-256', data);
+  const data = new TextEncoder().encode(String(text ?? ""));
+  const digest = await crypto.subtle.digest("SHA-256", data);
   return Array.from(new Uint8Array(digest))
-    .map(b => b.toString(16).padStart(2, '0'))
-    .join('');
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
 }
 
 function looksLikeSha256(value) {
-  return typeof value === 'string' && /^[0-9a-f]{64}$/i.test(value);
+  return typeof value === "string" && /^[0-9a-f]{64}$/i.test(value);
 }
 
 async function getAdminPin() {
-
   try {
-
-    const r =
-      await appStorageGet('wm-admin-pin');
-
+    const r = await appStorageGet("wm-admin-pin");
 
     if (!r) {
       return DEFAULT_PIN_HASH;
@@ -1559,15 +801,10 @@ async function getAdminPin() {
     const migratedHash = await sha256Hex(stored);
     await setAdminPinHash(migratedHash);
     return migratedHash;
-
   } catch (e) {
-
     return DEFAULT_PIN_HASH;
-
   }
-
 }
-
 
 // ============================================================
 // GUARDAR PIN
@@ -1575,46 +812,26 @@ async function getAdminPin() {
 
 // Recibe el PIN en texto plano (lo que la persona escribió), lo
 // convierte a hash y guarda solo el hash.
-async function setAdminPin(
-  pin
-) {
-
+async function setAdminPin(pin) {
   const hash = await sha256Hex(pin);
   await setAdminPinHash(hash);
-
 }
 
 // Guarda directamente un hash ya calculado (uso interno / migración).
-async function setAdminPinHash(
-  hash
-) {
-
+async function setAdminPinHash(hash) {
   try {
-
-    await appStorageSet(
-      'wm-admin-pin',
-      JSON.stringify(hash)
-    );
-
+    await appStorageSet("wm-admin-pin", JSON.stringify(hash));
   } catch (e) {
-
-    console.error(
-      e
-    );
-
+    console.error(e);
   }
-
 }
-
 
 // ============================================================
 // MODAL DE GOOGLE SHEETS
 // ============================================================
 
 function openSheetsConfigModal() {
-
-  const overlay =
-    openOverlay(`
+  const overlay = openOverlay(`
       <div class="modal-head">
         <h3>
           Conectar Google Sheets
@@ -1633,9 +850,7 @@ function openSheetsConfigModal() {
           id="sheets-url"
           type="url"
           placeholder="https://script.google.com/macros/s/.../exec"
-          value="${esc(
-            APPS_SCRIPT_URL || ''
-          )}"
+          value="${esc(APPS_SCRIPT_URL || "")}"
         />
 
       </div>
@@ -1659,288 +874,121 @@ function openSheetsConfigModal() {
       </div>
     `);
 
-
-  const input =
-    overlay.querySelector(
-      '#sheets-url'
-    );
-
+  const input = overlay.querySelector("#sheets-url");
 
   input.focus();
 
   input.select();
 
+  const submitBtn = overlay.querySelector('[data-a="ok"]');
 
-  const submitBtn =
-    overlay.querySelector(
-      '[data-a="ok"]'
-    );
+  const submit = async () => {
+    const url = input.value.trim().replace(/\/$/, "");
 
-
-  const submit =
-    async () => {
-
-      const url =
-        input.value
-          .trim()
-          .replace(
-            /\/$/,
-            ''
-          );
-
-
-      if (
-        !/^https:\/\/script\.google\.com\/macros\/s\/[^\s]+\/exec$/.test(
-          url
-        )
-      ) {
-
-        input.setCustomValidity(
-          'Debe ser la URL /exec de una implementación de Google Apps Script Web App.'
-        );
-
-
-        input.reportValidity();
-
-
-        return;
-
-      }
-
-
+    if (!/^https:\/\/script\.google\.com\/macros\/s\/[^\s]+\/exec$/.test(url)) {
       input.setCustomValidity(
-        ''
+        "Debe ser la URL /exec de una implementación de Google Apps Script Web App.",
       );
 
+      input.reportValidity();
 
-      submitBtn.disabled =
-        true;
-
-
-      submitBtn.textContent =
-        'Conectando…';
-
-
-      setSheetsStatus(
-        false,
-        '☁ Probando conexión…'
-      );
-
-
-      try {
-
-        if (
-          window.localStorage
-        ) {
-
-          window.localStorage.setItem(
-            'wm-sheets-url',
-            JSON.stringify(
-              url
-            )
-          );
-
-        }
-
-      } catch (_) {}
-
-
-      try {
-
-        if (
-          window.storage &&
-          typeof window.storage.set ===
-            'function'
-        ) {
-
-          await Promise.race([
-
-            window.storage.set(
-              'wm-sheets-url',
-              JSON.stringify(
-                url
-              ),
-              true
-            ),
-
-            new Promise(
-              resolve =>
-                setTimeout(
-                  resolve,
-                  800
-                )
-            )
-
-          ]);
-
-        }
-
-      } catch (_) {}
-
-
-      APPS_SCRIPT_URL =
-        url;
-
-
-      try {
-
-        const data =
-          await Promise.race([
-
-            loadRemoteData(),
-
-            new Promise(
-              (
-                _,
-                reject
-              ) =>
-                setTimeout(
-                  () =>
-                    reject(
-                      new Error(
-                        'Tiempo de espera agotado'
-                      )
-                    ),
-                  15000
-                )
-            )
-
-          ]);
-
-
-        if (
-          !data
-        ) {
-
-          throw new Error(
-            'No se recibió una respuesta válida del Web App.'
-          );
-
-        }
-
-
-        if (
-          data.program
-        ) {
-
-          PROGRAM =
-            data.program;
-
-        }
-
-
-        if (
-          data.people
-        ) {
-
-          PEOPLE =
-            data.people;
-
-        }
-
-
-        ensurePeopleBimestreKeys();
-
-
-        setSheetsStatus(
-          true,
-          '☁ Sheets conectado'
-        );
-
-
-        overlay.remove();
-
-
-        render();
-
-
-        alert(
-          '¡Conexión con Google Sheets correcta!'
-        );
-
-      } catch (err) {
-
-        submitBtn.disabled =
-          false;
-
-
-        submitBtn.textContent =
-          'Conectar y probar';
-
-
-        setSheetsStatus(
-          false,
-          '☁ Sheets no conectado'
-        );
-
-
-        alert(
-          'No se pudo conectar con Google Sheets.\n\n' +
-          'Primero prueba la URL /exec directamente en una pestaña del navegador.\n\n' +
-          'Detalle: ' +
-          (
-            err &&
-            err.message
-              ? err.message
-              : err
-          )
-        );
-
-      }
-
-    };
-
-
-  input.addEventListener(
-    'keydown',
-    e => {
-
-      if (
-        e.key ===
-        'Enter'
-      ) {
-
-        submit();
-
-      }
-
+      return;
     }
-  );
 
+    input.setCustomValidity("");
+
+    submitBtn.disabled = true;
+
+    submitBtn.textContent = "Conectando…";
+
+    setSheetsStatus(false, "☁ Probando conexión…");
+
+    try {
+      if (window.localStorage) {
+        window.localStorage.setItem("wm-sheets-url", JSON.stringify(url));
+      }
+    } catch (_) {}
+
+    try {
+      if (window.storage && typeof window.storage.set === "function") {
+        await Promise.race([
+          window.storage.set("wm-sheets-url", JSON.stringify(url), true),
+
+          new Promise((resolve) => setTimeout(resolve, 800)),
+        ]);
+      }
+    } catch (_) {}
+
+    APPS_SCRIPT_URL = url;
+
+    try {
+      const data = await Promise.race([
+        loadRemoteData(),
+
+        new Promise((_, reject) =>
+          setTimeout(
+            () => reject(new Error("Tiempo de espera agotado")),
+            15000,
+          ),
+        ),
+      ]);
+
+      if (!data) {
+        throw new Error("No se recibió una respuesta válida del Web App.");
+      }
+
+      if (data.program) {
+        PROGRAM = data.program;
+      }
+
+      if (data.people) {
+        PEOPLE = data.people;
+      }
+
+      ensurePeopleBimestreKeys();
+
+      setSheetsStatus(true, "☁ Sheets conectado");
+
+      overlay.remove();
+
+      render();
+
+      alert("¡Conexión con Google Sheets correcta!");
+    } catch (err) {
+      submitBtn.disabled = false;
+
+      submitBtn.textContent = "Conectar y probar";
+
+      setSheetsStatus(false, "☁ Sheets no conectado");
+
+      alert(
+        "No se pudo conectar con Google Sheets.\n\n" +
+          "Primero prueba la URL /exec directamente en una pestaña del navegador.\n\n" +
+          "Detalle: " +
+          (err && err.message ? err.message : err),
+      );
+    }
+  };
+
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      submit();
+    }
+  });
 
   overlay
-    .querySelector(
-      '[data-a="cancel"]'
-    )
-    .addEventListener(
-      'click',
-      () =>
-        overlay.remove()
-    );
+    .querySelector('[data-a="cancel"]')
+    .addEventListener("click", () => overlay.remove());
 
-
-  overlay
-    .querySelector(
-      '[data-a="ok"]'
-    )
-    .addEventListener(
-      'click',
-      submit
-    );
-
+  overlay.querySelector('[data-a="ok"]').addEventListener("click", submit);
 }
-
 
 // ============================================================
 // MODAL GENERAL
 // ============================================================
 
-function openOverlay(
-  innerHtml
-) {
-
-  const overlay =
-    el(`
+function openOverlay(innerHtml) {
+  const overlay = el(`
       <div class="overlay">
         <div class="modal">
           ${innerHtml}
@@ -1948,63 +996,33 @@ function openOverlay(
       </div>
     `);
 
+  document.body.appendChild(overlay);
 
-  document.body.appendChild(
-    overlay
-  );
-
-
-  overlay.addEventListener(
-    'click',
-    e => {
-
-      if (
-        e.target ===
-        overlay
-      ) {
-
-        overlay.remove();
-
-      }
-
+  overlay.addEventListener("click", (e) => {
+    if (e.target === overlay) {
+      overlay.remove();
     }
-  );
-
+  });
 
   return overlay;
-
 }
-
 
 // ============================================================
 // MODAL DE CONFIRMACIÓN
 // ============================================================
 
-function openConfirmModal(
-  message,
-  onConfirm,
-  opts
-) {
+function openConfirmModal(message, onConfirm, opts) {
+  opts = opts || {};
 
-  opts =
-    opts || {};
-
-
-  const overlay =
-    openOverlay(`
+  const overlay = openOverlay(`
       <div class="modal-head">
 
         <h3>
-          ${esc(
-            opts.title ||
-            'Confirmar'
-          )}
+          ${esc(opts.title || "Confirmar")}
         </h3>
 
         <p>
-          ${esc(
-            message
-          )}
+          ${esc(message)}
         </p>
 
       </div>
@@ -2019,65 +1037,32 @@ function openConfirmModal(
         </button>
 
         <button
-          class="btn ${
-            opts.danger
-              ? 'btn-danger'
-              : 'btn-primary'
-          } btn-sm"
+          class="btn ${opts.danger ? "btn-danger" : "btn-primary"} btn-sm"
           data-a="ok"
         >
-          ${esc(
-            opts.okLabel ||
-            'Confirmar'
-          )}
+          ${esc(opts.okLabel || "Confirmar")}
         </button>
 
       </div>
     `);
 
-
   overlay
-    .querySelector(
-      '[data-a="cancel"]'
-    )
-    .addEventListener(
-      'click',
-      () =>
-        overlay.remove()
-    );
+    .querySelector('[data-a="cancel"]')
+    .addEventListener("click", () => overlay.remove());
 
+  overlay.querySelector('[data-a="ok"]').addEventListener("click", () => {
+    overlay.remove();
 
-  overlay
-    .querySelector(
-      '[data-a="ok"]'
-    )
-    .addEventListener(
-      'click',
-      () => {
-
-        overlay.remove();
-
-        onConfirm();
-
-      }
-    );
-
+    onConfirm();
+  });
 }
-
 
 // ============================================================
 // MODAL DE TEXTO
 // ============================================================
 
-function openTextPromptModal(
-  title,
-  placeholder,
-  onSubmit,
-  prefill
-) {
-
-  const overlay =
-    openOverlay(`
+function openTextPromptModal(title, placeholder, onSubmit, prefill) {
+  const overlay = openOverlay(`
       <div class="modal-head">
 
         <h3>
@@ -2091,9 +1076,7 @@ function openTextPromptModal(
         <input
           class="search-input"
           type="text"
-          placeholder="${esc(
-            placeholder || ''
-          )}"
+          placeholder="${esc(placeholder || "")}"
         />
 
       </div>
@@ -2117,102 +1100,45 @@ function openTextPromptModal(
       </div>
     `);
 
+  const input = overlay.querySelector("input");
 
-  const input =
-    overlay.querySelector(
-      'input'
-    );
-
-
-  if (
-    prefill
-  ) {
-
-    input.value =
-      prefill;
-
+  if (prefill) {
+    input.value = prefill;
   }
-
 
   input.focus();
 
   input.select();
 
+  const submit = () => {
+    const v = input.value.trim();
 
-  const submit =
-    () => {
+    if (v) {
+      overlay.remove();
 
-      const v =
-        input.value.trim();
-
-
-      if (
-        v
-      ) {
-
-        overlay.remove();
-
-        onSubmit(
-          v
-        );
-
-      }
-
-    };
-
-
-  input.addEventListener(
-    'keydown',
-    e => {
-
-      if (
-        e.key ===
-        'Enter'
-      ) {
-
-        submit();
-
-      }
-
+      onSubmit(v);
     }
-  );
+  };
 
-
-  overlay
-    .querySelector(
-      '[data-a="cancel"]'
-    )
-    .addEventListener(
-      'click',
-      () =>
-        overlay.remove()
-    );
-
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      submit();
+    }
+  });
 
   overlay
-    .querySelector(
-      '[data-a="ok"]'
-    )
-    .addEventListener(
-      'click',
-      submit
-    );
+    .querySelector('[data-a="cancel"]')
+    .addEventListener("click", () => overlay.remove());
 
+  overlay.querySelector('[data-a="ok"]').addEventListener("click", submit);
 }
-
 
 // ============================================================
 // BOTÓN DE EDICIÓN
 // ============================================================
 
-function editPencil(
-  title,
-  currentValue,
-  onSave
-) {
-
-  const btn =
-    el(`
+function editPencil(title, currentValue, onSave) {
+  const btn = el(`
       <button
         class="edit-pencil"
         title="Editar"
@@ -2221,42 +1147,23 @@ function editPencil(
       </button>
     `);
 
+  btn.addEventListener("click", (e) => {
+    e.stopPropagation();
 
-  btn.addEventListener(
-    'click',
-    e => {
-
-      e.stopPropagation();
-
-
-      openTextPromptModal(
-        title,
-        '',
-        onSave,
-        currentValue
-      );
-
-    }
-  );
-
+    openTextPromptModal(title, "", onSave, currentValue);
+  });
 
   return btn;
-
 }
-
 
 // ============================================================
 // MODAL PIN
 // ============================================================
 
 async function openPinModal() {
+  const pin = await getAdminPin();
 
-  const pin =
-    await getAdminPin();
-
-
-  const overlay =
-    openOverlay(`
+  const overlay = openOverlay(`
       <div class="modal-head">
 
         <h3>
@@ -2313,113 +1220,61 @@ async function openPinModal() {
       </div>
     `);
 
-
-  const input =
-    overlay.querySelector(
-      'input'
-    );
-
+  const input = overlay.querySelector("input");
 
   input.focus();
 
+  const tryEnter = async () => {
+    const enteredHash = await sha256Hex(input.value);
 
-  const tryEnter =
-    async () => {
+    if (enteredHash === pin) {
+      /*
+       * =====================================================
+       * AUTENTICACIÓN CORRECTA
+       * =====================================================
+       *
+       * El hash SHA-256 del PIN correcto se utiliza como
+       * WRITE_TOKEN para las operaciones de escritura.
+       *
+       * IMPORTANTE:
+       * Nunca guardamos el PIN en texto plano.
+       */
 
-      const enteredHash =
-        await sha256Hex(input.value);
+      writeToken = enteredHash;
 
-      if (
-        enteredHash ===
-        pin
-      ) {
+      isAdmin = true;
 
-        overlay.remove();
+      overlay.remove();
 
+      render();
+    } else {
+      overlay.querySelector("#pin-error").style.display = "inline";
 
-        isAdmin =
-          true;
+      input.value = "";
 
-
-        // El token que autoriza a escribir en el Apps Script es el
-        // mismo hash del PIN, pero SOLO se guarda en memoria después
-        // de escribir el PIN correcto — nunca vive en el código como
-        // un valor fijo, igual que el propio PIN.
-        writeToken =
-          enteredHash;
-
-
-        render();
-
-      } else {
-
-        overlay
-          .querySelector(
-            '#pin-error'
-          )
-          .style.display =
-          'inline';
-
-
-        input.value =
-          '';
-
-
-        input.focus();
-
-      }
-
-    };
-
-
-  input.addEventListener(
-    'keydown',
-    e => {
-
-      if (
-        e.key ===
-        'Enter'
-      ) {
-
-        tryEnter();
-
-      }
-
+      input.focus();
     }
-  );
+  };
 
-
-  overlay
-    .querySelector(
-      '[data-a="cancel"]'
-    )
-    .addEventListener(
-      'click',
-      () =>
-        overlay.remove()
-    );
-
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      tryEnter();
+    }
+  });
 
   overlay
-    .querySelector(
-      '[data-a="ok"]'
-    )
-    .addEventListener(
-      'click',
-      tryEnter
-    );
+    .querySelector('[data-a="cancel"]')
+    .addEventListener("click", () => overlay.remove());
 
+  overlay.querySelector('[data-a="ok"]').addEventListener("click", tryEnter);
 }
-
 
 // ============================================================
 // CAMBIAR PIN
 // ============================================================
 
 function openChangePinModal() {
-
-  const overlay =
-    openOverlay(`
+  const overlay = openOverlay(`
       <div class="modal-head">
 
         <h3>
@@ -2464,276 +1319,141 @@ function openChangePinModal() {
       </div>
     `);
 
-
-  const input =
-    overlay.querySelector(
-      'input'
-    );
-
+  const input = overlay.querySelector("input");
 
   input.focus();
 
+  const submit = () => {
+    const v = input.value.trim();
 
-  const submit =
-    () => {
-
-      const v =
-        input.value.trim();
-
-
-      if (
-        !v
-      ) {
-
-        return;
-
-      }
-
-
-      setAdminPin(
-        v
-      );
-
-
-      overlay.remove();
-
-    };
-
-
-  input.addEventListener(
-    'keydown',
-    e => {
-
-      if (
-        e.key ===
-        'Enter'
-      ) {
-
-        submit();
-
-      }
-
+    if (!v) {
+      return;
     }
-  );
 
+    setAdminPin(v);
 
-  overlay
-    .querySelector(
-      '[data-a="cancel"]'
-    )
-    .addEventListener(
-      'click',
-      () =>
-        overlay.remove()
-    );
+    overlay.remove();
+  };
 
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      submit();
+    }
+  });
 
   overlay
-    .querySelector(
-      '[data-a="ok"]'
-    )
-    .addEventListener(
-      'click',
-      submit
-    );
+    .querySelector('[data-a="cancel"]')
+    .addEventListener("click", () => overlay.remove());
 
+  overlay.querySelector('[data-a="ok"]').addEventListener("click", submit);
 }
-
-
-// ============================================================
-// TOKEN DE ESCRITURA PARA GOOGLE SHEETS
-// ============================================================
-// El Apps Script (codigo.gs) puede exigir un token en cada guardado
-// para que nadie pueda modificar los datos con solo conocer la URL
-// /exec. Ese token es EL MISMO hash del PIN actual -- asi solo hay
-// un secreto que administrar, no dos. Este modal solo muestra ese
-// hash para que lo copies una vez dentro de Apps Script:
-// Configuracion del proyecto -> Propiedades del script -> WRITE_TOKEN.
-
-async function openWriteTokenModal() {
-
-  const currentHash =
-    await getAdminPin();
-
-  const overlay =
-    openOverlay(`
-      <div class="modal-head">
-        <h3>Token de guardado (Apps Script)</h3>
-        <p>
-          Copia este valor y pegalo en tu proyecto de Apps Script:
-          Configuracion del proyecto -> Propiedades del script ->
-          agrega una propiedad llamada <b>WRITE_TOKEN</b> con este
-          valor. Solo hazlo una vez -- si mas adelante cambias el
-          PIN, vuelve a abrir esta ventana y actualiza la propiedad
-          con el nuevo valor.
-        </p>
-      </div>
-      <div class="modal-search">
-        <input
-          class="search-input"
-          id="write-token-value"
-          type="text"
-          value="${esc(currentHash)}"
-          readonly
-        />
-      </div>
-      <div class="modal-foot">
-        <span
-          class="empty-note"
-          id="write-token-copied"
-          style="padding:0; margin-right:auto; display:none;"
-        >
-          Copiado ✓
-        </span>
-        <button class="btn btn-ghost btn-sm" data-a="close">Cerrar</button>
-        <button class="btn btn-primary btn-sm" data-a="copy">Copiar</button>
-      </div>
-    `);
-
-  const input =
-    overlay.querySelector('#write-token-value');
-
-  overlay
-    .querySelector('[data-a="close"]')
-    .addEventListener('click', () => overlay.remove());
-
-  overlay
-    .querySelector('[data-a="copy"]')
-    .addEventListener('click', async () => {
-
-      input.select();
-
-      try {
-
-        if (navigator.clipboard?.writeText) {
-          await navigator.clipboard.writeText(currentHash);
-        } else {
-          document.execCommand('copy');
-        }
-
-        overlay.querySelector('#write-token-copied').style.display = 'inline';
-
-      } catch (e) {
-
-        console.warn('No se pudo copiar automaticamente.', e);
-
-      }
-
-    });
-
-}
-
 
 // ============================================================
 // UTILIDADES
 // ============================================================
 
 function esc(s) {
-
-  return (
-    s ?? ''
-  )
-    .toString()
-    .replace(
-      /[&<>"']/g,
-      c =>
-        ({
-          '&': '&amp;',
-          '<': '&lt;',
-          '>': '&gt;',
-          '"': '&quot;',
-          "'": '&#39;'
-        }[c])
-    );
-
+  return (s ?? "").toString().replace(
+    /[&<>"']/g,
+    (c) =>
+      ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;",
+      })[c],
+  );
 }
 
+function el(html) {
+  const t = document.createElement("template");
 
-function el(
-  html
-) {
+  t.innerHTML = html.trim();
 
-  const t =
-    document.createElement(
-      'template'
-    );
-
-
-  t.innerHTML =
-    html.trim();
-
-
-  return t.content
-    .firstElementChild;
-
+  return t.content.firstElementChild;
 }
 
+function eligibleFor(cat) {
+  const people = Array.isArray(PEOPLE) ? PEOPLE : [];
 
-function eligibleFor(
-  cat
-) {
+  // ==========================================================
+  // FUNCIÓN INTERNA PARA DETECTAR "NO USAR"
+  // ==========================================================
 
-  if (
-    cat === 'maestros_lectura' ||
-    cat === 'libre'
-  ) {
+  const isNoUsar = (person) => {
+    const nota = String(person?.nota || "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .trim();
 
-    return PEOPLE
+    return /\bno\s+usar\b/.test(nota);
+  };
+
+  // ==========================================================
+  // ASIGNACIÓN LIBRE
+  // ==========================================================
+  // Puede utilizar cualquier publicador que no esté marcado
+  // como "No usar".
+
+  if (cat === "libre") {
+    return people
+      .filter((p) => !isNoUsar(p))
       .slice()
-      .sort(
-        (a, b) =>
-          a.nombre.localeCompare(
-            b.nombre,
-            'es'
-          )
+      .sort((a, b) =>
+        String(a?.nombre || "").localeCompare(String(b?.nombre || ""), "es"),
       );
-
   }
 
+  // ==========================================================
+  // SEAMOS MEJORES MAESTROS / LECTURA DE LA BIBLIA
+  // ==========================================================
+  // Solo permite publicadores con:
+  //
+  // elig_maestros_lectura === true
+
+  if (cat === "maestros_lectura") {
+    return people
+      .filter((p) => !isNoUsar(p) && p.elig_maestros_lectura === true)
+      .slice()
+      .sort((a, b) =>
+        String(a?.nombre || "").localeCompare(String(b?.nombre || ""), "es"),
+      );
+  }
+
+  // ==========================================================
+  // RESTO DE CATEGORÍAS
+  // ==========================================================
 
   const key =
-    cat ===
-    'estudio_biblico_lector'
-      ? 'elig_lector_estudio'
-      : (
-          'elig_' +
-          cat
-        );
+    cat === "estudio_biblico_lector" ? "elig_lector_estudio" : "elig_" + cat;
 
-
-  return PEOPLE
-    .filter(
-      p =>
-        p[key]
-    )
-    .sort(
-      (a, b) =>
-        a.nombre.localeCompare(
-          b.nombre,
-          'es'
-        )
+  return people
+    .filter((p) => !isNoUsar(p) && p[key] === true)
+    .slice()
+    .sort((a, b) =>
+      String(a?.nombre || "").localeCompare(String(b?.nombre || ""), "es"),
     );
-
 }
-
 
 // ============================================================
 // SEAMOS MEJORES MAESTROS — BIMESTRE ANTERIOR
 // ============================================================
 
 function getPreviousBimestreLabel(bimestre) {
-  const labels = (PROGRAM || []).map(b => b && b.bimestre).filter(Boolean);
+  const labels = (PROGRAM || []).map((b) => b && b.bimestre).filter(Boolean);
   const index = labels.indexOf(bimestre);
   return index > 0 ? labels[index - 1] : null;
 }
 
 function collectAssignedNamesFromItem(it, out) {
   if (!it || !out) return;
-  [it.name, it.conductor, it.lector].forEach(name => {
+  [it.name, it.conductor, it.lector].forEach((name) => {
     if (name) out.add(normName(name));
   });
   if (Array.isArray(it.subs)) {
-    it.subs.forEach(sub => {
+    it.subs.forEach((sub) => {
       if (sub && sub.name) out.add(normName(sub.name));
     });
   }
@@ -2741,10 +1461,10 @@ function collectAssignedNamesFromItem(it, out) {
 
 function getUsedNamesInBimestre(bimestre) {
   const used = new Set();
-  const bim = (PROGRAM || []).find(b => b && b.bimestre === bimestre);
+  const bim = (PROGRAM || []).find((b) => b && b.bimestre === bimestre);
   if (!bim) return used;
-  (bim.weeks || []).forEach(w => {
-    (w.items || []).forEach(it => collectAssignedNamesFromItem(it, used));
+  (bim.weeks || []).forEach((w) => {
+    (w.items || []).forEach((it) => collectAssignedNamesFromItem(it, used));
   });
   return used;
 }
@@ -2761,9 +1481,9 @@ function wasUsedInPreviousBimestre(nombre) {
 // es el valor que ya está en el campo que se está editando, para no marcar
 // a alguien como "repetido" solo por aparecer en su propia asignación.
 function getUsageWarning(nombre, excludeName) {
-  if (!nombre || !currentBimestre) return '';
+  if (!nombre || !currentBimestre) return "";
   const nameNorm = normName(nombre);
-  const excludeNorm = normName(excludeName || '');
+  const excludeNorm = normName(excludeName || "");
   const warnings = [];
 
   if (nameNorm !== excludeNorm) {
@@ -2778,7 +1498,7 @@ function getUsageWarning(nombre, excludeName) {
     warnings.push(`usado en ${previous}`);
   }
 
-  return warnings.join(' · ');
+  return warnings.join(" · ");
 }
 
 // ============================================================
@@ -2789,7 +1509,7 @@ function openAddMaestrosAssignmentModal(bim, w) {
   const overlay = openOverlay(`
     <div class="modal-head">
       <h3>Agregar asignación</h3>
-      <p>Seamos Mejores Maestros · ${esc(w.semana || '')}</p>
+      <p>Seamos Mejores Maestros · ${esc(w.semana || "")}</p>
     </div>
     <div class="field">
       <label>Texto de la asignación</label>
@@ -2807,54 +1527,68 @@ function openAddMaestrosAssignmentModal(bim, w) {
       <button class="btn btn-primary btn-sm" data-action="save">Agregar</button>
     </div>
   `);
-  const input = overlay.querySelector('#new-maestros-label');
+  const input = overlay.querySelector("#new-maestros-label");
   input.focus();
-  overlay.querySelector('[data-action="close"]').addEventListener('click', () => overlay.remove());
-  overlay.querySelector('[data-action="save"]').addEventListener('click', async () => {
-    const label = String(input.value || '').trim();
-    if (!label) { input.focus(); return; }
-    const structure = overlay.querySelector('#new-maestros-structure').value;
-    const item = { section: 'MAESTROS', label };
-    if (structure === 'pair') {
-      item.subs = [
-        { role: 'Nombre', name: '' },
-        { role: 'Ayudante', name: '' }
-      ];
-    } else {
-      item.name = '';
-    }
-    if (!Array.isArray(w.items)) w.items = [];
-
-    // Insertar dentro del primer bloque de Seamos Mejores Maestros,
-    // justo antes de la siguiente sección (normalmente NVC).
-    let insertAt = w.items.findIndex(x => x?.section === 'MAESTROS');
-
-    if (insertAt === -1) {
-      insertAt = w.items.findIndex(x => x?.section === 'NVC');
-      if (insertAt === -1) insertAt = w.items.length;
-    } else {
-      let cursor = insertAt;
-      while (cursor + 1 < w.items.length && w.items[cursor + 1]?.section === 'MAESTROS') {
-        cursor++;
+  overlay
+    .querySelector('[data-action="close"]')
+    .addEventListener("click", () => overlay.remove());
+  overlay
+    .querySelector('[data-action="save"]')
+    .addEventListener("click", async () => {
+      const label = String(input.value || "").trim();
+      if (!label) {
+        input.focus();
+        return;
       }
-      insertAt = cursor + 1;
-    }
+      const structure = overlay.querySelector("#new-maestros-structure").value;
+      const item = { section: "MAESTROS", label };
+      if (structure === "pair") {
+        item.subs = [
+          { role: "Nombre", name: "" },
+          { role: "Ayudante", name: "" },
+        ];
+      } else {
+        item.name = "";
+      }
+      if (!Array.isArray(w.items)) w.items = [];
 
-    const maestrosNums = w.items
-      .filter(x => x?.section === 'MAESTROS' && Number.isFinite(Number(x?.num)))
-      .map(x => Number(x.num));
+      // Insertar dentro del primer bloque de Seamos Mejores Maestros,
+      // justo antes de la siguiente sección (normalmente NVC).
+      let insertAt = w.items.findIndex((x) => x?.section === "MAESTROS");
 
-    if (maestrosNums.length) {
-      item.num = Math.max(...maestrosNums) + 1;
-    }
+      if (insertAt === -1) {
+        insertAt = w.items.findIndex((x) => x?.section === "NVC");
+        if (insertAt === -1) insertAt = w.items.length;
+      } else {
+        let cursor = insertAt;
+        while (
+          cursor + 1 < w.items.length &&
+          w.items[cursor + 1]?.section === "MAESTROS"
+        ) {
+          cursor++;
+        }
+        insertAt = cursor + 1;
+      }
 
-    w.items.splice(insertAt, 0, item);
-    await saveProgram();
-    overlay.remove();
-    openWeeks.add(w.id);
-    render();
+      const maestrosNums = w.items
+        .filter(
+          (x) => x?.section === "MAESTROS" && Number.isFinite(Number(x?.num)),
+        )
+        .map((x) => Number(x.num));
+
+      if (maestrosNums.length) {
+        item.num = Math.max(...maestrosNums) + 1;
+      }
+
+      w.items.splice(insertAt, 0, item);
+      await saveProgram();
+      overlay.remove();
+      openWeeks.add(w.id);
+      render();
+    });
+  overlay.addEventListener("click", (e) => {
+    if (e.target === overlay) overlay.remove();
   });
-  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
 }
 
 function changeMaestrosAssignmentStructure(bim, w, it) {
@@ -2862,13 +1596,13 @@ function changeMaestrosAssignmentStructure(bim, w, it) {
   const overlay = openOverlay(`
     <div class="modal-head">
       <h3>Editar tipo de asignación</h3>
-      <p>${esc(it.label || '')}</p>
+      <p>${esc(it.label || "")}</p>
     </div>
     <div class="field">
       <label>Personas que necesita</label>
       <select class="search-input" id="edit-maestros-structure">
-        <option value="name" ${!isPair ? 'selected' : ''}>Solo Nombre</option>
-        <option value="pair" ${isPair ? 'selected' : ''}>Nombre + Ayudante</option>
+        <option value="name" ${!isPair ? "selected" : ""}>Solo Nombre</option>
+        <option value="pair" ${isPair ? "selected" : ""}>Nombre + Ayudante</option>
       </select>
     </div>
     <div class="modal-foot" style="margin-top:16px;">
@@ -2876,36 +1610,47 @@ function changeMaestrosAssignmentStructure(bim, w, it) {
       <button class="btn btn-primary btn-sm" data-action="save">Guardar</button>
     </div>
   `);
-  overlay.querySelector('[data-action="close"]').addEventListener('click', () => overlay.remove());
-  overlay.querySelector('[data-action="save"]').addEventListener('click', () => {
-    const structure = overlay.querySelector('#edit-maestros-structure').value;
-    if (structure === 'pair') {
-      const oldSubs = Array.isArray(it.subs) ? it.subs : [];
-      const nombre = oldSubs.find(s => normName(s.role) === 'nombre')?.name || it.name || '';
-      const ayudante = oldSubs.find(s => normName(s.role) === 'ayudante')?.name || '';
-      delete it.name;
-      it.subs = [
-        { role: 'Nombre', name: nombre },
-        { role: 'Ayudante', name: ayudante }
-      ];
-    } else {
-      const oldSubs = Array.isArray(it.subs) ? it.subs : [];
-      const nombre = oldSubs.find(s => normName(s.role) === 'nombre')?.name || '';
-      delete it.subs;
-      it.name = nombre;
-    }
-    saveProgram();
-    overlay.remove();
-    render();
+  overlay
+    .querySelector('[data-action="close"]')
+    .addEventListener("click", () => overlay.remove());
+  overlay
+    .querySelector('[data-action="save"]')
+    .addEventListener("click", () => {
+      const structure = overlay.querySelector("#edit-maestros-structure").value;
+      if (structure === "pair") {
+        const oldSubs = Array.isArray(it.subs) ? it.subs : [];
+        const nombre =
+          oldSubs.find((s) => normName(s.role) === "nombre")?.name ||
+          it.name ||
+          "";
+        const ayudante =
+          oldSubs.find((s) => normName(s.role) === "ayudante")?.name || "";
+        delete it.name;
+        it.subs = [
+          { role: "Nombre", name: nombre },
+          { role: "Ayudante", name: ayudante },
+        ];
+      } else {
+        const oldSubs = Array.isArray(it.subs) ? it.subs : [];
+        const nombre =
+          oldSubs.find((s) => normName(s.role) === "nombre")?.name || "";
+        delete it.subs;
+        it.name = nombre;
+      }
+      saveProgram();
+      overlay.remove();
+      render();
+    });
+  overlay.addEventListener("click", (e) => {
+    if (e.target === overlay) overlay.remove();
   });
-  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
 }
 
 function deleteMaestrosAssignment(bim, w, idx) {
   const item = w.items?.[idx];
   if (!item) return;
   openConfirmModal(
-    `¿Eliminar esta asignación?\n\n${item.label || ''}`,
+    `¿Eliminar esta asignación?\n\n${item.label || ""}`,
     () => {
       if (Array.isArray(w.items) && idx >= 0 && idx < w.items.length) {
         w.items.splice(idx, 1);
@@ -2913,16 +1658,15 @@ function deleteMaestrosAssignment(bim, w, idx) {
         render();
       }
     },
-    { title: 'Eliminar asignación', okLabel: 'Eliminar' }
+    { title: "Eliminar asignación", okLabel: "Eliminar" },
   );
 }
 
 function appendMaestrosAdminControls(node, bim, w, it, idx) {
-  if (!(isAdmin && !pdfExportMode) || !it || it.section !== 'MAESTROS') return;
-  const target =
-    node?.matches?.('.item-row')
-      ? node
-      : node?.querySelector?.('.item-row');
+  if (!(isAdmin && !pdfExportMode) || !it || it.section !== "MAESTROS") return;
+  const target = node?.matches?.(".item-row")
+    ? node
+    : node?.querySelector?.(".item-row");
   if (!target) return;
   const controls = el(`
     <span style="display:inline-flex;gap:4px;margin-left:8px;align-items:center;">
@@ -2930,10 +1674,16 @@ function appendMaestrosAdminControls(node, bim, w, it, idx) {
       <button type="button" class="edit-pencil" title="Eliminar asignación" style="color:#b42318;">×</button>
     </span>
   `);
-  const buttons = controls.querySelectorAll('button');
-  buttons[0].addEventListener('click', e => { e.stopPropagation(); changeMaestrosAssignmentStructure(bim, w, it); });
-  buttons[1].addEventListener('click', e => { e.stopPropagation(); deleteMaestrosAssignment(bim, w, idx); });
-  const label = target.querySelector('.item-label');
+  const buttons = controls.querySelectorAll("button");
+  buttons[0].addEventListener("click", (e) => {
+    e.stopPropagation();
+    changeMaestrosAssignmentStructure(bim, w, it);
+  });
+  buttons[1].addEventListener("click", (e) => {
+    e.stopPropagation();
+    deleteMaestrosAssignment(bim, w, idx);
+  });
+  const label = target.querySelector(".item-label");
   if (label) label.appendChild(controls);
 }
 
@@ -2942,7 +1692,6 @@ window.appendMaestrosAdminControls = appendMaestrosAdminControls;
 window.openAddMaestrosAssignmentModal = openAddMaestrosAssignmentModal;
 window.changeMaestrosAssignmentStructure = changeMaestrosAssignmentStructure;
 window.deleteMaestrosAssignment = deleteMaestrosAssignment;
-
 
 // ============================================================
 // NUESTRA VIDA CRISTIANA — GESTIÓN DE ASIGNACIONES ADICIONALES
@@ -2961,16 +1710,16 @@ function insertNvcItem_(w, newItem) {
   // (el único ítem de NVC con la propiedad "conductor"). Si esa
   // semana no la tiene (fue eliminada), se inserta antes de
   // Palabras de conclusión, o al final si tampoco existe.
-  let insertAt = w.items.findIndex(x => x?.hasOwnProperty?.('conductor'));
+  let insertAt = w.items.findIndex((x) => x?.hasOwnProperty?.("conductor"));
   if (insertAt === -1) {
-    insertAt = w.items.findIndex(x => x?.section === 'CONCLUSION');
+    insertAt = w.items.findIndex((x) => x?.section === "CONCLUSION");
   }
   if (insertAt === -1) {
     insertAt = w.items.length;
   }
   const nvcNums = w.items
-    .filter(x => x?.section === 'NVC' && Number.isFinite(Number(x?.num)))
-    .map(x => Number(x.num));
+    .filter((x) => x?.section === "NVC" && Number.isFinite(Number(x?.num)))
+    .map((x) => Number(x.num));
   if (nvcNums.length) {
     newItem.num = Math.max(...nvcNums) + 1;
   }
@@ -2981,7 +1730,7 @@ function openAddNvcAssignmentModal(bim, w) {
   const overlay = openOverlay(`
     <div class="modal-head">
       <h3>Agregar asignación</h3>
-      <p>Nuestra Vida Cristiana · ${esc(w.semana || '')}</p>
+      <p>Nuestra Vida Cristiana · ${esc(w.semana || "")}</p>
     </div>
     <div class="field">
       <label>Tipo de asignación</label>
@@ -3006,55 +1755,65 @@ function openAddNvcAssignmentModal(bim, w) {
       <button class="btn btn-primary btn-sm" data-action="save">Agregar</button>
     </div>
   `);
-  const input = overlay.querySelector('#new-nvc-label');
-  const typeSelect = overlay.querySelector('#new-nvc-type');
-  const restrictWrap = overlay.querySelector('#new-nvc-restrict-wrap');
+  const input = overlay.querySelector("#new-nvc-label");
+  const typeSelect = overlay.querySelector("#new-nvc-type");
+  const restrictWrap = overlay.querySelector("#new-nvc-restrict-wrap");
   input.focus();
 
   const syncFieldsToType = () => {
-    const isEstudio = typeSelect.value === 'estudio';
+    const isEstudio = typeSelect.value === "estudio";
     // El Estudio bíblico usa categorías fijas (Conductor / Lector),
     // así que la restricción de "quién puede darla" no aplica ahí.
-    restrictWrap.style.display = isEstudio ? 'none' : '';
+    restrictWrap.style.display = isEstudio ? "none" : "";
     if (isEstudio && !input.value.trim()) {
-      input.value = 'Estudio bíblico de la congregación (30 mins.)';
+      input.value = "Estudio bíblico de la congregación (30 mins.)";
     }
   };
-  typeSelect.addEventListener('change', syncFieldsToType);
+  typeSelect.addEventListener("change", syncFieldsToType);
   syncFieldsToType();
 
-  overlay.querySelector('[data-action="close"]').addEventListener('click', () => overlay.remove());
-  overlay.querySelector('[data-action="save"]').addEventListener('click', async () => {
-    const label = String(input.value || '').trim();
-    if (!label) { input.focus(); return; }
-    let item;
-    if (typeSelect.value === 'estudio') {
-      item = { section: 'NVC', label, conductor: '', lector: '' };
-    } else {
-      const restrict = overlay.querySelector('#new-nvc-restrict').value === 'si';
-      item = { section: 'NVC', label, name: '' };
-      if (restrict) item.forceCat = 'intro_conclusion';
-    }
-    insertNvcItem_(w, item);
-    await saveProgram();
-    overlay.remove();
-    openWeeks.add(w.id);
-    render();
+  overlay
+    .querySelector('[data-action="close"]')
+    .addEventListener("click", () => overlay.remove());
+  overlay
+    .querySelector('[data-action="save"]')
+    .addEventListener("click", async () => {
+      const label = String(input.value || "").trim();
+      if (!label) {
+        input.focus();
+        return;
+      }
+      let item;
+      if (typeSelect.value === "estudio") {
+        item = { section: "NVC", label, conductor: "", lector: "" };
+      } else {
+        const restrict =
+          overlay.querySelector("#new-nvc-restrict").value === "si";
+        item = { section: "NVC", label, name: "" };
+        if (restrict) item.forceCat = "intro_conclusion";
+      }
+      insertNvcItem_(w, item);
+      await saveProgram();
+      overlay.remove();
+      openWeeks.add(w.id);
+      render();
+    });
+  overlay.addEventListener("click", (e) => {
+    if (e.target === overlay) overlay.remove();
   });
-  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
 }
 
 function changeNvcAssignmentCategory(bim, w, it) {
-  const restricted = it.forceCat === 'intro_conclusion';
+  const restricted = it.forceCat === "intro_conclusion";
   const overlay = openOverlay(`
     <div class="modal-head">
       <h3>¿Quién puede dar esta parte?</h3>
-      <p>${esc(it.label || '')}</p>
+      <p>${esc(it.label || "")}</p>
     </div>
     <div class="field">
       <select class="search-input" id="edit-nvc-restrict">
-        <option value="no" ${!restricted ? 'selected' : ''}>Igual que las demás partes de Nuestra Vida Cristiana</option>
-        <option value="si" ${restricted ? 'selected' : ''}>Restringido — solo quienes dan Introducción/Conclusión</option>
+        <option value="no" ${!restricted ? "selected" : ""}>Igual que las demás partes de Nuestra Vida Cristiana</option>
+        <option value="si" ${restricted ? "selected" : ""}>Restringido — solo quienes dan Introducción/Conclusión</option>
       </select>
     </div>
     <div class="modal-foot" style="margin-top:16px;">
@@ -3062,25 +1821,32 @@ function changeNvcAssignmentCategory(bim, w, it) {
       <button class="btn btn-primary btn-sm" data-action="save">Guardar</button>
     </div>
   `);
-  overlay.querySelector('[data-action="close"]').addEventListener('click', () => overlay.remove());
-  overlay.querySelector('[data-action="save"]').addEventListener('click', () => {
-    const restrict = overlay.querySelector('#edit-nvc-restrict').value === 'si';
-    if (restrict) it.forceCat = 'intro_conclusion';
-    else delete it.forceCat;
-    saveProgram();
-    overlay.remove();
-    render();
+  overlay
+    .querySelector('[data-action="close"]')
+    .addEventListener("click", () => overlay.remove());
+  overlay
+    .querySelector('[data-action="save"]')
+    .addEventListener("click", () => {
+      const restrict =
+        overlay.querySelector("#edit-nvc-restrict").value === "si";
+      if (restrict) it.forceCat = "intro_conclusion";
+      else delete it.forceCat;
+      saveProgram();
+      overlay.remove();
+      render();
+    });
+  overlay.addEventListener("click", (e) => {
+    if (e.target === overlay) overlay.remove();
   });
-  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
 }
 
 function deleteNvcAssignment(bim, w, idx) {
   const item = w.items?.[idx];
   if (!item) return;
-  const isEstudioBiblico = item.hasOwnProperty('conductor');
+  const isEstudioBiblico = item.hasOwnProperty("conductor");
   const message = isEstudioBiblico
-    ? `¿Eliminar el Estudio bíblico de la congregación de esta semana?\n\n${item.label || ''}`
-    : `¿Eliminar esta asignación?\n\n${item.label || ''}`;
+    ? `¿Eliminar el Estudio bíblico de la congregación de esta semana?\n\n${item.label || ""}`
+    : `¿Eliminar esta asignación?\n\n${item.label || ""}`;
   openConfirmModal(
     message,
     () => {
@@ -3090,32 +1856,37 @@ function deleteNvcAssignment(bim, w, idx) {
         render();
       }
     },
-    { title: 'Eliminar asignación', okLabel: 'Eliminar' }
+    { title: "Eliminar asignación", okLabel: "Eliminar" },
   );
 }
 
 function appendNvcAdminControls(node, bim, w, it, idx, opts) {
-  if (!(isAdmin && !pdfExportMode) || !it || it.section !== 'NVC') return;
+  if (!(isAdmin && !pdfExportMode) || !it || it.section !== "NVC") return;
   opts = opts || {};
-  const target =
-    node?.matches?.('.item-row')
-      ? node
-      : node?.querySelector?.('.item-row');
+  const target = node?.matches?.(".item-row")
+    ? node
+    : node?.querySelector?.(".item-row");
   if (!target) return;
   const showCategoryToggle = !opts.hideCategoryToggle;
   const controls = el(`
     <span style="display:inline-flex;gap:4px;margin-left:8px;align-items:center;">
-      ${showCategoryToggle ? `<button type="button" class="edit-pencil" title="Cambiar quién puede dar esta parte">⚙</button>` : ''}
+      ${showCategoryToggle ? `<button type="button" class="edit-pencil" title="Cambiar quién puede dar esta parte">⚙</button>` : ""}
       <button type="button" class="edit-pencil" title="Eliminar asignación" style="color:#b42318;">×</button>
     </span>
   `);
-  const buttons = controls.querySelectorAll('button');
+  const buttons = controls.querySelectorAll("button");
   let btnIdx = 0;
   if (showCategoryToggle) {
-    buttons[btnIdx++].addEventListener('click', e => { e.stopPropagation(); changeNvcAssignmentCategory(bim, w, it); });
+    buttons[btnIdx++].addEventListener("click", (e) => {
+      e.stopPropagation();
+      changeNvcAssignmentCategory(bim, w, it);
+    });
   }
-  buttons[btnIdx].addEventListener('click', e => { e.stopPropagation(); deleteNvcAssignment(bim, w, idx); });
-  const label = target.querySelector('.item-label');
+  buttons[btnIdx].addEventListener("click", (e) => {
+    e.stopPropagation();
+    deleteNvcAssignment(bim, w, idx);
+  });
+  const label = target.querySelector(".item-label");
   if (label) label.appendChild(controls);
 }
 
@@ -3123,7 +1894,6 @@ window.appendNvcAdminControls = appendNvcAdminControls;
 window.openAddNvcAssignmentModal = openAddNvcAssignmentModal;
 window.changeNvcAssignmentCategory = changeNvcAssignmentCategory;
 window.deleteNvcAssignment = deleteNvcAssignment;
-
 
 // ============================================================
 // RESPONSIVE: apila Nombre/Ayudante en pantallas angostas (celular)
@@ -3133,9 +1903,9 @@ window.deleteNvcAssignment = deleteNvcAssignment;
 // Se inyecta una sola vez una hoja de estilos que, con !important,
 // gana sobre el style inline y apila las columnas en una sola.
 (function injectMaestrosResponsiveCSS() {
-  if (document.getElementById('wm-responsive-fix')) return;
-  const style = document.createElement('style');
-  style.id = 'wm-responsive-fix';
+  if (document.getElementById("wm-responsive-fix")) return;
+  const style = document.createElement("style");
+  style.id = "wm-responsive-fix";
   style.textContent = `
     @media (max-width: 680px) {
       .maestros-pair-row {
@@ -3159,110 +1929,46 @@ window.deleteNvcAssignment = deleteNvcAssignment;
   document.head.appendChild(style);
 })();
 
-
 // ============================================================
 // RENDER PRINCIPAL
 // ============================================================
 
 function render() {
-
-  if (
-    !isAdmin &&
-    currentTab ===
-      'publicadores'
-  ) {
-
-    currentTab =
-      'programa';
-
+  if (!isAdmin && currentTab === "publicadores") {
+    currentTab = "programa";
   }
 
+  const root = document.getElementById("root");
 
-  const root =
-    document.getElementById(
-      'root'
-    );
+  root.innerHTML = "";
 
+  root.appendChild(renderHeader());
 
-  root.innerHTML =
-    '';
-
-
-  root.appendChild(
-    renderHeader()
-  );
-
-
-  if (
-    APPS_SCRIPT_URL &&
-    sheetsConnected
-  ) {
-
-    setSheetsStatus(
-      true
-    );
-
-  } else if (
-    APPS_SCRIPT_URL
-  ) {
-
-    setSheetsStatus(
-      false,
-      '☁ Sheets listo para conectar'
-    );
-
+  if (APPS_SCRIPT_URL && sheetsConnected) {
+    setSheetsStatus(true);
+  } else if (APPS_SCRIPT_URL) {
+    setSheetsStatus(false, "☁ Sheets listo para conectar");
   }
 
+  const body = el(`<div class="section-pad"></div>`);
 
-  const body =
-    el(
-      `<div class="section-pad"></div>`
-    );
-
-
-  if (
-    !PROGRAM
-  ) {
-
-    body.appendChild(
-      el(
-        `<div class="loading">Cargando datos…</div>`
-      )
-    );
-
-  } else if (
-    currentTab ===
-    'programa'
-  ) {
-
-    body.appendChild(
-      renderProgramaTab()
-    );
-
+  if (!PROGRAM) {
+    body.appendChild(el(`<div class="loading">Cargando datos…</div>`));
+  } else if (currentTab === "programa") {
+    body.appendChild(renderProgramaTab());
   } else {
-
-    body.appendChild(
-      renderPublicadoresTab()
-    );
-
+    body.appendChild(renderPublicadoresTab());
   }
 
-
-  root.appendChild(
-    body
-  );
-
+  root.appendChild(body);
 }
-
 
 // ============================================================
 // ENCABEZADO
 // ============================================================
 
 function renderHeader() {
-
-  const header =
-    el(`
+  const header = el(`
       <div class="app-header">
 
         <div class="brand">
@@ -3293,12 +1999,7 @@ function renderHeader() {
 
           <button
             data-tab="programa"
-            class="${
-              currentTab ===
-              'programa'
-                ? 'active'
-                : ''
-            }"
+            class="${currentTab === "programa" ? "active" : ""}"
           >
             Programa
           </button>
@@ -3308,17 +2009,12 @@ function renderHeader() {
               ? `
                 <button
                   data-tab="publicadores"
-                  class="${
-                    currentTab ===
-                    'publicadores'
-                      ? 'active'
-                      : ''
-                  }"
+                  class="${currentTab === "publicadores" ? "active" : ""}"
                 >
                   Publicadores
                 </button>
               `
-              : ''
+              : ""
           }
 
         </div>
@@ -3326,27 +2022,12 @@ function renderHeader() {
       </div>
     `);
 
+  header.querySelector(".brand").style.display = "flex";
 
-  header
-    .querySelector(
-      '.brand'
-    )
-    .style.display =
-    'flex';
+  const adminSlot = header.querySelector(".admin-toggle");
 
-
-  const adminSlot =
-    header.querySelector(
-      '.admin-toggle'
-    );
-
-
-  if (
-    isAdmin
-  ) {
-
-    adminSlot.innerHTML =
-      `
+  if (isAdmin) {
+    adminSlot.innerHTML = `
         <button
           class="admin-btn admin-on"
         >
@@ -3354,44 +2035,23 @@ function renderHeader() {
         </button>
       `;
 
-
-    adminSlot
-      .querySelector(
-        'button'
-      )
-      .addEventListener(
-        'click',
+    adminSlot.querySelector("button").addEventListener("click", () => {
+      openConfirmModal(
+        "¿Salir del modo administrador? Dejarás de poder editar hasta ingresar el PIN de nuevo.",
         () => {
+          isAdmin = false;
 
-          openConfirmModal(
-            '¿Salir del modo administrador? Dejarás de poder editar hasta ingresar el PIN de nuevo.',
-            () => {
+          render();
+        },
+        {
+          title: "Salir de modo admin",
 
-              isAdmin =
-                false;
-
-              writeToken =
-                null;
-
-              render();
-
-            },
-            {
-              title:
-                'Salir de modo admin',
-
-              okLabel:
-                'Salir'
-            }
-          );
-
-        }
+          okLabel: "Salir",
+        },
       );
-
+    });
   } else {
-
-    adminSlot.innerHTML =
-      `
+    adminSlot.innerHTML = `
         <button
           class="admin-btn"
         >
@@ -3399,150 +2059,70 @@ function renderHeader() {
         </button>
       `;
 
-
     adminSlot
-      .querySelector(
-        'button'
-      )
-      .addEventListener(
-        'click',
-        () =>
-          openPinModal()
-      );
-
+      .querySelector("button")
+      .addEventListener("click", () => openPinModal());
   }
 
+  header.querySelectorAll("button[data-tab]").forEach((b) => {
+    b.addEventListener("click", () => {
+      currentTab = b.dataset.tab;
 
-  header
-    .querySelectorAll(
-      'button[data-tab]'
-    )
-    .forEach(
-      b => {
-
-        b.addEventListener(
-          'click',
-          () => {
-
-            currentTab =
-              b.dataset.tab;
-
-            render();
-
-          }
-        );
-
-      }
-    );
-
+      render();
+    });
+  });
 
   return header;
-
 }
-
 
 // ============================================================
 // PESTAÑA PROGRAMA
 // ============================================================
 
 function renderProgramaTab() {
+  const wrap = el(`<div></div>`);
 
-  const wrap =
-    el(
-      `<div></div>`
-    );
+  if (!isAdmin) {
+    const viewerLabels = computeViewerBimestres();
 
+    const available = viewerLabels
+      .map((label) => PROGRAM.find((b) => b.bimestre === label))
+      .filter(Boolean);
 
-  if (
-    !isAdmin
-  ) {
-
-    const viewerLabels =
-      computeViewerBimestres();
-
-
-    const available =
-      viewerLabels
-        .map(
-          label =>
-            PROGRAM.find(
-              b =>
-                b.bimestre ===
-                label
-            )
-        )
-        .filter(Boolean);
-
-
-    currentBimestre =
-      available[0]?.bimestre ||
-      viewerLabels[0];
-
+    currentBimestre = available[0]?.bimestre || viewerLabels[0];
 
     wrap.appendChild(
       el(
-        `<div class="view-only-note">👁️ Estás viendo el programa en modo solo lectura. Desde el primer día de cada mes se muestran el bimestre vigente y el siguiente.</div>`
-      )
+        `<div class="view-only-note">👁️ Estás viendo el programa en modo solo lectura. Desde el primer día de cada mes se muestran el bimestre vigente y el siguiente.</div>`,
+      ),
     );
 
-
-    if (
-      !available.length
-    ) {
-
+    if (!available.length) {
       wrap.appendChild(
         el(
           `<div class="empty-note">Todavía no hay programa cargado para ${esc(
-            viewerLabels.join(
-              ' o '
-            )
-          )}.</div>`
-        )
+            viewerLabels.join(" o "),
+          )}.</div>`,
+        ),
       );
 
-
       return wrap;
-
     }
 
+    available.forEach((bim) => {
+      const title = el(
+        `<div class="viewer-bimester-title">${esc(bim.bimestre)}</div>`,
+      );
 
-    available.forEach(
-      bim => {
+      wrap.appendChild(title);
 
-        const title =
-          el(
-            `<div class="viewer-bimester-title">${esc(
-              bim.bimestre
-            )}</div>`
-          );
-
-
-        wrap.appendChild(
-          title
-        );
-
-
-        bim.weeks.forEach(
-          w =>
-            wrap.appendChild(
-              renderWeekCard(
-                bim,
-                w
-              )
-            )
-        );
-
-      }
-    );
-
+      bim.weeks.forEach((w) => wrap.appendChild(renderWeekCard(bim, w)));
+    });
 
     return wrap;
-
   }
 
-
-  const toolbar =
-    el(`
+  const toolbar = el(`
       <div class="program-toolbar">
 
         <div
@@ -3578,278 +2158,106 @@ function renderProgramaTab() {
       </div>
     `);
 
+  const pills = toolbar.querySelector(".pill-row");
 
-  const pills =
-    toolbar.querySelector(
-      '.pill-row'
-    );
-
-
-  PROGRAM.forEach(
-    b => {
-
-      const p =
-        el(`
+  PROGRAM.forEach((b) => {
+    const p = el(`
           <button
-            class="pill ${
-              b.bimestre ===
-              currentBimestre
-                ? 'active'
-                : ''
-            }"
+            class="pill ${b.bimestre === currentBimestre ? "active" : ""}"
           >
-            ${esc(
-              b.bimestre
-            )}
+            ${esc(b.bimestre)}
           </button>
         `);
 
+    p.addEventListener("click", () => {
+      currentBimestre = b.bimestre;
 
-      p.addEventListener(
-        'click',
-        () => {
+      render();
+    });
 
-          currentBimestre =
-            b.bimestre;
+    pills.appendChild(p);
+  });
 
-          render();
-
-        }
-      );
-
-
-      pills.appendChild(
-        p
-      );
-
-    }
-  );
-
-
-  wrap.appendChild(
-    toolbar
-  );
-
+  wrap.appendChild(toolbar);
 
   toolbar
-    .querySelector(
-      '#add-bimestre'
-    )
-    .addEventListener(
-      'click',
-      () =>
-        openAddBimestreModal()
-    );
-
+    .querySelector("#add-bimestre")
+    .addEventListener("click", () => openAddBimestreModal());
 
   toolbar
-    .querySelector(
-      '#pdf-bimestre'
-    )
-    .addEventListener(
-      'click',
-      () =>
-        openPdfBimestreModal()
-    );
-
+    .querySelector("#pdf-bimestre")
+    .addEventListener("click", () => openPdfBimestreModal());
 
   toolbar
-    .querySelector(
-      '#sheets-config'
-    )
-    .addEventListener(
-      'click',
-      () =>
-        openSheetsConfigModal()
-    );
+    .querySelector("#sheets-config")
+    .addEventListener("click", () => openSheetsConfigModal());
 
+  const bim = PROGRAM.find((b) => b.bimestre === currentBimestre) || PROGRAM[0];
 
-  const bim =
-    PROGRAM.find(
-      b =>
-        b.bimestre ===
-        currentBimestre
-    ) ||
-    PROGRAM[0];
-
-
-  if (
-    !bim
-  ) {
-
+  if (!bim) {
     return wrap;
-
   }
 
-
-  bim.weeks.forEach(
-    w =>
-      wrap.appendChild(
-        renderWeekCard(
-          bim,
-          w
-        )
-      )
-  );
-
+  bim.weeks.forEach((w) => wrap.appendChild(renderWeekCard(bim, w)));
 
   return wrap;
-
 }
-
 
 // ============================================================
 // GESTIÓN DE BIMESTRES
 // ============================================================
 
-function cloneForNewBimestre(
-  template,
-  newLabel
-) {
+function cloneForNewBimestre(template, newLabel) {
+  const clone = JSON.parse(JSON.stringify(template));
 
-  const clone =
-    JSON.parse(
-      JSON.stringify(
-        template
-      )
-    );
+  clone.bimestre = newLabel;
 
+  clone.weeks = (clone.weeks || []).map((w, wi) => {
+    const nw = JSON.parse(JSON.stringify(w));
 
-  clone.bimestre =
-    newLabel;
+    nw.id = `${newLabel}__${wi}`;
 
+    nw.items = (nw.items || []).map((it) => {
+      const ni = JSON.parse(JSON.stringify(it));
 
-  clone.weeks =
-    (
-      clone.weeks ||
-      []
-    ).map(
-      (
-        w,
-        wi
-      ) => {
-
-        const nw =
-          JSON.parse(
-            JSON.stringify(
-              w
-            )
-          );
-
-
-        nw.id =
-          `${newLabel}__${wi}`;
-
-
-        nw.items =
-          (
-            nw.items ||
-            []
-          ).map(
-            it => {
-
-              const ni =
-                JSON.parse(
-                  JSON.stringify(
-                    it
-                  )
-                );
-
-
-              if (
-                Object.prototype.hasOwnProperty.call(
-                  ni,
-                  'name'
-                )
-              ) {
-
-                ni.name =
-                  '';
-
-              }
-
-
-              if (
-                Object.prototype.hasOwnProperty.call(
-                  ni,
-                  'conductor'
-                )
-              ) {
-
-                ni.conductor =
-                  '';
-
-              }
-
-
-              if (
-                Object.prototype.hasOwnProperty.call(
-                  ni,
-                  'lector'
-                )
-              ) {
-
-                ni.lector =
-                  '';
-
-              }
-
-
-              if (
-                Array.isArray(
-                  ni.subs
-                )
-              ) {
-
-                ni.subs =
-                  ni.subs.map(
-                    s => ({
-                      ...s,
-                      name: ''
-                    })
-                  );
-
-              }
-
-
-              return ni;
-
-            }
-          );
-
-
-        return nw;
-
+      if (Object.prototype.hasOwnProperty.call(ni, "name")) {
+        ni.name = "";
       }
-    );
 
+      if (Object.prototype.hasOwnProperty.call(ni, "conductor")) {
+        ni.conductor = "";
+      }
+
+      if (Object.prototype.hasOwnProperty.call(ni, "lector")) {
+        ni.lector = "";
+      }
+
+      if (Array.isArray(ni.subs)) {
+        ni.subs = ni.subs.map((s) => ({
+          ...s,
+          name: "",
+        }));
+      }
+
+      return ni;
+    });
+
+    return nw;
+  });
 
   return clone;
-
 }
-
 
 // ============================================================
 // AGREGAR BIMESTRE
 // ============================================================
 
 function openAddBimestreModal() {
+  const options = PROGRAM.map(
+    (b) => `<option value="${esc(b.bimestre)}">${esc(b.bimestre)}</option>`,
+  ).join("");
 
-  const options =
-    PROGRAM
-      .map(
-        b =>
-          `<option value="${esc(
-            b.bimestre
-          )}">${esc(
-            b.bimestre
-          )}</option>`
-      )
-      .join('');
-
-
-  const overlay =
-    openOverlay(`
+  const overlay = openOverlay(`
       <div class="modal-head">
 
         <h3>
@@ -3924,190 +2332,77 @@ function openAddBimestreModal() {
       </div>
     `);
 
-
-  const input =
-    overlay.querySelector(
-      '#new-bim-name'
-    );
-
+  const input = overlay.querySelector("#new-bim-name");
 
   input.focus();
 
+  const submit = () => {
+    const label = input.value.trim();
 
-  const submit =
-    () => {
+    const templateLabel = overlay.querySelector("#new-bim-template").value;
 
-      const label =
-        input.value.trim();
-
-
-      const templateLabel =
-        overlay
-          .querySelector(
-            '#new-bim-template'
-          )
-          .value;
-
-
-      if (
-        !label
-      ) {
-
-        return;
-
-      }
-
-
-      if (
-        PROGRAM.some(
-          b =>
-            b.bimestre.toLowerCase() ===
-            label.toLowerCase()
-        )
-      ) {
-
-        input.setCustomValidity(
-          'Ese bimestre ya existe.'
-        );
-
-
-        input.reportValidity();
-
-
-        return;
-
-      }
-
-
-      const template =
-        PROGRAM.find(
-          b =>
-            b.bimestre ===
-            templateLabel
-        ) ||
-        PROGRAM[
-          PROGRAM.length - 1
-        ];
-
-
-      const newBim =
-        cloneForNewBimestre(
-          template,
-          label
-        );
-
-
-      PROGRAM.push(
-        newBim
-      );
-
-
-      PEOPLE.forEach(
-        p => {
-
-          if (
-            !p.disponibilidad
-          ) {
-
-            p.disponibilidad =
-              {};
-
-          }
-
-
-          if (
-            !Object.prototype.hasOwnProperty.call(
-              p.disponibilidad,
-              label
-            )
-          ) {
-
-            p.disponibilidad[
-              label
-            ] =
-              'Disponible';
-
-          }
-
-        }
-      );
-
-
-      currentBimestre =
-        label;
-
-
-      openWeeks.clear();
-
-
-      overlay.remove();
-
-
-      Promise.all([
-        saveProgram(),
-        savePeople()
-      ]).then(
-        () =>
-          render()
-      );
-
-    };
-
-
-  input.addEventListener(
-    'keydown',
-    e => {
-
-      if (
-        e.key ===
-        'Enter'
-      ) {
-
-        submit();
-
-      }
-
+    if (!label) {
+      return;
     }
-  );
 
+    if (PROGRAM.some((b) => b.bimestre.toLowerCase() === label.toLowerCase())) {
+      input.setCustomValidity("Ese bimestre ya existe.");
+
+      input.reportValidity();
+
+      return;
+    }
+
+    const template =
+      PROGRAM.find((b) => b.bimestre === templateLabel) ||
+      PROGRAM[PROGRAM.length - 1];
+
+    const newBim = cloneForNewBimestre(template, label);
+
+    PROGRAM.push(newBim);
+
+    PEOPLE.forEach((p) => {
+      if (!p.disponibilidad) {
+        p.disponibilidad = {};
+      }
+
+      if (!Object.prototype.hasOwnProperty.call(p.disponibilidad, label)) {
+        p.disponibilidad[label] = "Disponible";
+      }
+    });
+
+    currentBimestre = label;
+
+    openWeeks.clear();
+
+    overlay.remove();
+
+    Promise.all([saveProgram(), savePeople()]).then(() => render());
+  };
+
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      submit();
+    }
+  });
 
   overlay
-    .querySelector(
-      '[data-a="cancel"]'
-    )
-    .addEventListener(
-      'click',
-      () =>
-        overlay.remove()
-    );
+    .querySelector('[data-a="cancel"]')
+    .addEventListener("click", () => overlay.remove());
 
-
-  overlay
-    .querySelector(
-      '[data-a="ok"]'
-    )
-    .addEventListener(
-      'click',
-      submit
-    );
-
+  overlay.querySelector('[data-a="ok"]').addEventListener("click", submit);
 }
-
 
 // ============================================================
 // PDF
 // ============================================================
 
-function buildPdfWeekNode(
-  bim,
-  w
-) {
-
+function buildPdfWeekNode(bim, w) {
   // Reutiliza exactamente el mismo renderizador que usa la app en
   // pantalla (renderWeekCard), en modo solo-lectura y forzada abierta,
   // para que el PDF sea idéntico al diseño actual de la app.
   const card = renderWeekCard(bim, w);
-  card.classList.add('open');
+  card.classList.add("open");
 
   const root = el(`
     <div
@@ -4141,49 +2436,34 @@ function buildPdfWeekNode(
           margin-top:3px;
         "
       >
-        ${esc(
-            bim.bimestre
-          )} · Programa completo
+        ${esc(bim.bimestre)} · Programa completo
       </div>
     </div>
   `);
 
   root.appendChild(header);
 
-  card.style.margin = '0 18px';
+  card.style.margin = "0 18px";
   card.style.boxShadow =
-    '0 1px 2px rgba(27,46,53,.06), 0 6px 20px -8px rgba(27,46,53,.18)';
+    "0 1px 2px rgba(27,46,53,.06), 0 6px 20px -8px rgba(27,46,53,.18)";
 
   root.appendChild(card);
 
   return root;
-
 }
 
-
 function openPdfBimestreModal() {
+  const options = PROGRAM.map(
+    (b) =>
+      `<div class="modal-opt" data-bim="${esc(b.bimestre)}"><span>${esc(
+        b.bimestre,
+      )}</span><span class="stat">${
+        (b.weeks || []).length
+      } semanas</span></div>`,
+  ).join("");
 
-  const options =
-    PROGRAM
-      .map(
-        b =>
-          `<div class="modal-opt" data-bim="${esc(
-            b.bimestre
-          )}"><span>${esc(
-            b.bimestre
-          )}</span><span class="stat">${
-            (
-              b.weeks ||
-              []
-            ).length
-          } semanas</span></div>`
-      )
-      .join('');
-
-
-  const overlay =
-    openOverlay(
-      `
+  const overlay = openOverlay(
+    `
         <div class="modal-head">
 
           <h3>
@@ -4198,10 +2478,7 @@ function openPdfBimestreModal() {
 
         <div class="modal-list">
 
-          ${
-            options ||
-            '<div class="empty-note">No hay bimestres.</div>'
-          }
+          ${options || '<div class="empty-note">No hay bimestres.</div>'}
 
         </div>
 
@@ -4215,80 +2492,41 @@ function openPdfBimestreModal() {
           </button>
 
         </div>
-      `
-    );
+      `,
+  );
 
+  overlay.querySelectorAll("[data-bim]").forEach((opt) => {
+    opt.addEventListener("click", async () => {
+      const bim = PROGRAM.find((b) => b.bimestre === opt.dataset.bim);
 
-  overlay
-    .querySelectorAll(
-      '[data-bim]'
-    )
-    .forEach(
-      opt => {
+      overlay.remove();
 
-        opt.addEventListener(
-          'click',
-          async () => {
-
-            const bim =
-              PROGRAM.find(
-                b =>
-                  b.bimestre ===
-                  opt.dataset.bim
-              );
-
-
-            overlay.remove();
-
-
-            if (
-              bim
-            ) {
-
-              await downloadBimestrePdf(
-                bim
-              );
-
-            }
-
-          }
-        );
-
+      if (bim) {
+        await downloadBimestrePdf(bim);
       }
-    );
-
+    });
+  });
 
   overlay
-    .querySelector(
-      '[data-a="cancel"]'
-    )
-    .addEventListener(
-      'click',
-      () =>
-        overlay.remove()
-    );
-
+    .querySelector('[data-a="cancel"]')
+    .addEventListener("click", () => overlay.remove());
 }
-
 
 // ============================================================
 // DESCARGAR PDF
 // ============================================================
 
-async function downloadBimestrePdf(
-  bim
-) {
-
+async function downloadBimestrePdf(bim) {
   if (!window.jspdf?.jsPDF) {
     alert(
-      'No se pudo cargar el generador PDF. Abre la aplicación con conexión a Internet y vuelve a intentarlo.'
+      "No se pudo cargar el generador PDF. Abre la aplicación con conexión a Internet y vuelve a intentarlo.",
     );
     return;
   }
 
-  if (typeof window.html2canvas !== 'function') {
+  if (typeof window.html2canvas !== "function") {
     alert(
-      'No se pudo cargar el generador visual del PDF. Recarga la página e inténtalo de nuevo.'
+      "No se pudo cargar el generador visual del PDF. Recarga la página e inténtalo de nuevo.",
     );
     return;
   }
@@ -4299,177 +2537,138 @@ async function downloadBimestrePdf(
   pdfExportMode = true;
 
   try {
+    const { jsPDF } = window.jspdf;
 
-  const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({
+      orientation: "p",
+      unit: "mm",
+      format: "a4",
+      compress: true,
+    });
 
-  const doc = new jsPDF({
-    orientation: 'p',
-    unit: 'mm',
-    format: 'a4',
-    compress: true
-  });
+    const pageW = 210;
+    const pageH = 297;
+    const margin = 8;
+    const contentW = pageW - margin * 2;
+    const contentH = pageH - margin * 2;
+    let firstPage = true;
 
-  const pageW = 210;
-  const pageH = 297;
-  const margin = 8;
-  const contentW = pageW - margin * 2;
-  const contentH = pageH - margin * 2;
-  let firstPage = true;
+    // El PDF se genera capturando el mismo HTML/CSS visual de la app.
+    // Así deja de existir una segunda maquetación PDF distinta de la web.
+    for (let i = 0; i < (bim.weeks || []).length; i++) {
+      const week = bim.weeks[i];
+      const node = buildPdfWeekNode(bim, week);
 
-  // El PDF se genera capturando el mismo HTML/CSS visual de la app.
-  // Así deja de existir una segunda maquetación PDF distinta de la web.
-  for (let i = 0; i < (bim.weeks || []).length; i++) {
-    const week = bim.weeks[i];
-    const node = buildPdfWeekNode(bim, week);
+      node.style.position = "fixed";
+      node.style.left = "-100000px";
+      node.style.top = "0";
+      node.style.zIndex = "-1";
+      node.style.width = "820px";
+      node.style.background = "#faf6ee";
 
-    node.style.position = 'fixed';
-    node.style.left = '-100000px';
-    node.style.top = '0';
-    node.style.zIndex = '-1';
-    node.style.width = '820px';
-    node.style.background = '#faf6ee';
+      document.body.appendChild(node);
 
-    document.body.appendChild(node);
-
-    try {
-      if (document.fonts?.ready) {
-        await document.fonts.ready;
-      }
-
-      const canvas = await window.html2canvas(node, {
-        backgroundColor: '#faf6ee',
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        imageTimeout: 15000,
-        removeContainer: true
-      });
-
-      const pagePxH = Math.max(
-        1,
-        Math.floor(canvas.width * contentH / contentW)
-      );
-
-      let offsetPx = 0;
-
-      while (offsetPx < canvas.height) {
-        if (!firstPage) {
-          doc.addPage();
+      try {
+        if (document.fonts?.ready) {
+          await document.fonts.ready;
         }
-        firstPage = false;
 
-        const sliceH = Math.min(
-          pagePxH,
-          canvas.height - offsetPx
+        const canvas = await window.html2canvas(node, {
+          backgroundColor: "#faf6ee",
+          scale: 2,
+          useCORS: true,
+          logging: false,
+          imageTimeout: 15000,
+          removeContainer: true,
+        });
+
+        const pagePxH = Math.max(
+          1,
+          Math.floor((canvas.width * contentH) / contentW),
         );
 
-        const slice = document.createElement('canvas');
-        slice.width = canvas.width;
-        slice.height = sliceH;
+        let offsetPx = 0;
 
-        const ctx = slice.getContext('2d');
-        ctx.fillStyle = '#faf6ee';
-        ctx.fillRect(0, 0, slice.width, slice.height);
-        ctx.drawImage(
-          canvas,
-          0, offsetPx,
-          canvas.width, sliceH,
-          0, 0,
-          slice.width, slice.height
-        );
+        while (offsetPx < canvas.height) {
+          if (!firstPage) {
+            doc.addPage();
+          }
+          firstPage = false;
 
-        const sliceHmm =
-          slice.height * contentW / slice.width;
+          const sliceH = Math.min(pagePxH, canvas.height - offsetPx);
 
-        doc.addImage(
-          slice.toDataURL('image/jpeg', 0.94),
-          'JPEG',
-          margin,
-          margin,
-          contentW,
-          sliceHmm,
-          undefined,
-          'FAST'
-        );
+          const slice = document.createElement("canvas");
+          slice.width = canvas.width;
+          slice.height = sliceH;
 
-        offsetPx += sliceH;
+          const ctx = slice.getContext("2d");
+          ctx.fillStyle = "#faf6ee";
+          ctx.fillRect(0, 0, slice.width, slice.height);
+          ctx.drawImage(
+            canvas,
+            0,
+            offsetPx,
+            canvas.width,
+            sliceH,
+            0,
+            0,
+            slice.width,
+            slice.height,
+          );
+
+          const sliceHmm = (slice.height * contentW) / slice.width;
+
+          doc.addImage(
+            slice.toDataURL("image/jpeg", 0.94),
+            "JPEG",
+            margin,
+            margin,
+            contentW,
+            sliceHmm,
+            undefined,
+            "FAST",
+          );
+
+          offsetPx += sliceH;
+        }
+      } finally {
+        node.remove();
       }
-    } finally {
-      node.remove();
     }
-  }
 
-  const safeName =
-    String(bim.bimestre)
-      .replace(
-        /[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ -]/g,
-        ''
-      )
+    const safeName = String(bim.bimestre)
+      .replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ -]/g, "")
       .trim()
-      .replace(/\s+/g, '_');
+      .replace(/\s+/g, "_");
 
-  doc.save(
-    `Vida_y_Ministerio_${safeName}.pdf`
-  );
-
+    doc.save(`Vida_y_Ministerio_${safeName}.pdf`);
   } finally {
     pdfExportMode = false;
   }
 }
 
-
 // ============================================================
 // ETIQUETAS DE SECCIONES
 // ============================================================
 
-function sectionLabelText(
-  sec
-) {
-
-  if (
-    sec ===
-    'TESOROS'
-  ) {
-
-    return 'Tesoros de la Biblia';
-
+function sectionLabelText(sec) {
+  if (sec === "TESOROS") {
+    return "Tesoros de la Biblia";
   }
 
-
-  if (
-    sec ===
-    'MAESTROS'
-  ) {
-
-    return 'Seamos mejores maestros';
-
+  if (sec === "MAESTROS") {
+    return "Seamos mejores maestros";
   }
 
-
-  if (
-    sec ===
-    'NVC'
-  ) {
-
-    return 'Nuestra vida cristiana';
-
+  if (sec === "NVC") {
+    return "Nuestra vida cristiana";
   }
-
 
   return null;
-
 }
 
-
-function sectionIconSvg(
-  sec
-) {
-
-  if (
-    sec ===
-    'TESOROS'
-  ) {
-
+function sectionIconSvg(sec) {
+  if (sec === "TESOROS") {
     return `
       <span class="section-icon">
 
@@ -4499,15 +2698,9 @@ function sectionIconSvg(
 
       </span>
     `;
-
   }
 
-
-  if (
-    sec ===
-    'MAESTROS'
-  ) {
-
+  if (sec === "MAESTROS") {
     return `
       <span class="section-icon">
 
@@ -4546,15 +2739,9 @@ function sectionIconSvg(
 
       </span>
     `;
-
   }
 
-
-  if (
-    sec ===
-    'NVC'
-  ) {
-
+  if (sec === "NVC") {
     return `
       <span class="section-icon">
 
@@ -4593,42 +2780,22 @@ function sectionIconSvg(
 
       </span>
     `;
-
   }
 
-
-  return '';
-
+  return "";
 }
 
+function sectionLabelHtml(sec) {
+  const text = sectionLabelText(sec);
 
-function sectionLabelHtml(
-  sec
-) {
-
-  const text =
-    sectionLabelText(
-      sec
-    );
-
-
-  return text
-    ? `${sectionIconSvg(
-        sec
-      )}<span>${esc(
-        text
-      )}</span>`
-    : '';
-
+  return text ? `${sectionIconSvg(sec)}<span>${esc(text)}</span>` : "";
 }
-
 
 // ============================================================
 // ICONO DE CANCIÓN
 // ============================================================
 
 function songIconSvg() {
-
   return `
     <span
       class="song-icon"
@@ -4670,161 +2837,68 @@ function songIconSvg() {
 
     </span>
   `;
-
 }
-
 
 // ============================================================
 // ICONOS PARA PDF
 // ============================================================
 
 const PDF_ICON_SVG = {
+  TESOROS: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.7" stroke-linejoin="round"><path d="M6 3h12l4 6-10 12L2 9z"/><path d="M11 3 8 9l4 12 4-12-3-6"/><path d="M2 9h20"/></svg>`,
 
-  TESOROS:
-    `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.7" stroke-linejoin="round"><path d="M6 3h12l4 6-10 12L2 9z"/><path d="M11 3 8 9l4 12 4-12-3-6"/><path d="M2 9h20"/></svg>`,
+  MAESTROS: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20"/><path d="M12 6C9 6 7 8 7 10c0 2 2 2 5 0"/><path d="M12 11c-3 0-5 2-5 4 0 2 2 2 5 0"/><path d="M12 8c3 0 5 2 5 4 0 2-2 2-5 0"/><path d="M12 13c3 0 5 2 5 4 0 2-2 2-5 0"/></svg>`,
 
-  MAESTROS:
-    `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20"/><path d="M12 6C9 6 7 8 7 10c0 2 2 2 5 0"/><path d="M12 11c-3 0-5 2-5 4 0 2 2 2 5 0"/><path d="M12 8c3 0 5 2 5 4 0 2-2 2-5 0"/><path d="M12 13c3 0 5 2 5 4 0 2-2 2-5 0"/></svg>`,
+  NVC: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M15.8 8.4c.8-1.7 2.2-2.4 3.5-1.8 1.2.5 1.6 1.7 1.1 2.8-.3.8-.9 1.3-1.7 1.5"/><path d="M6.8 16.8h8.1a4.2 4.2 0 1 0-1.8-8 5.2 5.2 0 0 0-8.9 2.7 3.9 3.9 0 0 0 2.6 5.3Z"/><path d="M9 17v3M14 17v3"/><circle cx="19.1" cy="9.6" r=".55" fill="#ffffff" stroke="none"/></svg>`,
 
-  NVC:
-    `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M15.8 8.4c.8-1.7 2.2-2.4 3.5-1.8 1.2.5 1.6 1.7 1.1 2.8-.3.8-.9 1.3-1.7 1.5"/><path d="M6.8 16.8h8.1a4.2 4.2 0 1 0-1.8-8 5.2 5.2 0 0 0-8.9 2.7 3.9 3.9 0 0 0 2.6 5.3Z"/><path d="M9 17v3M14 17v3"/><circle cx="19.1" cy="9.6" r=".55" fill="#ffffff" stroke="none"/></svg>`,
-
-  SONG:
-    `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#be8900" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 17V5l11-2v12"/><path d="M9 5l11-2"/><circle cx="6" cy="17" r="3"/><circle cx="17" cy="15" r="3"/></svg>`
-
+  SONG: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#be8900" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 17V5l11-2v12"/><path d="M9 5l11-2"/><circle cx="6" cy="17" r="3"/><circle cx="17" cy="15" r="3"/></svg>`,
 };
 
+const PDF_ICON_CACHE = {};
 
-const PDF_ICON_CACHE =
-  {};
+function svgToPngDataUrl(svg, w = 48, h = 48) {
+  const key = svg + "|" + w + "|" + h;
 
-
-function svgToPngDataUrl(
-  svg,
-  w = 48,
-  h = 48
-) {
-
-  const key =
-    svg +
-    '|' +
-    w +
-    '|' +
-    h;
-
-
-  if (
-    PDF_ICON_CACHE[key]
-  ) {
-
+  if (PDF_ICON_CACHE[key]) {
     return PDF_ICON_CACHE[key];
-
   }
 
+  PDF_ICON_CACHE[key] = new Promise((resolve, reject) => {
+    const img = new Image();
 
-  PDF_ICON_CACHE[key] =
-    new Promise(
-      (
-        resolve,
-        reject
-      ) => {
+    img.onload = () => {
+      const c = document.createElement("canvas");
 
-        const img =
-          new Image();
+      c.width = w;
 
+      c.height = h;
 
-        img.onload =
-          () => {
+      const ctx = c.getContext("2d");
 
-            const c =
-              document.createElement(
-                'canvas'
-              );
+      ctx.clearRect(0, 0, w, h);
 
+      ctx.drawImage(img, 0, 0, w, h);
 
-            c.width =
-              w;
+      resolve(c.toDataURL("image/png"));
+    };
 
+    img.onerror = reject;
 
-            c.height =
-              h;
-
-
-            const ctx =
-              c.getContext(
-                '2d'
-              );
-
-
-            ctx.clearRect(
-              0,
-              0,
-              w,
-              h
-            );
-
-
-            ctx.drawImage(
-              img,
-              0,
-              0,
-              w,
-              h
-            );
-
-
-            resolve(
-              c.toDataURL(
-                'image/png'
-              )
-            );
-
-          };
-
-
-        img.onerror =
-          reject;
-
-
-        img.src =
-          'data:image/svg+xml;charset=utf-8,' +
-          encodeURIComponent(
-            svg
-          );
-
-      }
-    );
-
+    img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
+  });
 
   return PDF_ICON_CACHE[key];
-
 }
-
 
 // ============================================================
 // TARJETA DE SEMANA
 // ============================================================
 
-function renderWeekCard(
-  bim,
-  w
-) {
+function renderWeekCard(bim, w) {
+  const isOpen = pdfExportMode || openWeeks.has(w.id);
 
-  const isOpen =
-    pdfExportMode ||
-    openWeeks.has(
-      w.id
-    );
-
-
-  const card =
-    el(`
+  const card = el(`
       <div
-        class="week-card ${
-          isOpen
-            ? 'open'
-            : ''
-        }"
+        class="week-card ${isOpen ? "open" : ""}"
       >
 
         <div class="week-head">
@@ -4834,9 +2908,7 @@ function renderWeekCard(
             <div class="wk-titles-row">
 
               <p class="wk-semana">
-                ${esc(
-                  w.semana.toLowerCase()
-                )}
+                ${esc(w.semana.toLowerCase())}
               </p>
 
             </div>
@@ -4844,10 +2916,7 @@ function renderWeekCard(
             <div class="wk-lectura-row">
 
               <p class="wk-lectura">
-                ${esc(
-                  w.lectura_semanal ||
-                  ''
-                )}
+                ${esc(w.lectura_semanal || "")}
               </p>
 
             </div>
@@ -4879,131 +2948,57 @@ function renderWeekCard(
       </div>
     `);
 
+  card.querySelector(".week-head").addEventListener("click", () => {
+    if (openWeeks.has(w.id)) {
+      openWeeks.delete(w.id);
+    } else {
+      openWeeks.add(w.id);
+    }
 
-  card
-    .querySelector(
-      '.week-head'
-    )
-    .addEventListener(
-      'click',
-      () => {
+    render();
+  });
 
-        if (
-          openWeeks.has(
-            w.id
-          )
-        ) {
+  if (isAdmin && !pdfExportMode) {
+    card.querySelector(".wk-titles-row").appendChild(
+      editPencil("Editar semana", w.semana, (v) => {
+        w.semana = v;
 
-          openWeeks.delete(
-            w.id
-          );
-
-        } else {
-
-          openWeeks.add(
-            w.id
-          );
-
-        }
-
+        saveProgram();
 
         render();
-
-      }
+      }),
     );
 
+    card.querySelector(".wk-lectura-row").appendChild(
+      editPencil("Editar lectura semanal", w.lectura_semanal || "", (v) => {
+        w.lectura_semanal = v;
 
-  if (
-    (isAdmin && !pdfExportMode)
-  ) {
+        saveProgram();
 
-    card
-      .querySelector(
-        '.wk-titles-row'
-      )
-      .appendChild(
-        editPencil(
-          'Editar semana',
-          w.semana,
-          v => {
-
-            w.semana =
-              v;
-
-            saveProgram();
-
-            render();
-
-          }
-        )
-      );
-
-
-    card
-      .querySelector(
-        '.wk-lectura-row'
-      )
-      .appendChild(
-        editPencil(
-          'Editar lectura semanal',
-          w.lectura_semanal ||
-            '',
-          v => {
-
-            w.lectura_semanal =
-              v;
-
-            saveProgram();
-
-            render();
-
-          }
-        )
-      );
-
+        render();
+      }),
+    );
   }
 
+  const bodyEl = card.querySelector(".week-body");
 
-  const bodyEl =
-    card.querySelector(
-      '.week-body'
-    );
+  if (isOpen) {
+    let lastSection = null;
 
+    let maestrosRendered = false;
 
-  if (
-    isOpen
-  ) {
+    let maestrosAddShown = false;
 
-    let lastSection =
-      null;
+    let nvcRendered = false;
 
-    let maestrosRendered =
-      false;
+    let nvcAddShown = false;
 
-    let maestrosAddShown =
-      false;
+    const appendNvcAddControl = () => {
+      if (!(isAdmin && !pdfExportMode) || nvcAddShown) {
+        return;
+      }
 
-    let nvcRendered =
-      false;
-
-    let nvcAddShown =
-      false;
-
-
-    const appendNvcAddControl =
-      () => {
-
-        if (
-          !(isAdmin && !pdfExportMode) ||
-          nvcAddShown
-        ) {
-
-          return;
-
-        }
-
-        const addBox =
-          el(`
+      const addBox = el(`
             <div
               style="
                 padding:8px 0 12px;
@@ -5022,51 +3017,23 @@ function renderWeekCard(
             </div>
           `);
 
+      addBox.querySelector("button").addEventListener("click", (e) => {
+        e.stopPropagation();
 
-        addBox
-          .querySelector(
-            'button'
-          )
-          .addEventListener(
-            'click',
-            e => {
+        openAddNvcAssignmentModal(bim, w);
+      });
 
-              e.stopPropagation();
+      bodyEl.appendChild(addBox);
 
-              openAddNvcAssignmentModal(
-                bim,
-                w
-              );
+      nvcAddShown = true;
+    };
 
-            }
-          );
+    const appendMaestrosAddControl = () => {
+      if (!(isAdmin && !pdfExportMode) || maestrosAddShown) {
+        return;
+      }
 
-
-        bodyEl.appendChild(
-          addBox
-        );
-
-
-        nvcAddShown =
-          true;
-
-      };
-
-
-    const appendMaestrosAddControl =
-      () => {
-
-        if (
-          !(isAdmin && !pdfExportMode) ||
-          maestrosAddShown
-        ) {
-
-          return;
-
-        }
-
-        const addBox =
-          el(`
+      const addBox = el(`
             <div
               style="
                 padding:8px 0 12px;
@@ -5085,194 +3052,93 @@ function renderWeekCard(
             </div>
           `);
 
+      addBox.querySelector("button").addEventListener("click", (e) => {
+        e.stopPropagation();
 
-        addBox
-          .querySelector(
-            'button'
-          )
-          .addEventListener(
-            'click',
-            e => {
+        openAddMaestrosAssignmentModal(bim, w);
+      });
 
-              e.stopPropagation();
+      bodyEl.appendChild(addBox);
 
-              openAddMaestrosAssignmentModal(
-                bim,
-                w
-              );
+      maestrosAddShown = true;
+    };
 
-            }
-          );
+    (w.items || []).forEach((it, idx) => {
+      const sec = ["TESOROS", "MAESTROS", "NVC"].includes(it.section)
+        ? it.section
+        : null;
 
-
-        bodyEl.appendChild(
-          addBox
-        );
-
-
-        maestrosAddShown =
-          true;
-
-      };
-
-
-    (
-      w.items ||
-      []
-    ).forEach(
-      (
-        it,
-        idx
-      ) => {
-
-        const sec =
-          [
-            'TESOROS',
-            'MAESTROS',
-            'NVC'
-          ].includes(
-            it.section
-          )
-            ? it.section
-            : null;
-
-
-        /*
-         * Si estamos saliendo de MAESTROS para entrar
-         * a otra sección, ponemos el botón de agregar
-         * justo al final de MAESTROS.
-         */
-        if (
-          maestrosRendered &&
-          sec !== 'MAESTROS'
-        ) {
-
-          appendMaestrosAddControl();
-
-        }
-
-
-        /*
-         * Lo mismo para Nuestra Vida Cristiana: el botón
-         * de agregar se muestra justo antes de salir de
-         * esa sección (normalmente antes de Palabras de
-         * conclusión).
-         */
-        if (
-          nvcRendered &&
-          sec !== 'NVC'
-        ) {
-
-          appendNvcAddControl();
-
-        }
-
-
-        if (
-          sec &&
-          sec !==
-            lastSection
-        ) {
-
-          bodyEl.appendChild(
-            el(
-              `<span class="section-label ${sec}">${sectionLabelHtml(
-                sec
-              )}</span>`
-            )
-          );
-
-
-          lastSection =
-            sec;
-
-        } else if (
-          !sec
-        ) {
-
-          lastSection =
-            null;
-
-        }
-
-
-        if (
-          sec ===
-          'MAESTROS'
-        ) {
-
-          maestrosRendered =
-            true;
-
-        }
-
-
-        if (
-          sec ===
-          'NVC'
-        ) {
-
-          nvcRendered =
-            true;
-
-        }
-
-
-        bodyEl.appendChild(
-          renderItemRow(
-            bim,
-            w,
-            it,
-            idx
-          )
-        );
-
+      /*
+       * Si estamos saliendo de MAESTROS para entrar
+       * a otra sección, ponemos el botón de agregar
+       * justo al final de MAESTROS.
+       */
+      if (maestrosRendered && sec !== "MAESTROS") {
+        appendMaestrosAddControl();
       }
-    );
 
+      /*
+       * Lo mismo para Nuestra Vida Cristiana: el botón
+       * de agregar se muestra justo antes de salir de
+       * esa sección (normalmente antes de Palabras de
+       * conclusión).
+       */
+      if (nvcRendered && sec !== "NVC") {
+        appendNvcAddControl();
+      }
+
+      if (sec && sec !== lastSection) {
+        bodyEl.appendChild(
+          el(
+            `<span class="section-label ${sec}">${sectionLabelHtml(
+              sec,
+            )}</span>`,
+          ),
+        );
+
+        lastSection = sec;
+      } else if (!sec) {
+        lastSection = null;
+      }
+
+      if (sec === "MAESTROS") {
+        maestrosRendered = true;
+      }
+
+      if (sec === "NVC") {
+        nvcRendered = true;
+      }
+
+      bodyEl.appendChild(renderItemRow(bim, w, it, idx));
+    });
 
     /*
      * Si MAESTROS es la última sección de la semana,
      * agregamos el botón al final.
      */
-    if (
-      maestrosRendered
-    ) {
-
+    if (maestrosRendered) {
       appendMaestrosAddControl();
-
     }
-
 
     /*
      * Lo mismo para Nuestra Vida Cristiana, por si fuera
      * la última sección de la semana.
      */
-    if (
-      nvcRendered
-    ) {
-
+    if (nvcRendered) {
       appendNvcAddControl();
-
     }
-
   }
 
-
   return card;
-
 }
 
 // ============================================================
 // CANCIÓN
 // ============================================================
 
-function getSongDisplayLabel(
-  it
-) {
-
+function getSongDisplayLabel(it) {
   if (!it) {
-    return 'Canción';
+    return "Canción";
   }
 
   /*
@@ -5287,50 +3153,36 @@ function getSongDisplayLabel(
     it.description,
     it.nombreCancion,
     it.tituloCancion,
-    it.cancionTitulo
+    it.cancionTitulo,
   ];
 
   for (const candidate of candidates) {
-
-    const value =
-      String(
-        candidate ?? ''
-      )
+    const value = String(candidate ?? "")
       .trim()
-      .replace(/^[•·▪◦\-\s🎵🎶]+/, '')
+      .replace(/^[•·▪◦\-\s🎵🎶]+/, "")
       .trim();
 
     if (!value) {
       continue;
     }
 
-    const match =
-      value.match(
-        /canc[ií]ó[nn]\s*(?:n[º°.]?\s*)?(\d+)/i
-      );
+    const match = value.match(/canc[ií]ó[nn]\s*(?:n[º°.]?\s*)?(\d+)/i);
 
     if (match) {
-      return 'Canción ' + match[1];
+      return "Canción " + match[1];
     }
 
-    const onlyNumber =
-      value.match(
-        /^\d+$/
-      );
+    const onlyNumber = value.match(/^\d+$/);
 
     if (onlyNumber) {
-      return 'Canción ' + onlyNumber[0];
+      return "Canción " + onlyNumber[0];
     }
 
     /*
      * Si ya contiene la palabra canción pero no pudimos extraer
      * el número, mostramos el texto original en vez de ocultarlo.
      */
-    if (
-      /canc[ií]ó[nn]/i.test(
-        value
-      )
-    ) {
+    if (/canc[ií]ó[nn]/i.test(value)) {
       return value;
     }
   }
@@ -5347,124 +3199,57 @@ function getSongDisplayLabel(
     it.numCancion ??
     it.numero ??
     it.num ??
-    '';
+    "";
 
-  if (
-    typeof possibleNumber === 'object' &&
-    possibleNumber !== null
-  ) {
-
+  if (typeof possibleNumber === "object" && possibleNumber !== null) {
     const objectNumber =
       possibleNumber.numero ??
       possibleNumber.number ??
       possibleNumber.num ??
       possibleNumber.id ??
-      '';
+      "";
 
-    const objectMatch =
-      String(
-        objectNumber || ''
-      ).match(
-        /\d+/
-      );
+    const objectMatch = String(objectNumber || "").match(/\d+/);
 
     if (objectMatch) {
-      return 'Canción ' + objectMatch[0];
+      return "Canción " + objectMatch[0];
     }
   }
 
-  const numberMatch =
-    String(
-      possibleNumber || ''
-    ).match(
-      /\d+/
-    );
+  const numberMatch = String(possibleNumber || "").match(/\d+/);
 
   if (numberMatch) {
-    return 'Canción ' + numberMatch[0];
+    return "Canción " + numberMatch[0];
   }
 
-  return 'Canción';
-
+  return "Canción";
 }
 
-function saveSongLabel(
-  it,
-  value
-) {
+function saveSongLabel(it, value) {
+  let text = String(value || "").trim();
 
-  let text =
-    String(
-      value ||
-      ''
-    ).trim();
+  text = text.replace(/^[•·▪◦\-\s]+/, "").trim();
 
+  const match = text.match(/canc[ií]ó[nn]\s*(?:n[º°.]?\s*)?(\d+)/i);
 
-  text =
-    text
-      .replace(
-        /^[•·▪◦\-\s]+/,
-        ''
-      )
-      .trim();
+  const numberMatch = match || text.match(/^(\d+)$/);
 
-
-  const match =
-    text.match(
-      /canc[ií]ó[nn]\s*(?:n[º°.]?\s*)?(\d+)/i
-    );
-
-
-  const numberMatch =
-    match ||
-    text.match(
-      /^(\d+)$/
-    );
-
-
-  if (
-    numberMatch
-  ) {
-
-    it.label =
-      '• Canción ' +
-      numberMatch[1];
-
+  if (numberMatch) {
+    it.label = "• Canción " + numberMatch[1];
   } else {
-
-    it.label =
-      text
-        ? '• ' + text
-        : '• Canción';
-
+    it.label = text ? "• " + text : "• Canción";
   }
-
 }
-
 
 // ============================================================
 // FILA DE ASIGNACIÓN
 // ============================================================
 
-function renderItemRow(
-  bim,
-  w,
-  it,
-  idx
-) {
+function renderItemRow(bim, w, it, idx) {
+  if (isPureSongLine(it)) {
+    const songLabel = getSongDisplayLabel(it);
 
-  if (
-    isPureSongLine(it)
-  ) {
-
-    const songLabel =
-      getSongDisplayLabel(
-        it
-      );
-
-
-    const row =
-      el(`
+    const row = el(`
         <div class="item-row">
 
           <div
@@ -5479,89 +3264,39 @@ function renderItemRow(
         </div>
       `);
 
-
-    const labelDiv =
-      row.querySelector(
-        '.item-label'
-      );
-
+    const labelDiv = row.querySelector(".item-label");
 
     /*
-     * El texto se fuerza visible con estilo inline por precaución
-     * (evita que quede oculto si algún CSS futuro afecta esta fila).
+     * El texto se fuerza visible con estilo inline para
+     * evitar que un CSS anterior oculte .song-text.
      */
     labelDiv.appendChild(
       el(
         `<span style="display:inline-flex;align-items:center;gap:8px;">${songIconSvg()}<span style="display:inline !important;visibility:visible !important;opacity:1 !important;color:#363535 !important;font-weight:600 !important;white-space:nowrap !important;">${esc(
-          songLabel || 'Canción'
-        )}</span></span>`
-      )
+          songLabel || "Canción",
+        )}</span></span>`,
+      ),
     );
 
-
-    if (
-      (isAdmin && !pdfExportMode)
-    ) {
-
+    if (isAdmin && !pdfExportMode) {
       labelDiv.appendChild(
-        editPencil(
-          'Editar cántico',
-          songLabel,
-          v => {
+        editPencil("Editar cántico", songLabel, (v) => {
+          saveSongLabel(it, v);
 
-            saveSongLabel(
-              it,
-              v
-            );
+          saveProgram();
 
-            saveProgram();
-
-            render();
-
-          }
-        )
+          render();
+        }),
       );
-
     }
 
-
     return row;
-
   }
 
+  const cat = computeCat(it);
 
-  const cat =
-    computeCat(
-      it
-    );
-
-
-  if (
-    Object.prototype.hasOwnProperty.call(
-      it,
-      'conductor'
-    )
-  ) {
-
-    const wrap =
-    el(
-        `<div></div>`
-    );
-
-
-    wrap.appendChild(
-        renderAssignLine(
-        bim,
-        w,
-        it,
-        idx,
-        'conductor',
-        it.label,
-        cat,
-        it.conductor
-    )
-    );
-
+  if (Object.prototype.hasOwnProperty.call(it, "conductor")) {
+    const wrap = el(`<div></div>`);
 
     wrap.appendChild(
       renderAssignLine(
@@ -5569,29 +3304,31 @@ function renderItemRow(
         w,
         it,
         idx,
-        'lector',
+        "conductor",
         it.label,
-        'estudio_biblico_lector',
+        cat,
+        it.conductor,
+      ),
+    );
+
+    wrap.appendChild(
+      renderAssignLine(
+        bim,
+        w,
+        it,
+        idx,
+        "lector",
+        it.label,
+        "estudio_biblico_lector",
         it.lector,
-        'Lector'
-      )
+        "Lector",
+      ),
     );
 
-
-    appendNvcAdminControls(
-      wrap,
-      bim,
-      w,
-      it,
-      idx,
-      { hideCategoryToggle: true }
-    );
-
+    appendNvcAdminControls(wrap, bim, w, it, idx, { hideCategoryToggle: true });
 
     return wrap;
-
   }
-
 
   /*
    * SEAMOS MEJORES MAESTROS CON DOS PERSONAS
@@ -5603,38 +3340,18 @@ function renderItemRow(
    *
    * Nunca se duplica el texto de la asignación.
    */
-  if (
-    Array.isArray(
-      it.subs
-    )
-  ) {
-
+  if (Array.isArray(it.subs)) {
     const nombre =
-      it.subs.find(
-        s =>
-          normName(
-            s?.role
-          ) ===
-          'nombre'
-      )?.name ||
+      it.subs.find((s) => normName(s?.role) === "nombre")?.name ||
       it.subs[0]?.name ||
-      '';
-
+      "";
 
     const ayudante =
-      it.subs.find(
-        s =>
-          normName(
-            s?.role
-          ) ===
-          'ayudante'
-      )?.name ||
+      it.subs.find((s) => normName(s?.role) === "ayudante")?.name ||
       it.subs[1]?.name ||
-      '';
+      "";
 
-
-    const wrap =
-      el(`
+    const wrap = el(`
         <div
           class="item-row maestros-pair-row"
           style="
@@ -5651,10 +3368,7 @@ function renderItemRow(
           >
 
             <span>
-              ${esc(
-                it.label ||
-                ''
-              )}
+              ${esc(it.label || "")}
             </span>
 
           </div>
@@ -5681,45 +3395,25 @@ function renderItemRow(
             </span>
 
             ${
-              (isAdmin && !pdfExportMode)
+              isAdmin && !pdfExportMode
                 ? `
                   <button
                     type="button"
-                    class="assign-btn ${
-                      nombre
-                        ? ''
-                        : 'empty'
-                    }"
+                    class="assign-btn ${nombre ? "" : "empty"}"
                     style="font-weight:700;color:#363535;"
                   >
-                    ${
-                      nombre
-                        ? esc(
-                            nombre
-                          )
-                        : 'Sin asignar'
-                    }
+                    ${nombre ? esc(nombre) : "Sin asignar"}
                   </button>
                 `
                 : `
                   <span
-                    class="assign-static ${
-                      nombre
-                        ? ''
-                        : 'public-empty'
-                    }"
+                    class="assign-static ${nombre ? "" : "public-empty"}"
                     style="
                       font-weight:700;
                       color:#363535;
                     "
                   >
-                    ${
-                      nombre
-                        ? esc(
-                            nombre
-                          )
-                        : ''
-                    }
+                    ${nombre ? esc(nombre) : ""}
                   </span>
                 `
             }
@@ -5748,45 +3442,25 @@ function renderItemRow(
             </span>
 
             ${
-              (isAdmin && !pdfExportMode)
+              isAdmin && !pdfExportMode
                 ? `
                   <button
                     type="button"
-                    class="assign-btn ${
-                      ayudante
-                        ? ''
-                        : 'empty'
-                    }"
+                    class="assign-btn ${ayudante ? "" : "empty"}"
                     style="font-weight:700;color:#363535;"
                   >
-                    ${
-                      ayudante
-                        ? esc(
-                            ayudante
-                          )
-                        : 'Sin asignar'
-                    }
+                    ${ayudante ? esc(ayudante) : "Sin asignar"}
                   </button>
                 `
                 : `
                   <span
-                    class="assign-static ${
-                      ayudante
-                        ? ''
-                        : 'public-empty'
-                    }"
+                    class="assign-static ${ayudante ? "" : "public-empty"}"
                     style="
                       font-weight:700;
                       color:#363535;
                     "
                   >
-                    ${
-                      ayudante
-                        ? esc(
-                            ayudante
-                          )
-                        : ''
-                    }
+                    ${ayudante ? esc(ayudante) : ""}
                   </span>
                 `
             }
@@ -5796,145 +3470,60 @@ function renderItemRow(
         </div>
       `);
 
+    if (isAdmin && !pdfExportMode) {
+      wrap.querySelector(".label-with-pencil").appendChild(
+        editPencil("Editar texto de la parte", it.label || "", (v) => {
+          it.label = v;
 
-    if (
-      (isAdmin && !pdfExportMode)
-    ) {
+          saveProgram();
 
-      wrap
-        .querySelector(
-          '.label-with-pencil'
-        )
-        .appendChild(
-          editPencil(
-            'Editar texto de la parte',
-            it.label ||
-              '',
-            v => {
-
-              it.label =
-                v;
-
-              saveProgram();
-
-              render();
-
-            }
-          )
-        );
-
-
-      const buttons =
-        wrap.querySelectorAll(
-          '.assign-btn'
-        );
-
-
-      buttons[0]?.addEventListener(
-        'click',
-        e => {
-
-          e.stopPropagation();
-
-          openAssignModal(
-            'maestros_lectura',
-            nombre,
-            newName => {
-
-              applyAssignment(
-                bim,
-                w,
-                it,
-                'sub0',
-                newName
-              );
-
-            }
-          );
-
-        }
+          render();
+        }),
       );
 
+      const buttons = wrap.querySelectorAll(".assign-btn");
 
-      buttons[1]?.addEventListener(
-        'click',
-        e => {
+      buttons[0]?.addEventListener("click", (e) => {
+        e.stopPropagation();
 
-          e.stopPropagation();
+        openAssignModal("maestros_lectura", nombre, (newName) => {
+          applyAssignment(bim, w, it, "sub0", newName);
+        });
+      });
 
-          openAssignModal(
-            'maestros_lectura',
-            ayudante,
-            newName => {
+      buttons[1]?.addEventListener("click", (e) => {
+        e.stopPropagation();
 
-              applyAssignment(
-                bim,
-                w,
-                it,
-                'sub1',
-                newName
-              );
-
-            }
-          );
-
-        }
-      );
-
+        openAssignModal("maestros_lectura", ayudante, (newName) => {
+          applyAssignment(bim, w, it, "sub1", newName);
+        });
+      });
     }
 
-
-    appendMaestrosAdminControls(
-      wrap,
-      bim,
-      w,
-      it,
-      idx
-    );
-
+    appendMaestrosAdminControls(wrap, bim, w, it, idx);
 
     return wrap;
-
   }
-
 
   /*
    * ASIGNACIÓN DE UNA SOLA PERSONA.
    */
-  const row =
-    renderAssignLine(
-      bim,
-      w,
-      it,
-      idx,
-      'name',
-      it.label,
-      cat,
-      it.name ||
-        ''
-    );
-
-
-  appendMaestrosAdminControls(
-    row,
+  const row = renderAssignLine(
     bim,
     w,
     it,
-    idx
+    idx,
+    "name",
+    it.label,
+    cat,
+    it.name || "",
   );
 
+  appendMaestrosAdminControls(row, bim, w, it, idx);
 
-  appendNvcAdminControls(
-    row,
-    bim,
-    w,
-    it,
-    idx
-  );
-
+  appendNvcAdminControls(row, bim, w, it, idx);
 
   return row;
-
 }
 
 // ============================================================
@@ -5950,30 +3539,17 @@ function renderAssignLine(
   label,
   cat,
   currentName,
-  roleTag
+  roleTag,
 ) {
+  const safeCurrentName = String(currentName ?? "").trim();
 
-  const safeCurrentName =
-    String(
-      currentName ??
-      ''
-    ).trim();
+  const nameHtml = safeCurrentName
+    ? esc(safeCurrentName)
+    : isAdmin && !pdfExportMode
+      ? "Sin asignar"
+      : "";
 
-
-  const nameHtml =
-    safeCurrentName
-      ? esc(
-          safeCurrentName
-        )
-      : (
-          (isAdmin && !pdfExportMode)
-            ? 'Sin asignar'
-            : ''
-        );
-
-
-  const row =
-    el(`
+  const row = el(`
       <div class="item-row">
 
         <div
@@ -5981,19 +3557,23 @@ function renderAssignLine(
         >
 
           <span style="display:inline-flex;align-items:center;gap:8px;">
-            ${/canc[ií]ó[nn]/i.test(String(label || '')) ? songIconSvg() : ''}
-            <span style="${/canc[ií]ó[nn]/i.test(String(label || '')) ? 'color:#363535 !important;font-weight:600 !important;' : ''}">${esc(/canc[ií]ó[nn]/i.test(String(label || '')) ? String(label || '').trim().replace(/^[•·▪◦\-\s]+/, '') : label)}</span>
+            ${/canc[ií]ó[nn]/i.test(String(label || "")) ? songIconSvg() : ""}
+            <span style="${/canc[ií]ó[nn]/i.test(String(label || "")) ? "color:#363535 !important;font-weight:600 !important;" : ""}">${esc(
+              /canc[ií]ó[nn]/i.test(String(label || ""))
+                ? String(label || "")
+                    .trim()
+                    .replace(/^[•·▪◦\-\s]+/, "")
+                : label,
+            )}</span>
 
             ${
               roleTag
                 ? `
                   <span class="role-tag">
-                    — ${esc(
-                      roleTag
-                    )}
+                    — ${esc(roleTag)}
                   </span>
                 `
-                : ''
+                : ""
             }
 
           </span>
@@ -6001,15 +3581,11 @@ function renderAssignLine(
         </div>
 
         ${
-          (isAdmin && !pdfExportMode)
+          isAdmin && !pdfExportMode
             ? `
               <button
                 type="button"
-                class="assign-btn ${
-                  safeCurrentName
-                    ? ''
-                    : 'empty'
-                }"
+                class="assign-btn ${safeCurrentName ? "" : "empty"}"
                 style="
                   font-weight:700;
                   color:#363535;
@@ -6020,11 +3596,7 @@ function renderAssignLine(
             `
             : `
               <span
-                class="assign-static ${
-                  safeCurrentName
-                    ? ''
-                    : 'public-empty'
-                }"
+                class="assign-static ${safeCurrentName ? "" : "public-empty"}"
                 style="
                   font-weight:700;
                   color:#363535;
@@ -6038,244 +3610,98 @@ function renderAssignLine(
       </div>
     `);
 
-
   const showPencil =
-    (isAdmin && !pdfExportMode) &&
-    cat !==
-      'intro_conclusion' &&
-    slot !==
-      'lector' &&
-    slot !==
-      'sub1';
+    isAdmin &&
+    !pdfExportMode &&
+    cat !== "intro_conclusion" &&
+    slot !== "lector" &&
+    slot !== "sub1";
 
+  if (showPencil) {
+    row.querySelector(".label-with-pencil").appendChild(
+      editPencil("Editar texto de la parte", it.label, (v) => {
+        it.label = v;
 
-  if (
-    showPencil
-  ) {
+        saveProgram();
 
-    row
-      .querySelector(
-        '.label-with-pencil'
-      )
-      .appendChild(
-        editPencil(
-          'Editar texto de la parte',
-          it.label,
-          v => {
-
-            it.label =
-              v;
-
-            saveProgram();
-
-            render();
-
-          }
-        )
-      );
-
+        render();
+      }),
+    );
   }
 
-
-  if (
-    (isAdmin && !pdfExportMode)
-  ) {
-
-    row
-      .querySelector(
-        '.assign-btn'
-      )
-      .addEventListener(
-        'click',
-        () => {
-
-          openAssignModal(
-            cat,
-            safeCurrentName,
-            newName => {
-
-              applyAssignment(
-                bim,
-                w,
-                it,
-                slot,
-                newName
-              );
-
-            }
-          );
-
-        }
-      );
-
+  if (isAdmin && !pdfExportMode) {
+    row.querySelector(".assign-btn").addEventListener("click", () => {
+      openAssignModal(cat, safeCurrentName, (newName) => {
+        applyAssignment(bim, w, it, slot, newName);
+      });
+    });
   }
-
 
   return row;
-
 }
 
 // ============================================================
 // APLICAR ASIGNACIÓN
 // ============================================================
 
-function applyAssignment(
-  bim,
-  w,
-  it,
-  slot,
-  newName
-) {
-
-  if (
-    !it
-  ) {
-
-    console.warn(
-      'No se pudo aplicar la asignación: elemento inexistente.'
-    );
+function applyAssignment(bim, w, it, slot, newName) {
+  if (!it) {
+    console.warn("No se pudo aplicar la asignación: elemento inexistente.");
 
     return;
-
   }
 
+  const value = String(newName ?? "").trim();
 
-  const value =
-    String(
-      newName ??
-      ''
-    ).trim();
+  if (slot === "name") {
+    it.name = value;
+  } else if (slot === "conductor") {
+    it.conductor = value;
+  } else if (slot === "lector") {
+    it.lector = value;
+  } else if (slot.startsWith("sub")) {
+    const si = Number.parseInt(slot.slice(3), 10);
 
-
-  if (
-    slot ===
-    'name'
-  ) {
-
-    it.name =
-      value;
-
-  } else if (
-    slot ===
-    'conductor'
-  ) {
-
-    it.conductor =
-      value;
-
-  } else if (
-    slot ===
-    'lector'
-  ) {
-
-    it.lector =
-      value;
-
-  } else if (
-    slot.startsWith(
-      'sub'
-    )
-  ) {
-
-    const si =
-      Number.parseInt(
-        slot.slice(3),
-        10
-      );
-
-
-    if (
-      !Number.isInteger(
-        si
-      ) ||
-      si < 0
-    ) {
-
+    if (!Number.isInteger(si) || si < 0) {
       return;
-
     }
 
-
-    if (
-      !Array.isArray(
-        it.subs
-      )
-    ) {
-
-      it.subs =
-        [];
-
+    if (!Array.isArray(it.subs)) {
+      it.subs = [];
     }
 
+    while (it.subs.length <= si) {
+      it.subs.push({
+        role: it.subs.length === 0 ? "Nombre" : "Ayudante",
 
-    while (
-      it.subs.length <=
-      si
-    ) {
-
-      it.subs.push(
-        {
-          role:
-            it.subs.length === 0
-              ? 'Nombre'
-              : 'Ayudante',
-
-          name:
-            ''
-        }
-      );
-
+        name: "",
+      });
     }
 
+    if (!it.subs[si]) {
+      it.subs[si] = {
+        role: si === 0 ? "Nombre" : "Ayudante",
 
-    if (
-      !it.subs[si]
-    ) {
-
-      it.subs[si] =
-        {
-          role:
-            si === 0
-              ? 'Nombre'
-              : 'Ayudante',
-
-          name:
-            ''
-        };
-
+        name: "",
+      };
     }
 
-
-    it.subs[si].name =
-      value;
-
+    it.subs[si].name = value;
   }
-
 
   saveProgram();
 
   render();
-
 }
 
 // ============================================================
 // MODAL DE ASIGNACIÓN
 // ============================================================
 
-function openAssignModal(
-  cat,
-  currentName,
-  onPick
-) {
+function openAssignModal(cat, currentName, onPick) {
+  const options = eligibleFor(cat);
 
-  const options =
-    eligibleFor(
-      cat
-    );
-
-
-  const overlay =
-    el(`
+  const overlay = el(`
       <div class="overlay">
 
         <div class="modal">
@@ -6287,21 +3713,10 @@ function openAssignModal(
             </h3>
 
             <p>
-              ${esc(
-                CAT_LABELS[
-                  cat
-                ] || ''
-              )}
+              ${esc(CAT_LABELS[cat] || "")}
               ·
-              ${
-                options.length
-              }
-              elegible${
-                options.length ===
-                1
-                  ? ''
-                  : 's'
-              }
+              ${options.length}
+              elegible${options.length === 1 ? "" : "s"}
             </p>
 
           </div>
@@ -6340,77 +3755,35 @@ function openAssignModal(
       </div>
     `);
 
+  document.body.appendChild(overlay);
 
-  document.body.appendChild(
-    overlay
-  );
+  function paintList(filter) {
+    const list = overlay.querySelector(".modal-list");
 
+    list.innerHTML = "";
 
-  function paintList(
-    filter
-  ) {
+    const f = (filter || "").toLowerCase();
 
-    const list =
-      overlay.querySelector(
-        '.modal-list'
-      );
+    const filtered = options.filter((p) => p.nombre.toLowerCase().includes(f));
 
-
-    list.innerHTML =
-      '';
-
-
-    const f =
-      (
-        filter ||
-        ''
-      ).toLowerCase();
-
-
-    const filtered =
-      options.filter(
-        p =>
-          p.nombre
-            .toLowerCase()
-            .includes(
-              f
-            )
-      );
-
-
-    if (
-      !filtered.length
-    ) {
-
+    if (!filtered.length) {
       list.appendChild(
-        el(
-          `<div class="empty-note">No hay publicadores que coincidan.</div>`
-        )
+        el(`<div class="empty-note">No hay publicadores que coincidan.</div>`),
       );
-
 
       return;
-
     }
 
+    filtered.forEach((p) => {
+      const warningText = getUsageWarning(p.nombre, currentName);
 
-    filtered.forEach(
-      p => {
-        const warningText = getUsageWarning(p.nombre, currentName);
+      const previousWarning = warningText
+        ? `<span style="display:block;color:#c62828;font-size:12px;font-weight:700;margin-top:2px;">⚠ ${esc(warningText)}</span>`
+        : "";
 
-        const previousWarning = warningText
-          ? `<span style="display:block;color:#c62828;font-size:12px;font-weight:700;margin-top:2px;">⚠ ${esc(warningText)}</span>`
-          : '';
-
-        const opt =
-          el(`
+      const opt = el(`
             <div
-              class="modal-opt ${
-                p.nombre ===
-                currentName
-                  ? 'selected'
-                  : ''
-              }"
+              class="modal-opt ${p.nombre === currentName ? "selected" : ""}"
             >
 
               <span>
@@ -6423,112 +3796,49 @@ function openAssignModal(
             </div>
           `);
 
-        opt.addEventListener(
-          'click',
-          () => {
+      opt.addEventListener("click", () => {
+        onPick(p.nombre);
 
-            onPick(
-              p.nombre
-            );
+        overlay.remove();
+      });
 
-
-            overlay.remove();
-
-          }
-        );
-
-
-        list.appendChild(
-          opt
-        );
-
-      }
-    );
-
+      list.appendChild(opt);
+    });
   }
 
-
-  paintList(
-    ''
-  );
-
+  paintList("");
 
   overlay
-    .querySelector(
-      '.search-input'
-    )
-    .addEventListener(
-      'input',
-      e =>
-        paintList(
-          e.target.value
-        )
-    );
-
+    .querySelector(".search-input")
+    .addEventListener("input", (e) => paintList(e.target.value));
 
   overlay
-    .querySelector(
-      '[data-action="close"]'
-    )
-    .addEventListener(
-      'click',
-      () =>
-        overlay.remove()
-    );
-
+    .querySelector('[data-action="close"]')
+    .addEventListener("click", () => overlay.remove());
 
   overlay
-    .querySelector(
-      '[data-action="clear"]'
-    )
-    .addEventListener(
-      'click',
-      () => {
+    .querySelector('[data-action="clear"]')
+    .addEventListener("click", () => {
+      onPick("");
 
-        onPick(
-          ''
-        );
+      overlay.remove();
+    });
 
-
-        overlay.remove();
-
-      }
-    );
-
-
-  overlay.addEventListener(
-    'click',
-    e => {
-
-      if (
-        e.target ===
-        overlay
-      ) {
-
-        overlay.remove();
-
-      }
-
+  overlay.addEventListener("click", (e) => {
+    if (e.target === overlay) {
+      overlay.remove();
     }
-  );
-
+  });
 }
-
 
 // ============================================================
 // PESTAÑA PUBLICADORES
 // ============================================================
 
 function renderPublicadoresTab() {
+  const wrap = el(`<div></div>`);
 
-  const wrap =
-    el(
-      `<div></div>`
-    );
-
-
-  const toolbar =
-    el(`
+  const toolbar = el(`
       <div class="toolbar">
 
         <input
@@ -6536,9 +3846,7 @@ function renderPublicadoresTab() {
           id="people-search"
           placeholder="Buscar publicador…"
           style="max-width:260px"
-          value="${esc(
-            peopleSearch
-          )}"
+          value="${esc(peopleSearch)}"
         />
 
         <div
@@ -6558,7 +3866,7 @@ function renderPublicadoresTab() {
                   ↻ Re-sincronizar Varones
                 </button>
               `
-              : ''
+              : ""
           }
 
           ${
@@ -6571,20 +3879,7 @@ function renderPublicadoresTab() {
                   Cambiar PIN
                 </button>
               `
-              : ''
-          }
-
-          ${
-            isAdmin
-              ? `
-                <button
-                  class="btn btn-ghost btn-sm"
-                  id="show-write-token"
-                >
-                  🔑 Token de guardado
-                </button>
-              `
-              : ''
+              : ""
           }
 
           ${
@@ -6597,7 +3892,7 @@ function renderPublicadoresTab() {
                   + Agregar publicador
                 </button>
               `
-              : ''
+              : ""
           }
 
         </div>
@@ -6605,258 +3900,116 @@ function renderPublicadoresTab() {
       </div>
     `);
 
+  const list = el(`<div id="people-list"></div>`);
 
-  const list =
-    el(
-      `<div id="people-list"></div>`
-    );
+  toolbar.querySelector("#people-search").addEventListener("input", (e) => {
+    peopleSearch = e.target.value;
 
+    renderPeopleList(list);
+  });
 
-  toolbar
-    .querySelector(
-      '#people-search'
-    )
-    .addEventListener(
-      'input',
-      e => {
-
-        peopleSearch =
-          e.target.value;
-
-        renderPeopleList(
-          list
-        );
-
-      }
-    );
-
-
-  if (
-    isAdmin
-  ) {
+  if (isAdmin) {
+    toolbar
+      .querySelector("#add-person")
+      .addEventListener("click", () => addNewPerson());
 
     toolbar
-      .querySelector(
-        '#add-person'
-      )
-      .addEventListener(
-        'click',
-        () =>
-          addNewPerson()
-      );
+      .querySelector("#change-pin")
+      .addEventListener("click", () => openChangePinModal());
 
+    toolbar.querySelector("#resync-varones").addEventListener("click", () => {
+      openConfirmModal(
+        "Esto vuelve a aplicar las reglas de Oraciones, Asignación #1, Perlas, NVC, Estudio bíblico e Introducción/Conclusión desde el archivo de Varones, sobre todos los publicadores que coincidan por nombre.",
 
-    toolbar
-      .querySelector(
-        '#change-pin'
-      )
-      .addEventListener(
-        'click',
-        () =>
-          openChangePinModal()
-      );
-
-
-    toolbar
-      .querySelector(
-        '#show-write-token'
-      )
-      .addEventListener(
-        'click',
-        () =>
-          openWriteTokenModal()
-      );
-
-
-    toolbar
-      .querySelector(
-        '#resync-varones'
-      )
-      .addEventListener(
-        'click',
-        () => {
-
-          openConfirmModal(
-            'Esto vuelve a aplicar las reglas de Oraciones, Asignación #1, Perlas, NVC, Estudio bíblico e Introducción/Conclusión desde el archivo de Varones, sobre todos los publicadores que coincidan por nombre.',
-
-            async () => {
-
-              await appStorageSet(
-                'wm-meta',
-                JSON.stringify({ varonesMigratedV3: false })
-              );
-
-
-              await migrateVarones();
-
-
-              render();
-
-            },
-
-            {
-              title:
-                'Re-sincronizar Varones',
-
-              okLabel:
-                'Sincronizar'
-            }
+        async () => {
+          await appStorageSet(
+            "wm-meta",
+            JSON.stringify({ varonesMigratedV3: false }),
           );
 
-        }
+          await migrateVarones();
+
+          render();
+        },
+
+        {
+          title: "Re-sincronizar Varones",
+
+          okLabel: "Sincronizar",
+        },
       );
-
+    });
   }
 
+  wrap.appendChild(toolbar);
 
-  wrap.appendChild(
-    toolbar
-  );
-
-
-  if (
-    !isAdmin
-  ) {
-
+  if (!isAdmin) {
     wrap.appendChild(
       el(
-        `<div class="view-only-note">👁️ Estás viendo la base de datos en modo solo lectura. Toca «🔒 Admin» arriba para editar disponibilidad, agregar o quitar publicadores.</div>`
-      )
+        `<div class="view-only-note">👁️ Estás viendo la base de datos en modo solo lectura. Toca «🔒 Admin» arriba para editar disponibilidad, agregar o quitar publicadores.</div>`,
+      ),
     );
-
   } else {
-
     wrap.appendChild(
       el(
-        `<p class="hint">Toca un nombre para editar su disponibilidad o qué partes puede dar. Los cambios se guardan automáticamente y los ve todo el que use esta app.</p>`
-      )
+        `<p class="hint">Toca un nombre para editar su disponibilidad o qué partes puede dar. Los cambios se guardan automáticamente y los ve todo el que use esta app.</p>`,
+      ),
     );
-
   }
 
+  wrap.appendChild(list);
 
-  wrap.appendChild(
-    list
-  );
-
-
-  renderPeopleList(
-    list
-  );
-
+  renderPeopleList(list);
 
   return wrap;
-
 }
-
 
 // ============================================================
 // LISTA DE PUBLICADORES
 // ============================================================
 
-function renderPeopleList(
-  container
-) {
+function renderPeopleList(container) {
+  container.innerHTML = "";
 
-  container.innerHTML =
-    '';
+  const f = peopleSearch.toLowerCase();
 
+  const filtered = PEOPLE.filter((p) =>
+    p.nombre.toLowerCase().includes(f),
+  ).sort((a, b) => a.nombre.localeCompare(b.nombre, "es"));
 
-  const f =
-    peopleSearch.toLowerCase();
-
-
-  const filtered =
-    PEOPLE
-      .filter(
-        p =>
-          p.nombre
-            .toLowerCase()
-            .includes(
-              f
-            )
-      )
-      .sort(
-        (
-          a,
-          b
-        ) =>
-          a.nombre.localeCompare(
-            b.nombre,
-            'es'
-          )
-      );
-
-
-  if (
-    !filtered.length
-  ) {
-
+  if (!filtered.length) {
     container.appendChild(
-      el(
-        `<div class="empty-note">No se encontraron publicadores.</div>`
-      )
+      el(`<div class="empty-note">No se encontraron publicadores.</div>`),
     );
 
-
     return;
-
   }
 
-
-  filtered.forEach(
-    p =>
-      container.appendChild(
-        renderPersonCard(
-          p
-        )
-      )
-  );
-
+  filtered.forEach((p) => container.appendChild(renderPersonCard(p)));
 }
-
 
 // ============================================================
 // BADGE
 // ============================================================
 
-function badgeHtml(
-  active,
-  text
-) {
-
+function badgeHtml(active, text) {
   return `
     <span
-      class="badge ${
-        active
-          ? 'on'
-          : 'off'
-      }"
+      class="badge ${active ? "on" : "off"}"
     >
-      ${esc(
-        text
-      )}
+      ${esc(text)}
     </span>
   `;
-
 }
-
 
 // ============================================================
 // TARJETA DE PUBLICADOR
 // ============================================================
 
-function renderPersonCard(
-  p
-) {
+function renderPersonCard(p) {
+  const isOpen = openPersonId === p.id;
 
-  const isOpen =
-    openPersonId ===
-    p.id;
-
-
-  const card =
-    el(`
+  const card = el(`
       <div class="person-card">
 
         <div class="person-top">
@@ -6864,52 +4017,26 @@ function renderPersonCard(
           <div>
 
             <div class="person-name">
-              ${esc(
-                p.nombre
-              )}
+              ${esc(p.nombre)}
             </div>
 
             <div class="badge-row">
 
-              ${badgeHtml(
-                p.elig_oraciones,
-                'Oraciones'
-              )}
+              ${badgeHtml(p.elig_oraciones, "Oraciones")}
 
-              ${badgeHtml(
-                p.elig_parte1,
-                'Asig. #1'
-              )}
+              ${badgeHtml(p.elig_parte1, "Asig. #1")}
 
-              ${badgeHtml(
-                p.elig_perlas,
-                'Perlas'
-              )}
+              ${badgeHtml(p.elig_perlas, "Perlas")}
 
-              ${badgeHtml(
-                p.elig_nvc,
-                'NVC'
-              )}
+              ${badgeHtml(p.elig_nvc, "NVC")}
 
-              ${badgeHtml(
-                p.elig_estudio_biblico,
-                'Estudio bíblico'
-              )}
+              ${badgeHtml(p.elig_estudio_biblico, "Estudio bíblico")}
 
-              ${badgeHtml(
-                p.elig_intro_conclusion,
-                'Intro/Concl'
-              )}
+              ${badgeHtml(p.elig_intro_conclusion, "Intro/Concl")}
 
-              ${badgeHtml(
-                p.elig_maestros_lectura,
-                'Maestros/Lectura'
-              )}
+              ${badgeHtml(p.elig_maestros_lectura, "Maestros/Lectura")}
 
-              ${badgeHtml(
-                p.elig_lector_estudio,
-                'Lector Estudio'
-              )}
+              ${badgeHtml(p.elig_lector_estudio, "Lector Estudio")}
 
             </div>
 
@@ -6941,81 +4068,31 @@ function renderPersonCard(
       </div>
     `);
 
-
-  if (
-    isOpen
-  ) {
-
-    card
-      .querySelector(
-        '.chevron'
-      )
-      .style.transform =
-      'rotate(180deg)';
-
+  if (isOpen) {
+    card.querySelector(".chevron").style.transform = "rotate(180deg)";
   }
 
+  card.querySelector(".person-top").addEventListener("click", () => {
+    openPersonId = isOpen ? null : p.id;
 
-  card
-    .querySelector(
-      '.person-top'
-    )
-    .addEventListener(
-      'click',
-      () => {
+    render();
+  });
 
-        openPersonId =
-          isOpen
-            ? null
-            : p.id;
-
-
-        render();
-
-      }
-    );
-
-
-  if (
-    isOpen
-  ) {
-
+  if (isOpen) {
     card
-      .querySelector(
-        '.edit-holder'
-      )
-      .appendChild(
-        isAdmin
-          ? renderPersonEditForm(
-              p
-            )
-          : renderPersonReadOnly(
-              p
-            )
-      );
-
+      .querySelector(".edit-holder")
+      .appendChild(isAdmin ? renderPersonEditForm(p) : renderPersonReadOnly(p));
   }
-
 
   return card;
-
 }
-
 
 // ============================================================
 // PUBLICADOR SOLO LECTURA
 // ============================================================
 
-function renderPersonReadOnly(
-  p
-) {
-
-  const bimestres =
-    PROGRAM.map(
-      b =>
-        b.bimestre
-    );
-
+function renderPersonReadOnly(p) {
+  const bimestres = PROGRAM.map((b) => b.bimestre);
 
   return el(
     `
@@ -7031,31 +4108,24 @@ function renderPersonReadOnly(
 
             ${bimestres
               .map(
-                b =>
+                (b) =>
                   `
                     <div
                       class="avail-item"
                     >
 
                       <label>
-                        ${esc(
-                          b
-                        )}
+                        ${esc(b)}
                       </label>
 
                       <span>
-                        ${esc(
-                          p.disponibilidad[
-                            b
-                          ] ||
-                          '—'
-                        )}
+                        ${esc(p.disponibilidad[b] || "—")}
                       </span>
 
                     </div>
-                  `
+                  `,
               )
-              .join('')}
+              .join("")}
 
           </div>
 
@@ -7071,40 +4141,27 @@ function renderPersonReadOnly(
                 </label>
 
                 <span>
-                  ${esc(
-                    p.nota
-                  )}
+                  ${esc(p.nota)}
                 </span>
 
               </div>
             `
-            : ''
+            : ""
         }
 
       </div>
-    `
+    `,
   );
-
 }
-
 
 // ============================================================
 // FORMULARIO DE EDICIÓN DE PUBLICADOR
 // ============================================================
 
-function renderPersonEditForm(
-  p
-) {
+function renderPersonEditForm(p) {
+  const bimestres = PROGRAM.map((b) => b.bimestre);
 
-  const bimestres =
-    PROGRAM.map(
-      b =>
-        b.bimestre
-    );
-
-
-  const form =
-    el(`
+  const form = el(`
       <div class="edit-grid">
 
         <div class="field">
@@ -7115,9 +4172,7 @@ function renderPersonEditForm(
 
           <input
             type="text"
-            value="${esc(
-              p.nombre
-            )}"
+            value="${esc(p.nombre)}"
             data-field="nombre"
           />
 
@@ -7136,11 +4191,7 @@ function renderPersonEditForm(
               <input
                 type="checkbox"
                 data-field="elig_oraciones"
-                ${
-                  p.elig_oraciones
-                    ? 'checked'
-                    : ''
-                }
+                ${p.elig_oraciones ? "checked" : ""}
               />
 
               Oraciones
@@ -7153,11 +4204,7 @@ function renderPersonEditForm(
               <input
                 type="checkbox"
                 data-field="elig_parte1"
-                ${
-                  p.elig_parte1
-                    ? 'checked'
-                    : ''
-                }
+                ${p.elig_parte1 ? "checked" : ""}
               />
 
               Asignación #1 (Tesoros)
@@ -7170,11 +4217,7 @@ function renderPersonEditForm(
               <input
                 type="checkbox"
                 data-field="elig_perlas"
-                ${
-                  p.elig_perlas
-                    ? 'checked'
-                    : ''
-                }
+                ${p.elig_perlas ? "checked" : ""}
               />
 
               Perlas escondidas
@@ -7187,11 +4230,7 @@ function renderPersonEditForm(
               <input
                 type="checkbox"
                 data-field="elig_nvc"
-                ${
-                  p.elig_nvc
-                    ? 'checked'
-                    : ''
-                }
+                ${p.elig_nvc ? "checked" : ""}
               />
 
               Nuestra Vida Cristiana
@@ -7204,11 +4243,7 @@ function renderPersonEditForm(
               <input
                 type="checkbox"
                 data-field="elig_estudio_biblico"
-                ${
-                  p.elig_estudio_biblico
-                    ? 'checked'
-                    : ''
-                }
+                ${p.elig_estudio_biblico ? "checked" : ""}
               />
 
               Estudio bíblico (conductor)
@@ -7221,11 +4256,7 @@ function renderPersonEditForm(
               <input
                 type="checkbox"
                 data-field="elig_intro_conclusion"
-                ${
-                  p.elig_intro_conclusion
-                    ? 'checked'
-                    : ''
-                }
+                ${p.elig_intro_conclusion ? "checked" : ""}
               />
 
               Introducción / Conclusión
@@ -7238,11 +4269,7 @@ function renderPersonEditForm(
               <input
                 type="checkbox"
                 data-field="elig_maestros_lectura"
-                ${
-                  p.elig_maestros_lectura
-                    ? 'checked'
-                    : ''
-                }
+                ${p.elig_maestros_lectura ? "checked" : ""}
               />
 
               Mejores Maestros / Lectura Biblia
@@ -7255,11 +4282,7 @@ function renderPersonEditForm(
               <input
                 type="checkbox"
                 data-field="elig_lector_estudio"
-                ${
-                  p.elig_lector_estudio
-                    ? 'checked'
-                    : ''
-                }
+                ${p.elig_lector_estudio ? "checked" : ""}
               />
 
               Lector — Estudio bíblico
@@ -7280,33 +4303,23 @@ function renderPersonEditForm(
 
             ${bimestres
               .map(
-                b =>
+                (b) =>
                   `
                     <div
                       class="avail-item"
                     >
 
                       <label>
-                        ${esc(
-                          b
-                        )}
+                        ${esc(b)}
                       </label>
 
                       <select
-                        data-avail="${esc(
-                          b
-                        )}"
+                        data-avail="${esc(b)}"
                       >
 
                         <option
                           value=""
-                          ${
-                            !p.disponibilidad[
-                              b
-                            ]
-                              ? 'selected'
-                              : ''
-                          }
+                          ${!p.disponibilidad[b] ? "selected" : ""}
                         >
                           —
                         </option>
@@ -7314,12 +4327,9 @@ function renderPersonEditForm(
                         <option
                           value="Disponible"
                           ${
-                            p.disponibilidad[
-                              b
-                            ] ===
-                            'Disponible'
-                              ? 'selected'
-                              : ''
+                            p.disponibilidad[b] === "Disponible"
+                              ? "selected"
+                              : ""
                           }
                         >
                           Disponible
@@ -7327,14 +4337,7 @@ function renderPersonEditForm(
 
                         <option
                           value="Usado"
-                          ${
-                            p.disponibilidad[
-                              b
-                            ] ===
-                            'Usado'
-                              ? 'selected'
-                              : ''
-                          }
+                          ${p.disponibilidad[b] === "Usado" ? "selected" : ""}
                         >
                           Usado
                         </option>
@@ -7342,9 +4345,9 @@ function renderPersonEditForm(
                       </select>
 
                     </div>
-                  `
+                  `,
               )
-              .join('')}
+              .join("")}
 
           </div>
 
@@ -7358,10 +4361,7 @@ function renderPersonEditForm(
 
           <input
             type="text"
-            value="${esc(
-              p.nota ||
-              ''
-            )}"
+            value="${esc(p.nota || "")}"
             data-field="nota"
             placeholder="Ej: por ahora no, problema de salud…"
           />
@@ -7389,298 +4389,124 @@ function renderPersonEditForm(
       </div>
     `);
 
-
   form
-    .querySelector(
-      '[data-field="nombre"]'
-    )
-    .addEventListener(
-      'change',
-      e => {
+    .querySelector('[data-field="nombre"]')
+    .addEventListener("change", (e) => {
+      p.nombre = e.target.value.trim() || p.nombre;
 
-        p.nombre =
-          e.target.value.trim() ||
-          p.nombre;
+      savePeople();
 
+      render();
+    });
+
+  form.querySelector('[data-field="nota"]').addEventListener("change", (e) => {
+    p.nota = e.target.value;
+
+    savePeople();
+  });
+
+  [
+    "elig_oraciones",
+    "elig_parte1",
+    "elig_perlas",
+    "elig_nvc",
+    "elig_estudio_biblico",
+    "elig_intro_conclusion",
+    "elig_maestros_lectura",
+    "elig_lector_estudio",
+  ].forEach((f) => {
+    form
+      .querySelector(`[data-field="${f}"]`)
+      .addEventListener("change", (e) => {
+        p[f] = e.target.checked;
 
         savePeople();
 
         render();
+      });
+  });
 
-      }
-    );
+  form.querySelectorAll("[data-avail]").forEach((sel) => {
+    sel.addEventListener("change", (e) => {
+      p.disponibilidad[sel.dataset.avail] = e.target.value;
 
+      savePeople();
+    });
+  });
 
-  form
-    .querySelector(
-      '[data-field="nota"]'
-    )
-    .addEventListener(
-      'change',
-      e => {
+  form.querySelector("#del-person").addEventListener("click", () => {
+    openConfirmModal(
+      `¿Eliminar a ${p.nombre} de la base de datos? Esta acción no se puede deshacer.`,
 
-        p.nota =
-          e.target.value;
+      () => {
+        PEOPLE = PEOPLE.filter((x) => x.id !== p.id);
 
+        openPersonId = null;
 
         savePeople();
 
-      }
+        render();
+      },
+
+      {
+        title: "Eliminar publicador",
+
+        okLabel: "Eliminar",
+
+        danger: true,
+      },
     );
-
-
-  [
-    'elig_oraciones',
-    'elig_parte1',
-    'elig_perlas',
-    'elig_nvc',
-    'elig_estudio_biblico',
-    'elig_intro_conclusion',
-    'elig_maestros_lectura',
-    'elig_lector_estudio'
-  ].forEach(
-    f => {
-
-      form
-        .querySelector(
-          `[data-field="${f}"]`
-        )
-        .addEventListener(
-          'change',
-          e => {
-
-            p[f] =
-              e.target.checked;
-
-
-            savePeople();
-
-            render();
-
-          }
-        );
-
-    }
-  );
-
-
-  form
-    .querySelectorAll(
-      '[data-avail]'
-    )
-    .forEach(
-      sel => {
-
-        sel.addEventListener(
-          'change',
-          e => {
-
-            p.disponibilidad[
-              sel.dataset.avail
-            ] =
-              e.target.value;
-
-
-            savePeople();
-
-          }
-        );
-
-      }
-    );
-
-
-  form
-    .querySelector(
-      '#del-person'
-    )
-    .addEventListener(
-      'click',
-      () => {
-
-        openConfirmModal(
-          `¿Eliminar a ${p.nombre} de la base de datos? Esta acción no se puede deshacer.`,
-
-          () => {
-
-            PEOPLE =
-              PEOPLE.filter(
-                x =>
-                  x.id !==
-                  p.id
-              );
-
-
-            openPersonId =
-              null;
-
-
-            savePeople();
-
-            render();
-
-          },
-
-          {
-            title:
-              'Eliminar publicador',
-
-            okLabel:
-              'Eliminar',
-
-            danger:
-              true
-          }
-        );
-
-      }
-    );
-
+  });
 
   return form;
-
 }
-
 
 // ============================================================
 // AGREGAR NUEVO PUBLICADOR
 // ============================================================
 
 function addNewPerson() {
+  openTextPromptModal("Nuevo publicador", "Nombre completo", (nombre) => {
+    const bimestres = PROGRAM.map((b) => b.bimestre);
 
-  openTextPromptModal(
-    'Nuevo publicador',
-    'Nombre completo',
-    nombreCrudo => {
+    const disp = {};
 
-      const nombre =
-        String(nombreCrudo || '').trim();
+    bimestres.forEach((b) => {
+      disp[b] = "Disponible";
+    });
 
-      if (!nombre) return;
+    const newP = {
+      id: "p_" + Date.now(),
 
-      // Buscamos coincidencia exacta primero. Si no hay, también
-      // avisamos ante nombres muy parecidos (ej. una tilde de más
-      // o de menos, o dobles espacios), que suelen ser errores de
-      // escritura y no personas distintas.
-      const key = normName(nombre);
+      nombre: nombre.trim(),
 
-      const exactMatch =
-        PEOPLE.find(p => normName(p.nombre) === key);
+      nota: "",
 
-      const similarMatch =
-        !exactMatch
-          ? PEOPLE.find(p => {
-              const otherKey = normName(p.nombre);
-              return (
-                otherKey !== key &&
-                (otherKey.includes(key) || key.includes(otherKey))
-              );
-            })
-          : null;
+      disponibilidad: disp,
 
-      const crearPublicador = () => {
+      elig_perlas: false,
 
-        const bimestres =
-          PROGRAM.map(
-            b =>
-              b.bimestre
-          );
+      elig_intro_conclusion: false,
 
+      elig_parte1: false,
 
-        const disp =
-          {};
+      elig_nvc: false,
 
+      elig_estudio_biblico: false,
 
-        bimestres.forEach(
-          b => {
+      elig_oraciones: false,
 
-            disp[b] =
-              'Disponible';
+      elig_maestros_lectura: false,
 
-          }
-        );
+      elig_lector_estudio: false,
+    };
 
+    PEOPLE.push(newP);
 
-        const newP = {
+    openPersonId = newP.id;
 
-          id:
-            'p_' +
-            Date.now(),
+    savePeople();
 
-          nombre,
-
-          nota:
-            '',
-
-          disponibilidad:
-            disp,
-
-          elig_perlas:
-            false,
-
-          elig_intro_conclusion:
-            false,
-
-          elig_parte1:
-            false,
-
-          elig_nvc:
-              false,
-
-          elig_estudio_biblico:
-            false,
-
-          elig_oraciones:
-            false,
-
-          elig_maestros_lectura:
-            false,
-
-          elig_lector_estudio:
-            false
-
-        };
-
-
-        PEOPLE.push(
-          newP
-        );
-
-
-        openPersonId =
-          newP.id;
-
-
-        savePeople();
-
-
-        render();
-
-      };
-
-      if (exactMatch) {
-
-        openConfirmModal(
-          `Ya existe un publicador llamado "${exactMatch.nombre}". ¿Quieres agregar a "${nombre}" de todos modos, como una persona aparte?`,
-          crearPublicador,
-          { title: 'Ese nombre ya existe', okLabel: 'Agregar de todos modos' }
-        );
-
-      } else if (similarMatch) {
-
-        openConfirmModal(
-          `Ya existe un publicador con un nombre parecido: "${similarMatch.nombre}". ¿Seguro que "${nombre}" es una persona distinta?`,
-          crearPublicador,
-          { title: 'Nombre parecido encontrado', okLabel: 'Sí, es otra persona' }
-        );
-
-      } else {
-
-        crearPublicador();
-
-      }
-
-    }
-  );
-
+    render();
+  });
 }
