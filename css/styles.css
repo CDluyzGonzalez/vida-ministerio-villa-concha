@@ -153,7 +153,6 @@ body{
 .song-label{display:flex;align-items:center;gap:6px;}
 .song-icon{display:inline-flex;align-items:center;line-height:0;color:var(--gold-deep);}
 .song-icon svg{width:16px;height:16px;display:block;}
-.song-text{display:inline;font-size:13.5px;line-height:1.4;}
 
 .item-row{
   display:flex; justify-content:space-between; align-items:flex-start; gap:14px;
@@ -245,47 +244,19 @@ body{
 .sheets-status.connected{color:#e7efe4;border-color:rgba(231,239,228,.35);}
 .sheets-status.offline{color:#f4d2c2;border-color:rgba(244,210,194,.3);}
 .program-toolbar .actions{display:flex; gap:8px; flex-wrap:wrap;}
-.print-only-root{display:none;}
-.print-week-title{
-  font-family:'Fraunces',serif; font-weight:600; font-size:17px; color:var(--teal-deep);
-  margin:0 0 4px;
+/* ---- aviso de guardado (toast) ---- */
+#wm-save-toast{
+  position:fixed; left:50%; bottom:18px; transform:translateX(-50%) translateY(16px);
+  max-width:92vw; width:440px; background:var(--terra-bg); color:var(--terra-warn);
+  border:1.5px solid var(--terra-warn); border-radius:12px; padding:12px 14px;
+  font-family:'Inter',sans-serif; font-size:13px; font-weight:600; line-height:1.4;
+  display:flex; align-items:flex-start; gap:10px; box-shadow:0 10px 28px rgba(18,51,56,.22);
+  z-index:300; opacity:0; pointer-events:none; transition:opacity .2s ease, transform .2s ease;
 }
-.print-week-reading{
-  font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--muted);
-}
-.print-assignment{
-  flex:none; font-size:13px; font-weight:600; color:var(--teal-deep);
-  max-width:210px; text-align:right; white-space:normal;
-}
-.print-assignment.empty{color:var(--terra-warn); font-style:italic; font-weight:500;}
-@media print{
-@page{margin:12mm;}
-  body{background:#fff !important; color:#111;}
-  #root{display:none !important;}
-  .print-only-root{
-    display:block !important; max-width:900px; margin:0 auto; padding:0;
-    color:#111;
-}
-  .print-only-root .print-header{
-    border-bottom:2px solid var(--teal-deep); padding:0 0 10px; margin-bottom:14px;
-}
-  .print-only-root .print-header h1{
-    font-family:'Fraunces',serif; font-size:22px; margin:0 0 2px; color:var(--teal-deep);
-}
-  .print-only-root .print-header p{
-    margin:0; font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--muted);
-}
-  .print-only-root .week-card{
-    box-shadow:none !important; margin-bottom:12px; break-inside:auto;
-    border-color:#d8d0bf;
-}
-  .print-only-root .week-head{cursor:default;}
-  .print-only-root .week-body{
-    display:block !important; padding-top:10px; border-top:1px dashed var(--line);
-}
-  .print-only-root .item-row{break-inside:avoid;}
-  .print-only-root .edit-pencil,
-  .print-only-root .assign-btn{display:none !important;}
-  .print-only-root .assign-static{display:none !important;}
-  .print-only-root .print-assignment{display:block !important;}
+#wm-save-toast.show{ opacity:1; transform:translateX(-50%) translateY(0); pointer-events:auto; }
+#wm-save-toast.warn{ background:var(--paper-2); color:var(--gold-deep); border-color:var(--gold); }
+#wm-save-toast span{ flex:1; }
+#wm-save-toast button{
+  appearance:none; border:none; background:transparent; color:inherit; font-size:17px; line-height:1;
+  cursor:pointer; padding:0 2px; flex:none;
 }

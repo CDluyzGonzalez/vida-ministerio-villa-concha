@@ -709,6 +709,20 @@ async function postRemote(
   }
 
 
+  // Sin PIN correcto no hay token, y sin token el Apps Script
+  // rechaza el guardado (ver REQUIRE_WRITE_TOKEN en codigo.gs).
+  // Evitamos la petición de red inútil y, sobre todo, evitamos
+  // molestar a un publicador que solo está viendo el programa con
+  // un aviso de "no se pudo guardar" que no le corresponde a él.
+  if (
+    !writeToken
+  ) {
+
+    return false;
+
+  }
+
+
   try {
 
     await fetch(
@@ -727,7 +741,8 @@ async function postRemote(
         body:
           JSON.stringify({
             action,
-            payload
+            payload,
+            token: writeToken
           })
 
       }
@@ -1315,19 +1330,113 @@ async function migrateVarones() {
 
 
 // ============================================================
+// AVISO VISUAL DE GUARDADO (toast)
+// ============================================================
+// Antes, si un guardado fallaba (sin internet, Sheets caído, storage
+// bloqueado), el único rastro quedaba en la consola del navegador —
+// nadie lo veía. Estas funciones muestran un aviso visible cuando el
+// guardado NO se completó del todo, para que quien esté editando lo
+// note de inmediato y no crea que su cambio quedó guardado sin serlo.
+
+let saveToastTimer_ = null;
+
+function showSaveToast_(message, type) {
+
+  let toast = document.getElementById('wm-save-toast');
+
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'wm-save-toast';
+    document.body.appendChild(toast);
+  }
+
+  toast.className = 'save-toast ' + (type || 'error');
+
+  toast.innerHTML = `
+    <span>${esc(message)}</span>
+    <button type="button" aria-label="Cerrar aviso">×</button>
+  `;
+
+  toast.querySelector('button').addEventListener('click', hideSaveToast_);
+
+  // Forzar reflow para que la transición de entrada se aplique
+  // incluso si el toast ya estaba visible con otro mensaje.
+  void toast.offsetWidth;
+  toast.classList.add('show');
+
+  clearTimeout(saveToastTimer_);
+  const duration = type === 'error' ? 9000 : 6000;
+  saveToastTimer_ = setTimeout(hideSaveToast_, duration);
+
+}
+
+function hideSaveToast_() {
+
+  const toast = document.getElementById('wm-save-toast');
+  if (toast) toast.classList.remove('show');
+
+}
+
+// Traduce el resultado de un guardado (local + remoto) a un aviso
+// visible solo cuando algo no se completó — el guardado exitoso
+// sigue siendo silencioso, para no llenar la pantalla de avisos.
+function reportSaveOutcome_(localOk, remoteOk, queSeGuardaba) {
+
+  if (localOk && remoteOk) {
+    return;
+  }
+
+  // Un publicador que solo está viendo el programa (sin sesión de
+  // Admin) puede disparar guardados de fondo (ej. el auto-ajuste de
+  // Varones). Nunca le mostramos avisos de guardado a él — solo le
+  // corresponden a quien realmente está editando.
+  if (!isAdmin) {
+    return;
+  }
+
+  if (!localOk && !remoteOk) {
+    showSaveToast_(
+      `⚠ No se pudo guardar ${queSeGuardaba}. Revisa tu conexión e inténtalo de nuevo — el cambio podría perderse.`,
+      'error'
+    );
+    return;
+  }
+
+  if (!remoteOk) {
+    showSaveToast_(
+      `⚠ Se guardó en este dispositivo, pero no se sincronizó con Google Sheets. Otros dispositivos no verán este cambio todavía.`,
+      'warn'
+    );
+    return;
+  }
+
+  // !localOk && remoteOk
+  showSaveToast_(
+    `⚠ Se sincronizó con Google Sheets, pero no se guardó una copia en este dispositivo.`,
+    'warn'
+  );
+
+}
+
+
+// ============================================================
 // GUARDAR PROGRAMA
 // ============================================================
 
 async function saveProgram() {
 
+  let localOk = true;
+
   try {
 
-    await appStorageSet(
+    localOk = await appStorageSet(
       'wm-program',
       JSON.stringify(PROGRAM)
     );
 
   } catch (e) {
+
+    localOk = false;
 
     console.error(
       e
@@ -1336,16 +1445,21 @@ async function saveProgram() {
   }
 
 
+  let remoteOk = true;
+
   if (
     APPS_SCRIPT_URL
   ) {
 
-    await postRemote(
+    remoteOk = await postRemote(
       'saveProgram',
       PROGRAM
     );
 
   }
+
+
+  reportSaveOutcome_(localOk, remoteOk, 'el programa');
 
 }
 
@@ -1356,14 +1470,18 @@ async function saveProgram() {
 
 async function savePeople() {
 
+  let localOk = true;
+
   try {
 
-    await appStorageSet(
+    localOk = await appStorageSet(
       'wm-people',
       JSON.stringify(PEOPLE)
     );
 
   } catch (e) {
+
+    localOk = false;
 
     console.error(
       e
@@ -1372,16 +1490,21 @@ async function savePeople() {
   }
 
 
+  let remoteOk = true;
+
   if (
     APPS_SCRIPT_URL
   ) {
 
-    await postRemote(
+    remoteOk = await postRemote(
       'savePeople',
       PEOPLE
     );
 
   }
+
+
+  reportSaveOutcome_(localOk, remoteOk, 'la base de datos');
 
 }
 
@@ -2218,6 +2341,14 @@ async function openPinModal() {
           true;
 
 
+        // El token que autoriza a escribir en el Apps Script es el
+        // mismo hash del PIN, pero SOLO se guarda en memoria después
+        // de escribir el PIN correcto — nunca vive en el código como
+        // un valor fijo, igual que el propio PIN.
+        writeToken =
+          enteredHash;
+
+
         render();
 
       } else {
@@ -2405,6 +2536,90 @@ function openChangePinModal() {
       'click',
       submit
     );
+
+}
+
+
+// ============================================================
+// TOKEN DE ESCRITURA PARA GOOGLE SHEETS
+// ============================================================
+// El Apps Script (codigo.gs) puede exigir un token en cada guardado
+// para que nadie pueda modificar los datos con solo conocer la URL
+// /exec. Ese token es EL MISMO hash del PIN actual -- asi solo hay
+// un secreto que administrar, no dos. Este modal solo muestra ese
+// hash para que lo copies una vez dentro de Apps Script:
+// Configuracion del proyecto -> Propiedades del script -> WRITE_TOKEN.
+
+async function openWriteTokenModal() {
+
+  const currentHash =
+    await getAdminPin();
+
+  const overlay =
+    openOverlay(`
+      <div class="modal-head">
+        <h3>Token de guardado (Apps Script)</h3>
+        <p>
+          Copia este valor y pegalo en tu proyecto de Apps Script:
+          Configuracion del proyecto -> Propiedades del script ->
+          agrega una propiedad llamada <b>WRITE_TOKEN</b> con este
+          valor. Solo hazlo una vez -- si mas adelante cambias el
+          PIN, vuelve a abrir esta ventana y actualiza la propiedad
+          con el nuevo valor.
+        </p>
+      </div>
+      <div class="modal-search">
+        <input
+          class="search-input"
+          id="write-token-value"
+          type="text"
+          value="${esc(currentHash)}"
+          readonly
+        />
+      </div>
+      <div class="modal-foot">
+        <span
+          class="empty-note"
+          id="write-token-copied"
+          style="padding:0; margin-right:auto; display:none;"
+        >
+          Copiado ✓
+        </span>
+        <button class="btn btn-ghost btn-sm" data-a="close">Cerrar</button>
+        <button class="btn btn-primary btn-sm" data-a="copy">Copiar</button>
+      </div>
+    `);
+
+  const input =
+    overlay.querySelector('#write-token-value');
+
+  overlay
+    .querySelector('[data-a="close"]')
+    .addEventListener('click', () => overlay.remove());
+
+  overlay
+    .querySelector('[data-a="copy"]')
+    .addEventListener('click', async () => {
+
+      input.select();
+
+      try {
+
+        if (navigator.clipboard?.writeText) {
+          await navigator.clipboard.writeText(currentHash);
+        } else {
+          document.execCommand('copy');
+        }
+
+        overlay.querySelector('#write-token-copied').style.display = 'inline';
+
+      } catch (e) {
+
+        console.warn('No se pudo copiar automaticamente.', e);
+
+      }
+
+    });
 
 }
 
@@ -3154,6 +3369,9 @@ function renderHeader() {
 
               isAdmin =
                 false;
+
+              writeToken =
+                null;
 
               render();
 
@@ -5269,8 +5487,8 @@ function renderItemRow(
 
 
     /*
-     * El texto se fuerza visible con estilo inline para
-     * evitar que un CSS anterior oculte .song-text.
+     * El texto se fuerza visible con estilo inline por precaución
+     * (evita que quede oculto si algún CSS futuro afecta esta fila).
      */
     labelDiv.appendChild(
       el(
@@ -6360,6 +6578,19 @@ function renderPublicadoresTab() {
             isAdmin
               ? `
                 <button
+                  class="btn btn-ghost btn-sm"
+                  id="show-write-token"
+                >
+                  🔑 Token de guardado
+                </button>
+              `
+              : ''
+          }
+
+          ${
+            isAdmin
+              ? `
+                <button
                   class="btn btn-primary btn-sm"
                   id="add-person"
                 >
@@ -6423,6 +6654,17 @@ function renderPublicadoresTab() {
         'click',
         () =>
           openChangePinModal()
+      );
+
+
+    toolbar
+      .querySelector(
+        '#show-write-token'
+      )
+      .addEventListener(
+        'click',
+        () =>
+          openWriteTokenModal()
       );
 
 
@@ -7309,84 +7551,134 @@ function addNewPerson() {
   openTextPromptModal(
     'Nuevo publicador',
     'Nombre completo',
-    nombre => {
+    nombreCrudo => {
 
-      const bimestres =
-        PROGRAM.map(
-          b =>
-            b.bimestre
+      const nombre =
+        String(nombreCrudo || '').trim();
+
+      if (!nombre) return;
+
+      // Buscamos coincidencia exacta primero. Si no hay, también
+      // avisamos ante nombres muy parecidos (ej. una tilde de más
+      // o de menos, o dobles espacios), que suelen ser errores de
+      // escritura y no personas distintas.
+      const key = normName(nombre);
+
+      const exactMatch =
+        PEOPLE.find(p => normName(p.nombre) === key);
+
+      const similarMatch =
+        !exactMatch
+          ? PEOPLE.find(p => {
+              const otherKey = normName(p.nombre);
+              return (
+                otherKey !== key &&
+                (otherKey.includes(key) || key.includes(otherKey))
+              );
+            })
+          : null;
+
+      const crearPublicador = () => {
+
+        const bimestres =
+          PROGRAM.map(
+            b =>
+              b.bimestre
+          );
+
+
+        const disp =
+          {};
+
+
+        bimestres.forEach(
+          b => {
+
+            disp[b] =
+              'Disponible';
+
+          }
         );
 
 
-      const disp =
-        {};
+        const newP = {
 
+          id:
+            'p_' +
+            Date.now(),
 
-      bimestres.forEach(
-        b => {
+          nombre,
 
-          disp[b] =
-            'Disponible';
+          nota:
+            '',
 
-        }
-      );
+          disponibilidad:
+            disp,
 
-
-      const newP = {
-
-        id:
-          'p_' +
-          Date.now(),
-
-        nombre:
-          nombre.trim(),
-
-        nota:
-          '',
-
-        disponibilidad:
-          disp,
-
-        elig_perlas:
-          false,
-
-        elig_intro_conclusion:
-          false,
-
-        elig_parte1:
-          false,
-
-        elig_nvc:
+          elig_perlas:
             false,
 
-        elig_estudio_biblico:
-          false,
+          elig_intro_conclusion:
+            false,
 
-        elig_oraciones:
-          false,
+          elig_parte1:
+            false,
 
-        elig_maestros_lectura:
-          false,
+          elig_nvc:
+              false,
 
-        elig_lector_estudio:
-          false
+          elig_estudio_biblico:
+            false,
+
+          elig_oraciones:
+            false,
+
+          elig_maestros_lectura:
+            false,
+
+          elig_lector_estudio:
+            false
+
+        };
+
+
+        PEOPLE.push(
+          newP
+        );
+
+
+        openPersonId =
+          newP.id;
+
+
+        savePeople();
+
+
+        render();
 
       };
 
+      if (exactMatch) {
 
-      PEOPLE.push(
-        newP
-      );
+        openConfirmModal(
+          `Ya existe un publicador llamado "${exactMatch.nombre}". ¿Quieres agregar a "${nombre}" de todos modos, como una persona aparte?`,
+          crearPublicador,
+          { title: 'Ese nombre ya existe', okLabel: 'Agregar de todos modos' }
+        );
 
+      } else if (similarMatch) {
 
-      openPersonId =
-        newP.id;
+        openConfirmModal(
+          `Ya existe un publicador con un nombre parecido: "${similarMatch.nombre}". ¿Seguro que "${nombre}" es una persona distinta?`,
+          crearPublicador,
+          { title: 'Nombre parecido encontrado', okLabel: 'Sí, es otra persona' }
+        );
 
+      } else {
 
-      savePeople();
+        crearPublicador();
 
-
-      render();
+      }
 
     }
   );

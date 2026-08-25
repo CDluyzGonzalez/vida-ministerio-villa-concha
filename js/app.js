@@ -41,6 +41,12 @@ let openPersonId = null;
 
 let sheetsConnected = false;
 
+// Token que autoriza a guardar en Google Sheets. Es el mismo hash del
+// PIN, calculado en memoria SOLO tras un ingreso de PIN correcto —
+// nunca vive como un valor fijo en el código. Se limpia al salir del
+// modo administrador. Ver openWriteTokenModal() en functions.js.
+let writeToken = null;
+
 
 // ============================================================
 // CONFIGURACIÓN GENERAL
