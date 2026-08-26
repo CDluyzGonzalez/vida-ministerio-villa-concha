@@ -1,0 +1,42 @@
+{
+  "id": "./",
+  "name": "Vida y Ministerio — Villa Concha",
+  "short_name": "Vida y Ministerio",
+  "description": "Programa de Vida y Ministerio — Villa Concha",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#F8F5EE",
+  "theme_color": "#575a5d",
+  "lang": "es-CO",
+
+  "icons": [
+    {
+      "src": "./icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+
+  "screenshots": [
+    {
+      "src": "./screenshots/mobile.png",
+      "sizes": "720x1431",
+      "type": "image/png"
+    },
+    {
+      "src": "./screenshots/desktop.png",
+      "sizes": "1917x948",
+      "type": "image/png",
+      "form_factor": "wide"
+    }
+  ]
+}

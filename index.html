@@ -10,6 +10,45 @@
         content="width=device-width, initial-scale=1.0"
     >
 
+    <link rel="manifest" href="./manifest.json">
+
+    <script>
+        window.wmDeferredInstallPrompt = null;
+
+        window.addEventListener("beforeinstallprompt", (event) => {
+            event.preventDefault();
+
+        window.wmDeferredInstallPrompt = event;
+
+        window.dispatchEvent(
+            new Event("wm-install-ready")
+        );
+    });
+
+    window.addEventListener("appinstalled", () => {
+        window.wmDeferredInstallPrompt = null;
+
+        window.dispatchEvent(
+            new Event("wm-app-installed")
+            );
+        });
+    </script>
+
+    <link rel="apple-touch-icon" href="./icons/icon-192.png">
+
+    <link rel="apple-touch-icon" href="./icons/icon-192.png">
+
+    <meta name="theme-color" content="#575a5d">
+
+    <meta name="apple-mobile-web-app-capable"
+        content="yes">
+
+    <meta name="apple-mobile-web-app-status-bar-style"
+        content="default">
+
+    <meta name="apple-mobile-web-app-title"
+        content="Vida y Ministerio">
+
     <title>Vida y Ministerio — Villa Concha</title>
 
 

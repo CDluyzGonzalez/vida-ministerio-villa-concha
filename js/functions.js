@@ -15,6 +15,7 @@
 // CONFIGURACIÓN DE CATEGORÍAS
 // ============================================================
 
+
 // PDF: mientras se exporta, las semanas se fuerzan abiertas y los
 // controles de edición (lápices, botones de asignar, agregar/eliminar)
 // se ocultan, mostrando el mismo estilo de solo lectura que ve un
@@ -1988,6 +1989,16 @@ function renderHeader() {
             ☁ Sheets no conectado
           </span>
 
+          <span class="install-app-slot">
+            <button
+              class="install-app-btn"
+              type="button"
+              title="Instalar Vida y Ministerio"
+            >
+              📲 Descargar app
+            </button>
+          </span>
+
           <span
             class="admin-toggle"
             style="margin-left:8px;"
@@ -2024,53 +2035,191 @@ function renderHeader() {
 
   header.querySelector(".brand").style.display = "flex";
 
-  const adminSlot = header.querySelector(".admin-toggle");
+  // ==========================================================
+  // BOTÓN INSTALAR APP
+  // ==========================================================
+
+  const installButton =
+    header.querySelector(".install-app-btn");
+
+  if (installButton) {
+
+    installButton.addEventListener("click", async () => {
+
+      const installPrompt =
+        window.wmDeferredInstallPrompt;
+
+      // Android / Chrome / Edge
+      if (installPrompt) {
+
+        installPrompt.prompt();
+
+        const { outcome } =
+          await installPrompt.userChoice;
+
+        if (outcome === "accepted") {
+          window.wmDeferredInstallPrompt = null;
+          render();
+        }
+
+        return;
+      }
+
+      // iPhone / iPad
+      const isIOS =
+        /iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+      if (isIOS) {
+
+        const overlay = openOverlay(`
+          <div class="modal-head">
+
+            <h3>
+              Instalar Vida y Ministerio
+            </h3>
+
+            <p>
+              Para instalar la aplicación en tu iPhone:
+            </p>
+
+          </div>
+
+          <div class="modal-search">
+
+            <div class="install-ios-steps">
+
+              <p>
+                <strong>1.</strong>
+                Abre esta página en <strong>Safari</strong>.
+              </p>
+
+              <p>
+                <strong>2.</strong>
+                Pulsa el botón
+                <strong>Compartir</strong>.
+              </p>
+
+              <p>
+                <strong>3.</strong>
+                Selecciona
+                <strong>“Añadir a pantalla de inicio”</strong>.
+              </p>
+
+              <p>
+                <strong>4.</strong>
+                Pulsa <strong>“Añadir”</strong>.
+              </p>
+
+            </div>
+
+          </div>
+
+          <div class="modal-foot">
+
+            <button
+              class="btn btn-primary btn-sm"
+              data-a="ok"
+            >
+              Entendido
+            </button>
+
+          </div>
+        `);
+
+        overlay
+          .querySelector('[data-a="ok"]')
+          .addEventListener(
+            "click",
+            () => overlay.remove()
+          );
+
+        return;
+      }
+
+      // Otros navegadores
+      alert(
+        "La instalación directa no está disponible en este navegador. " +
+        "Busca la opción “Instalar aplicación” o “Añadir a pantalla de inicio” " +
+        "en el menú del navegador."
+      );
+
+    });
+
+  }
+
+  // ==========================================================
+  // BOTÓN ADMIN
+  // ==========================================================
+
+  const adminSlot =
+    header.querySelector(".admin-toggle");
 
   if (isAdmin) {
+
     adminSlot.innerHTML = `
-        <button
-          class="admin-btn admin-on"
-        >
-          🔓 Admin
-        </button>
-      `;
-
-    adminSlot.querySelector("button").addEventListener("click", () => {
-      openConfirmModal(
-        "¿Salir del modo administrador? Dejarás de poder editar hasta ingresar el PIN de nuevo.",
-        () => {
-          isAdmin = false;
-
-          render();
-        },
-        {
-          title: "Salir de modo admin",
-
-          okLabel: "Salir",
-        },
-      );
-    });
-  } else {
-    adminSlot.innerHTML = `
-        <button
-          class="admin-btn"
-        >
-          🔒 Admin
-        </button>
-      `;
+      <button
+        class="admin-btn admin-on"
+      >
+        🔓 Admin
+      </button>
+    `;
 
     adminSlot
       .querySelector("button")
-      .addEventListener("click", () => openPinModal());
+      .addEventListener("click", () => {
+
+        openConfirmModal(
+          "¿Salir del modo administrador? Dejarás de poder editar hasta ingresar el PIN de nuevo.",
+
+          () => {
+            isAdmin = false;
+            render();
+          },
+
+          {
+            title: "Salir de modo admin",
+            okLabel: "Salir",
+          },
+        );
+
+      });
+
+  } else {
+
+    adminSlot.innerHTML = `
+      <button
+        class="admin-btn"
+      >
+        🔒 Admin
+      </button>
+    `;
+
+    adminSlot
+      .querySelector("button")
+      .addEventListener(
+        "click",
+        () => openPinModal()
+      );
+
   }
 
-  header.querySelectorAll("button[data-tab]").forEach((b) => {
-    b.addEventListener("click", () => {
-      currentTab = b.dataset.tab;
+  // ==========================================================
+  // PESTAÑAS
+  // ==========================================================
 
-      render();
+  header
+    .querySelectorAll("button[data-tab]")
+    .forEach((b) => {
+
+      b.addEventListener("click", () => {
+
+        currentTab = b.dataset.tab;
+
+        render();
+
+      });
+
     });
-  });
 
   return header;
 }

@@ -38,45 +38,180 @@ body{
 .app-header .brand{
   display:flex; align-items:baseline; gap:10px; margin-bottom:14px;
 }
+
 .admin-btn{
-  font-family:'IBM Plex Mono',monospace; font-size:12px; font-weight:600;
-  background:rgba(244,237,224,.08); border:1.5px solid rgba(244,237,224,.25); color:#cfe0dd;
-  padding:6px 12px; border-radius:999px; cursor:pointer; letter-spacing:.02em;
+  font-family:'IBM Plex Mono',monospace; 
+  font-size:12px; 
+  font-weight:600;
+  background:rgba(244,237,224,.08); 
+  border:1.5px solid rgba(244,237,224,.25); 
+  color:#cfe0dd;
+  padding:6px 12px; 
+  border-radius:999px; 
+  cursor:pointer; 
+  letter-spacing:.02em;
 }
-.admin-btn.admin-on{ background:var(--gold); border-color:var(--gold); color:#fff; }
+
+.admin-btn.admin-on{ 
+  background:var(--gold); 
+  border-color:var(--gold); 
+  color:#fff; 
+}
+
+/* ============================================================
+  BOTÓN DESCARGAR APP
+   ============================================================ */
+
+.install-app-slot{
+  display:inline-flex;
+  align-items:center;
+  margin-left:2px;
+}
+
+.install-app-btn{
+  appearance:none;
+  -webkit-appearance:none;
+
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+
+  min-height:38px;
+  padding:7px 14px;
+
+  border:1px solid rgba(244,237,224,.35);
+  border-radius:999px;
+
+  background:rgba(244,237,224,.08);
+  color:#f4ede0;
+
+  font-family:'Inter',sans-serif;
+  font-size:12px;
+  font-weight:600;
+  line-height:1.2;
+
+  white-space:nowrap;
+  cursor:pointer;
+
+  box-shadow:none;
+
+  transition:
+    background .15s ease,
+    border-color .15s ease,
+    transform .15s ease;
+}
+
+.install-app-btn:hover{
+  background:rgba(244,237,224,.15);
+  border-color:rgba(244,237,224,.55);
+}
+
+.install-app-btn:active{
+  transform:translateY(1px);
+}
+
+.install-app-btn:focus-visible{
+  outline:2px solid var(--gold);
+  outline-offset:2px;
+}
+
 .view-only-note{
-  font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:var(--muted);
-  background:var(--paper-2); border:1px dashed var(--line); border-radius:9px;
-  padding:9px 12px; margin-bottom:16px; line-height:1.5;
+  font-family:'IBM Plex Mono',monospace; 
+  font-size:11.5px; 
+  color:var(--muted);
+  background:var(--paper-2); 
+  border:1px dashed var(--line); 
+  border-radius:9px;
+  padding:9px 12px; 
+  margin-bottom:16px; 
+  line-height:1.5;
 }
+
 .item-label.readonly{ color:var(--ink); }
+
 .assign-static{
-  flex:none; font-family:'Inter',sans-serif; font-size:13.5px; font-weight:600; color:var(--teal-deep);
-  max-width:190px; text-align:right; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  flex:none; font-family:'Inter',sans-serif; 
+  font-size:13.5px; 
+  font-weight:600; 
+  color:var(--teal-deep);
+  max-width:190px; 
+  text-align:right; 
+  white-space:nowrap; 
+  overflow:hidden; 
+  text-overflow:ellipsis;
 }
-.assign-static.empty{ color:var(--terra-warn); font-style:italic; font-weight:500; }
+.assign-static.empty{ 
+  color:var(--terra-warn); 
+  font-style:italic; 
+  font-weight:500; 
+}
+
 .edit-pencil{
-  appearance:none; border:none; background:var(--paper-2); color:var(--gold-deep);
-  width:24px; height:24px; border-radius:7px; cursor:pointer; font-size:12px;
-  display:inline-flex; align-items:center; justify-content:center; flex:none;
+  appearance:none; border:none; 
+  background:var(--paper-2); 
+  color:var(--gold-deep);
+  width:24px; 
+  height:24px; 
+  border-radius:7px; 
+  cursor:pointer; 
+  font-size:12px;
+  display:inline-flex; 
+  align-items:center; 
+  justify-content:center; 
+  flex:none;
   margin-left:6px;
 }
-.edit-pencil:hover{ background:#ecdfc2; }
-.wk-titles-row{ display:flex; align-items:center; gap:2px; }
-.wk-lectura-row{ display:flex; align-items:center; gap:2px; }
+
+.edit-pencil:hover{ 
+  background:#ecdfc2; 
+}
+
+.wk-titles-row{ 
+  display:flex; 
+  align-items:center; 
+  gap:2px; 
+}
+
+.wk-lectura-row{ 
+  display:flex; 
+  align-items:center; 
+  gap:2px; 
+}
+
 .app-header .brand h1{
-  font-family:'Fraunces',serif; font-weight:600; font-size:22px; margin:0; letter-spacing:.2px;
+  font-family:'Fraunces',serif; 
+  font-weight:600; 
+  font-size:22px; 
+  margin:0; 
+  letter-spacing:.2px;
 }
+
 .app-header .brand span.sub{
-  font-family:'IBM Plex Mono',monospace; font-size:11px; color:#c9b98e; letter-spacing:.06em; text-transform:uppercase;
+  font-family:'IBM Plex Mono',monospace; 
+  font-size:11px; 
+  color:#c9b98e; 
+  letter-spacing:.06em; 
+  text-transform:uppercase;
 }
-.tabbar{display:flex; gap:4px;}
+
+.tabbar{
+  display:flex; 
+  gap:4px;
+}
+
 .tabbar button{
-  appearance:none; border:none; background:transparent; color:#cfe0dd;
-  font-family:'Inter',sans-serif; font-weight:600; font-size:14px;
-  padding:10px 16px; cursor:pointer; border-radius:10px 10px 0 0;
+  appearance:none; border:none; 
+  background:transparent; 
+  color:#cfe0dd;
+  font-family:'Inter',sans-serif; 
+  font-weight:600; font-size:14px;
+  padding:10px 16px; 
+  cursor:pointer; 
+  border-radius:10px 10px 0 0;
   position:relative; top:1px;
 }
+
 .tabbar button.active{ background:var(--paper); color:var(--teal-deep); }
 
 /* ---- generic ---- */
@@ -253,10 +388,40 @@ body{
   display:flex; align-items:flex-start; gap:10px; box-shadow:0 10px 28px rgba(18,51,56,.22);
   z-index:300; opacity:0; pointer-events:none; transition:opacity .2s ease, transform .2s ease;
 }
-#wm-save-toast.show{ opacity:1; transform:translateX(-50%) translateY(0); pointer-events:auto; }
-#wm-save-toast.warn{ background:var(--paper-2); color:var(--gold-deep); border-color:var(--gold); }
-#wm-save-toast span{ flex:1; }
+#wm-save-toast.show{ 
+  opacity:1; 
+  transform:translateX(-50%) translateY(0); 
+  pointer-events:auto; 
+}
+
+#wm-save-toast.warn{ 
+  background:var(--paper-2); 
+  color:var(--gold-deep); 
+  border-color:var(--gold); 
+}
+
+#wm-save-toast span{ 
+  flex:1; 
+}
+
 #wm-save-toast button{
-  appearance:none; border:none; background:transparent; color:inherit; font-size:17px; line-height:1;
-  cursor:pointer; padding:0 2px; flex:none;
+  appearance:none; 
+  border:none; 
+  background:transparent; 
+  color:inherit; 
+  font-size:17px; 
+  line-height:1;
+  cursor:pointer; 
+  padding:0 2px; 
+  flex:none;
+}
+
+@media (max-width:639px){
+
+  .install-app-btn{
+    min-height:34px;
+    padding:6px 10px;
+    font-size:11px;
+  }
+
 }
