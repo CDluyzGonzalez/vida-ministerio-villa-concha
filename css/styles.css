@@ -418,10 +418,63 @@ body{
 
 @media (max-width:639px){
 
+  .app-header{
+    padding:14px 12px 0;
+  }
+
+  .app-header .brand{
+    display:flex;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:7px;
+    margin-bottom:10px;
+  }
+
+  .app-header .brand h1{
+    font-size:19px;
+    flex:1 1 auto;
+    min-width:0;
+  }
+
+  .app-header .brand span.sub{
+    font-size:9px;
+    flex:0 0 auto;
+  }
+
+  .install-app-slot{
+    flex:0 0 auto;
+    margin-left:0;
+  }
+
   .install-app-btn{
-    min-height:34px;
-    padding:6px 10px;
+    min-height:32px;
+    padding:5px 9px;
+    font-size:10.5px;
+  }
+
+  .admin-btn{
+    flex:0 0 auto;
+    padding:5px 10px;
     font-size:11px;
+  }
+
+  .tabbar{
+    width:100%;
+    overflow-x:auto;
+    overflow-y:hidden;
+    gap:2px;
+    scrollbar-width:none;
+  }
+
+  .tabbar::-webkit-scrollbar{
+    display:none;
+  }
+
+  .tabbar button{
+    flex:0 0 auto;
+    font-size:12.5px;
+    padding:9px 11px;
+    white-space:nowrap;
   }
 
 }
