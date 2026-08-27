@@ -3,13 +3,14 @@
 > Aplicación web progresiva (PWA) para la gestión, consulta y organización de las asignaciones semanales del programa **Vida y Ministerio.**
 
 🌐 [**Ver aplicación en producción**](https://vida-ministerio-villa-concha.vercel.app/)
+
 📦 [**Ver código fuente en GitHub**](https://github.com/CDluyzGonzalez/vida-ministerio-villa-concha)
 
 ---
 
 ## 📋 Descripción
 
-**Vida y Ministerio — ** es una aplicación web desarrollada para facilitar la consulta y gestión de las asignaciones correspondientes a las reuniones semanales.
+**Vida y Ministerio** —  es una aplicación web desarrollada para facilitar la consulta y gestión de las asignaciones correspondientes a las reuniones semanales.
 
 La aplicación presenta la información organizada por períodos y semanas, proporcionando una interfaz clara, responsive y accesible desde computadores, tablets y dispositivos móviles.
 
