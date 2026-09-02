@@ -26,7 +26,7 @@ async function apiLoadPersonas() {
     const res = await fetch('/api/personas');
     if (res.ok) {
       const data = await res.json();
-      if (data.ok && Array.isArray(data.personas)) {
+      if (data.ok && Array.isArray(data.personas) && data.personas.length > 0) {
         setApiStatus(true);
         return data.personas;
       }
@@ -40,7 +40,8 @@ async function apiLoadPersonas() {
   const stored = await appStorageGet('wm-people');
   if (stored?.value) {
     try {
-      return JSON.parse(stored.value);
+      const parsed = JSON.parse(stored.value);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
     } catch (_) {}
   }
   return typeof DEFAULT_PEOPLE !== 'undefined' ? JSON.parse(JSON.stringify(DEFAULT_PEOPLE)) : [];
@@ -52,7 +53,7 @@ async function apiLoadPrograma(bimestreId) {
     const res = await fetch(`/api/programa/${encodeURIComponent(bimestreId)}`);
     if (res.ok) {
       const data = await res.json();
-      if (data.ok && data.programa) {
+      if (data.ok && data.programa && Array.isArray(data.programa.weeks) && data.programa.weeks.length > 0) {
         setApiStatus(true);
         return data.programa;
       }
@@ -66,13 +67,38 @@ async function apiLoadPrograma(bimestreId) {
   const stored = await appStorageGet(`wm-program-${bimestreId}`);
   if (stored?.value) {
     try {
-      return JSON.parse(stored.value);
+      const parsed = JSON.parse(stored.value);
+      if (parsed && Array.isArray(parsed.weeks) && parsed.weeks.length > 0) return parsed;
     } catch (_) {}
   }
   
-  if (typeof DEFAULT_PROGRAM !== 'undefined') {
-    const found = DEFAULT_PROGRAM.find(p => p.id === bimestreId || p.bimestre.toLowerCase().includes(bimestreId.toLowerCase()));
+  if (typeof DEFAULT_PROGRAM !== 'undefined' && Array.isArray(DEFAULT_PROGRAM)) {
+    const found = DEFAULT_PROGRAM.find(p => p.id === bimestreId || (p.bimestre && p.bimestre.toLowerCase().includes(bimestreId.toLowerCase())));
     if (found) return JSON.parse(JSON.stringify(found));
+
+    // Generar copia limpia usando el primer bimestre de plantilla
+    const template = DEFAULT_PROGRAM[0];
+    if (template) {
+      const clean = JSON.parse(JSON.stringify(template));
+      clean.id = sanitizeBimestreId(bimestreId);
+      clean.bimestre = bimestreId;
+      clean.weeks = (clean.weeks || []).map((w, idx) => {
+        const nw = JSON.parse(JSON.stringify(w));
+        nw.id = `${clean.id}__${idx}`;
+        nw.items = (nw.items || []).map(it => {
+          const ni = JSON.parse(JSON.stringify(it));
+          if (ni.hasOwnProperty('name')) ni.name = '';
+          if (ni.hasOwnProperty('conductor')) ni.conductor = '';
+          if (ni.hasOwnProperty('lector')) ni.lector = '';
+          if (Array.isArray(ni.subs)) {
+            ni.subs = ni.subs.map(s => ({ ...s, name: '' }));
+          }
+          return ni;
+        });
+        return nw;
+      });
+      return clean;
+    }
   }
   return null;
 }
