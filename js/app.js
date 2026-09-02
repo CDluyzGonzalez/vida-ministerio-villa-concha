@@ -113,6 +113,21 @@ function switchTab(tabName) {
 // ============================================================
 
 async function boot() {
+  // 0. Restaurar sesión Admin previa si existe token guardado
+  try {
+    const savedToken = sessionStorage.getItem('wm_admin_token') || localStorage.getItem('wm_admin_token');
+    if (savedToken) {
+      const isValid = await apiVerifyPin(savedToken);
+      if (isValid) {
+        isAdmin = true;
+        writeToken = savedToken;
+      } else {
+        localStorage.removeItem('wm_admin_token');
+        sessionStorage.removeItem('wm_admin_token');
+      }
+    }
+  } catch (_) {}
+
   render();
 
   try {

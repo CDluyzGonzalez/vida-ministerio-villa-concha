@@ -56,6 +56,7 @@ async function apiLoadPrograma(bimestreId) {
       const data = await res.json();
       if (data.ok && data.programa && Array.isArray(data.programa.weeks) && data.programa.weeks.length > 0) {
         setApiStatus(true);
+        await appStorageSet(`wm-program-${bimestreId}`, JSON.stringify(data.programa));
         return data.programa;
       }
     }
@@ -147,18 +148,22 @@ async function apiSavePrograma(bimestreId, programData, token) {
       })
     });
 
-    if (res.ok) {
-      const data = await res.json();
-      if (data.ok) {
-        setApiStatus(true);
-        return true;
-      }
+    const data = await res.json().catch(() => ({}));
+    if (res.ok && data.ok) {
+      setApiStatus(true);
+      return true;
+    } else {
+      console.warn('Respuesta no exitosa al guardar programa:', res.status, data);
+      showToast('⚠️ No se pudo guardar en la nube: ' + (data?.error || `HTTP ${res.status}`), 'warning');
+      setApiStatus(false, '☁ Error al guardar');
+      return false;
     }
   } catch (error) {
     console.warn('No se pudo sincronizar programa con la nube:', error.message);
-    setApiStatus(false, '☁ Guardado solo en local');
+    showToast('⚠️ Error de conexión al guardar programa', 'warning');
+    setApiStatus(false, '☁ Sin conexión');
+    return false;
   }
-  return true;
 }
 
 // 4. Guardar Publicador Individual
@@ -170,17 +175,20 @@ async function apiSavePersona(personaData, token) {
       body: JSON.stringify({ persona: personaData, token })
     });
 
-    if (res.ok) {
-      const data = await res.json();
-      if (data.ok) {
-        setApiStatus(true);
-        return data.persona;
-      }
+    const data = await res.json().catch(() => ({}));
+    if (res.ok && data.ok) {
+      setApiStatus(true);
+      return data.persona;
+    } else {
+      console.warn('Error al guardar publicador:', res.status, data);
+      showToast('⚠️ Error al guardar en la nube: ' + (data?.error || `HTTP ${res.status}`), 'warning');
+      return null;
     }
   } catch (error) {
     console.warn('No se pudo guardar publicador en la nube:', error.message);
+    showToast('⚠️ Error de conexión al guardar publicador', 'warning');
+    return null;
   }
-  return personaData;
 }
 
 // 4b. Eliminar Publicador Individual
@@ -195,17 +203,20 @@ async function apiDeletePersona(personId, token) {
       body: JSON.stringify({ token })
     });
 
-    if (res.ok) {
-      const data = await res.json();
-      if (data.ok) {
-        setApiStatus(true);
-        return true;
-      }
+    const data = await res.json().catch(() => ({}));
+    if (res.ok && data.ok) {
+      setApiStatus(true);
+      return true;
+    } else {
+      console.warn('Error al eliminar publicador:', res.status, data);
+      showToast('⚠️ Error al eliminar en la nube: ' + (data?.error || `HTTP ${res.status}`), 'warning');
+      return false;
     }
   } catch (error) {
     console.warn(`No se pudo eliminar publicador ${personId} en la nube:`, error.message);
+    showToast('⚠️ Error de conexión al eliminar publicador', 'warning');
+    return false;
   }
-  return false;
 }
 
 // 4c. Sincronizar Lote Completo de Publicadores

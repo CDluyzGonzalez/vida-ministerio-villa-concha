@@ -249,13 +249,14 @@ async function savePersonFromModal(personId, isNew) {
     }
   }
 
-  // Guardar en almacenamiento local y sincronizar con la API y Firestore
+  // Guardar en almacenamiento local y sincronizar con Firestore
   await appStorageSet('wm-people', JSON.stringify(PEOPLE));
-  await apiSavePersona(personaData, writeToken);
-  apiSyncAllPersonas(PEOPLE, writeToken);
+  const saved = await apiSavePersona(personaData, writeToken);
 
   closePersonModal();
-  showToast('Publicador guardado exitosamente', 'success');
+  if (saved) {
+    showToast('Publicador guardado en la nube exitosamente', 'success');
+  }
   render();
 }
 
@@ -273,11 +274,12 @@ async function deletePersonFromModal(personId) {
 
   await appStorageSet('wm-people', JSON.stringify(PEOPLE));
 
-  // Eliminar en backend individual y sincronizar lote con Firestore
-  await apiDeletePersona(personId, writeToken);
-  apiSyncAllPersonas(PEOPLE, writeToken);
+  // Eliminar en backend y Firestore directamente
+  const deleted = await apiDeletePersona(personId, writeToken);
 
   closePersonModal();
-  showToast(`"${person.nombre}" eliminado correctamente`, 'success');
+  if (deleted) {
+    showToast(`"${person.nombre}" eliminado de la nube`, 'success');
+  }
   render();
 }

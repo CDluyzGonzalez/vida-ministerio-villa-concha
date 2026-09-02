@@ -205,7 +205,7 @@ app.put('/api/programa/:bimestreId', async (req, res) => {
   const { weeks, bimestre, token } = req.body;
   const cleanId = sanitizeBimestreId(bimestre || bimestreId);
 
-  if (token && token !== ADMIN_PIN_HASH) {
+  if (token && String(token).trim().toLowerCase() !== ADMIN_PIN_HASH.trim().toLowerCase()) {
     return res.status(401).json({ ok: false, error: 'Token no autorizado' });
   }
 
@@ -220,15 +220,19 @@ app.put('/api/programa/:bimestreId', async (req, res) => {
     if (db) {
       try {
         const docRef = db.collection('programas').doc(cleanId);
-        await docRef.set(dataToSave, { merge: true });
+        await docRef.set(dataToSave);
+        // También guardar con prefijo 2026- para compatibilidad total
+        const docRef2026 = db.collection('programas').doc(`2026-${cleanId}`);
+        await docRef2026.set(dataToSave);
       } catch (firestoreError) {
         console.warn('Firestore write warning:', firestoreError.message);
+        return res.status(500).json({ ok: false, error: 'Error en base de datos: ' + firestoreError.message });
       }
     }
 
     // Actualizar copia local en memoria
     if (!localData.programas) localData.programas = [];
-    const idx = localData.programas.findIndex(p => p.id === cleanId || p.bimestre === dataToSave.bimestre);
+    const idx = localData.programas.findIndex(p => p.id === cleanId || p.id === `2026-${cleanId}` || p.bimestre === dataToSave.bimestre);
     if (idx >= 0) {
       localData.programas[idx] = { ...localData.programas[idx], ...dataToSave };
     } else {
@@ -238,7 +242,7 @@ app.put('/api/programa/:bimestreId', async (req, res) => {
     res.json({ ok: true, message: 'Programa guardado correctamente', programa: dataToSave });
   } catch (error) {
     console.error(`Error al guardar programa ${bimestreId}:`, error);
-    res.json({ ok: true, message: 'Guardado en memoria local' });
+    res.status(500).json({ ok: false, error: error.message });
   }
 });
 
@@ -279,7 +283,7 @@ app.get('/api/personas', async (req, res) => {
 app.post('/api/personas', async (req, res) => {
   const { persona, token } = req.body || {};
 
-  if (token && token !== ADMIN_PIN_HASH) {
+  if (token && String(token).trim().toLowerCase() !== ADMIN_PIN_HASH.trim().toLowerCase()) {
     return res.status(401).json({ ok: false, error: 'Token no autorizado' });
   }
 
@@ -288,27 +292,38 @@ app.post('/api/personas', async (req, res) => {
   }
 
   try {
+    const personaClean = {
+      id: String(persona.id),
+      nombre: String(persona.nombre).trim(),
+      genero: persona.genero || 'M',
+      nota: persona.nota || '',
+      estado: persona.estado || 'activo',
+      privilegios: Array.isArray(persona.privilegios) ? persona.privilegios : [],
+      actualizado_en: new Date().toISOString()
+    };
+
     if (db) {
       try {
-        const docRef = db.collection('personas').doc(String(persona.id));
-        await docRef.set(persona, { merge: true });
+        const docRef = db.collection('personas').doc(String(personaClean.id));
+        await docRef.set(personaClean); // Sin merge para reemplazar exactamente los privilegios
       } catch (firestoreError) {
         console.warn('Firestore single persona write error:', firestoreError.message);
+        return res.status(500).json({ ok: false, error: 'Error en base de datos: ' + firestoreError.message });
       }
     }
 
     if (!localData.personas) localData.personas = [];
-    const idx = localData.personas.findIndex(p => String(p.id) === String(persona.id));
+    const idx = localData.personas.findIndex(p => String(p.id) === String(personaClean.id));
     if (idx >= 0) {
-      localData.personas[idx] = { ...localData.personas[idx], ...persona };
+      localData.personas[idx] = personaClean;
     } else {
-      localData.personas.push(persona);
+      localData.personas.push(personaClean);
     }
 
-    res.json({ ok: true, persona, message: 'Publicador guardado correctamente' });
+    res.json({ ok: true, persona: personaClean, message: 'Publicador guardado correctamente' });
   } catch (error) {
     console.error('Error al guardar persona:', error);
-    res.json({ ok: true, persona, message: 'Guardado en memoria' });
+    res.status(500).json({ ok: false, error: error.message });
   }
 });
 
@@ -317,7 +332,7 @@ app.delete('/api/personas/:id', async (req, res) => {
   const { id } = req.params;
   const token = req.headers['x-admin-token'] || req.query.token || req.body?.token;
 
-  if (token && token !== ADMIN_PIN_HASH) {
+  if (token && String(token).trim().toLowerCase() !== ADMIN_PIN_HASH.trim().toLowerCase()) {
     return res.status(401).json({ ok: false, error: 'Token no autorizado' });
   }
 
@@ -327,6 +342,7 @@ app.delete('/api/personas/:id', async (req, res) => {
         await db.collection('personas').doc(String(id)).delete();
       } catch (firestoreError) {
         console.warn(`Firestore delete persona error for ${id}:`, firestoreError.message);
+        return res.status(500).json({ ok: false, error: 'Error en base de datos: ' + firestoreError.message });
       }
     }
 
@@ -337,7 +353,7 @@ app.delete('/api/personas/:id', async (req, res) => {
     res.json({ ok: true, id, message: 'Publicador eliminado correctamente' });
   } catch (error) {
     console.error(`Error al eliminar persona ${id}:`, error);
-    res.json({ ok: true, id, message: 'Eliminado en memoria' });
+    res.status(500).json({ ok: false, error: error.message });
   }
 });
 
@@ -345,7 +361,7 @@ app.delete('/api/personas/:id', async (req, res) => {
 app.post('/api/personas/batch', async (req, res) => {
   const { personas, token } = req.body || {};
 
-  if (token && token !== ADMIN_PIN_HASH) {
+  if (token && String(token).trim().toLowerCase() !== ADMIN_PIN_HASH.trim().toLowerCase()) {
     return res.status(401).json({ ok: false, error: 'Token no autorizado' });
   }
 
@@ -362,7 +378,7 @@ app.post('/api/personas/batch', async (req, res) => {
         // Upsert todas las personas enviadas
         personas.forEach(p => {
           const docRef = db.collection('personas').doc(String(p.id));
-          batch.set(docRef, p, { merge: true });
+          batch.set(docRef, p);
         });
 
         // Eliminar personas que ya no están en la lista
@@ -387,7 +403,7 @@ app.post('/api/personas/batch', async (req, res) => {
     res.json({ ok: true, count: personas.length, message: 'Publicadores sincronizados' });
   } catch (error) {
     console.error('Error al guardar personas:', error);
-    res.json({ ok: true, count: personas.length, message: 'Publicadores guardados en memoria' });
+    res.status(500).json({ ok: false, error: error.message });
   }
 });
 

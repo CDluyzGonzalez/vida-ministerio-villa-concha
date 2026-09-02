@@ -89,6 +89,10 @@ async function submitAdminPin() {
   if (isValid) {
     isAdmin = true;
     writeToken = hash;
+    try {
+      localStorage.setItem('wm_admin_token', hash);
+      sessionStorage.setItem('wm_admin_token', hash);
+    } catch (_) {}
     closeAdminPinModal();
     showToast('Modo Administrador activado', 'success');
     render();
@@ -105,6 +109,10 @@ async function submitAdminPin() {
 function logoutAdmin() {
   isAdmin = false;
   writeToken = null;
+  try {
+    localStorage.removeItem('wm_admin_token');
+    sessionStorage.removeItem('wm_admin_token');
+  } catch (_) {}
   showToast('Has salido del modo administrador', 'info');
   if (currentTab === 'dashboard') {
     currentTab = 'programa';

@@ -594,8 +594,10 @@ async function applyAssignmentSlot(weekId, itemIdx, slot, newName) {
     item.subs[1].name = value;
   }
 
-  await apiSavePrograma(PROGRAM.bimestre, PROGRAM, writeToken);
-  showToast(value ? `Asignado a ${value}` : 'Asignación quitada', 'success');
+  const saved = await apiSavePrograma(PROGRAM.bimestre, PROGRAM, writeToken);
+  if (saved) {
+    showToast(value ? `Asignado a ${value}` : 'Asignación quitada', 'success');
+  }
   render();
 }
 
