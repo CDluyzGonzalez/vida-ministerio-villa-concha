@@ -1,14 +1,13 @@
 // ============================================================
 // VIDA Y MINISTERIO — VILLA CONCHA
 // server/server.js
-// Servidor Backend Express & API REST para Google Cloud Run
+// Servidor Express Backend y API REST con Google Cloud Firestore
 // ============================================================
 
 import express from 'express';
 import cors from 'cors';
 import compression from 'compression';
 import path from 'path';
-import fs from 'fs';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 import { db, isConnected, localData } from './firestore.js';
@@ -21,7 +20,7 @@ const rootDir = path.resolve(__dirname, '..');
 
 const app = express();
 const PORT = process.env.PORT || 8080;
-const ADMIN_PIN_HASH = process.env.ADMIN_PIN_HASH || '79404babda0441a8756da8dc02bae87094fd393739678ccd7f36f90127f651b8';
+const ADMIN_PIN_HASH = process.env.ADMIN_PIN_HASH || '94dfa9f73f8d689626359f8011c52bd85bb049e6aaebdf5c5ecddaa2abaf42fa'; // PIN 7777
 
 // Middlewares
 app.use(compression());
@@ -38,14 +37,18 @@ app.use(express.static(rootDir, {
   }
 }));
 
-// Guardar cambios en archivo local si db no está disponible
-function saveLocalBackup() {
-  try {
-    const seedPath = path.join(rootDir, 'database', 'migrated_seed_data.json');
-    fs.writeFileSync(seedPath, JSON.stringify(localData, null, 2), 'utf8');
-  } catch (e) {
-    console.error('Error guardando respaldo local:', e);
-  }
+// ============================================================
+// HELPER: Normalizar ID de Bimestre
+// ============================================================
+function sanitizeBimestreId(name) {
+  return String(name || '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
 }
 
 // ============================================================
@@ -69,9 +72,17 @@ app.get('/api/health', (req, res) => {
 app.get('/api/bimestres', async (req, res) => {
   try {
     if (db) {
-      const snapshot = await db.collection('bimestres').orderBy('orden', 'asc').get();
+      const snapshot = await db.collection('programas').get();
       if (!snapshot.empty) {
-        const bimestres = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const bimestres = snapshot.docs.map(doc => {
+          const d = doc.data();
+          return {
+            id: doc.id,
+            nombre: d.bimestre || doc.id,
+            anio: d.anio || 2026,
+            orden: d.orden || 1
+          };
+        });
         return res.json({ ok: true, bimestres });
       }
     }
@@ -106,17 +117,32 @@ app.get('/api/bimestres', async (req, res) => {
 // Obtener el programa de un bimestre
 app.get('/api/programa/:bimestreId', async (req, res) => {
   const { bimestreId } = req.params;
+  const cleanId = sanitizeBimestreId(bimestreId);
+
   try {
     if (db) {
-      const docRef = db.collection('programas').doc(bimestreId);
-      const doc = await docRef.get();
+      // 1. Buscar por ID directo
+      let doc = await db.collection('programas').doc(cleanId).get();
       if (doc.exists) {
         return res.json({ ok: true, programa: { id: doc.id, ...doc.data() } });
+      }
+
+      // 2. Buscar por ID con prefijo 2026-
+      doc = await db.collection('programas').doc(`2026-${cleanId}`).get();
+      if (doc.exists) {
+        return res.json({ ok: true, programa: { id: doc.id, ...doc.data() } });
+      }
+
+      // 3. Buscar por campo 'bimestre'
+      const snap = await db.collection('programas').where('bimestre', '==', bimestreId).limit(1).get();
+      if (!snap.empty) {
+        const found = snap.docs[0];
+        return res.json({ ok: true, programa: { id: found.id, ...found.data() } });
       }
     }
 
     // Buscar en localData
-    const localProg = localData?.programas?.find(p => p.id === bimestreId || p.bimestre.toLowerCase().includes(bimestreId.toLowerCase()));
+    const localProg = localData?.programas?.find(p => p.id === cleanId || p.id === `2026-${cleanId}` || p.bimestre.toLowerCase().includes(bimestreId.toLowerCase()));
     if (localProg) {
       return res.json({ ok: true, programa: localProg });
     }
@@ -132,6 +158,7 @@ app.get('/api/programa/:bimestreId', async (req, res) => {
 app.put('/api/programa/:bimestreId', async (req, res) => {
   const { bimestreId } = req.params;
   const { weeks, bimestre, token } = req.body;
+  const cleanId = sanitizeBimestreId(bimestre || bimestreId);
 
   if (token && token !== ADMIN_PIN_HASH) {
     return res.status(401).json({ ok: false, error: 'Token no autorizado' });
@@ -139,27 +166,28 @@ app.put('/api/programa/:bimestreId', async (req, res) => {
 
   try {
     const dataToSave = {
-      id: bimestreId,
+      id: cleanId,
       bimestre: bimestre || bimestreId,
       weeks: weeks || [],
       actualizado_en: new Date().toISOString()
     };
 
     if (db) {
-      const docRef = db.collection('programas').doc(bimestreId);
+      const docRef = db.collection('programas').doc(cleanId);
       await docRef.set(dataToSave, { merge: true });
-    } else {
-      // Guardar en localData
-      const idx = localData.programas.findIndex(p => p.id === bimestreId);
+    }
+
+    // Actualizar copia local
+    if (localData?.programas) {
+      const idx = localData.programas.findIndex(p => p.id === cleanId || p.bimestre === dataToSave.bimestre);
       if (idx >= 0) {
         localData.programas[idx] = { ...localData.programas[idx], ...dataToSave };
       } else {
         localData.programas.push(dataToSave);
       }
-      saveLocalBackup();
     }
 
-    return res.json({ ok: true, message: 'Programa guardado exitosamente' });
+    res.json({ ok: true, message: 'Programa guardado correctamente', programa: dataToSave });
   } catch (error) {
     console.error(`Error al guardar programa ${bimestreId}:`, error);
     res.status(500).json({ ok: false, error: error.message });
@@ -167,10 +195,10 @@ app.put('/api/programa/:bimestreId', async (req, res) => {
 });
 
 // ============================================================
-// ENDPOINTS: PUBLICADORES / PERSONAS
+// ENDPOINTS: PUBLICADORES (PERSONAS)
 // ============================================================
 
-// Obtener todos los publicadores con sus privilegios normalizados
+// Obtener todos los publicadores
 app.get('/api/personas', async (req, res) => {
   try {
     if (db) {
@@ -181,74 +209,60 @@ app.get('/api/personas', async (req, res) => {
       }
     }
 
+    // Fallback a localData
     if (localData?.personas?.length > 0) {
       return res.json({ ok: true, personas: localData.personas });
     }
 
-    return res.status(404).json({ ok: false, message: 'No hay publicadores registrados' });
+    return res.json({ ok: true, personas: [] });
   } catch (error) {
     console.error('Error al obtener personas:', error);
     res.status(500).json({ ok: false, error: error.message });
   }
 });
 
-// Crear o actualizar un publicador
-app.post('/api/personas', async (req, res) => {
-  const { persona, token } = req.body;
+// Guardar o actualizar lote completo de publicadores
+app.post('/api/personas/batch', async (req, res) => {
+  const { personas, token } = req.body;
 
   if (token && token !== ADMIN_PIN_HASH) {
-    return res.status(401).json({ ok: false, error: 'No autorizado' });
+    return res.status(401).json({ ok: false, error: 'Token no autorizado' });
   }
 
-  if (!persona || !persona.nombre) {
-    return res.status(400).json({ ok: false, error: 'Datos de publicador incompletos' });
+  if (!Array.isArray(personas)) {
+    return res.status(400).json({ ok: false, error: 'Formato inválido' });
   }
 
   try {
-    const personaId = persona.id || `p_${Date.now()}`;
-    const personaData = {
-      ...persona,
-      id: personaId,
-      actualizado_en: new Date().toISOString()
-    };
-
     if (db) {
-      await db.collection('personas').doc(personaId).set(personaData, { merge: true });
-    } else {
-      const idx = localData.personas.findIndex(p => p.id === personaId);
-      if (idx >= 0) {
-        localData.personas[idx] = { ...localData.personas[idx], ...personaData };
-      } else {
-        localData.personas.push(personaData);
-      }
-      saveLocalBackup();
+      const batch = db.batch();
+      personas.forEach(p => {
+        const docRef = db.collection('personas').doc(p.id);
+        batch.set(docRef, p, { merge: true });
+      });
+      await batch.commit();
     }
 
-    return res.json({ ok: true, persona: personaData });
+    localData.personas = personas;
+    res.json({ ok: true, count: personas.length, message: 'Publicadores guardados' });
   } catch (error) {
-    console.error('Error al guardar persona:', error);
+    console.error('Error al guardar personas:', error);
     res.status(500).json({ ok: false, error: error.message });
   }
 });
 
 // ============================================================
-// ENDPOINT: AUTENTICACIÓN ADMIN
+// FALLBACK SPA
 // ============================================================
-
-app.post('/api/auth/verify', (req, res) => {
-  const { pinHash } = req.body;
-  if (pinHash && pinHash.toLowerCase() === ADMIN_PIN_HASH.toLowerCase()) {
-    return res.json({ ok: true, authorized: true, token: ADMIN_PIN_HASH });
-  }
-  return res.status(401).json({ ok: false, authorized: false, error: 'PIN incorrecto' });
-});
-
-// Redireccionar cualquier otra ruta al index.html de la PWA
 app.get('*', (req, res) => {
   res.sendFile(path.join(rootDir, 'index.html'));
 });
 
-// Iniciar servidor
+// Iniciar Servidor
 app.listen(PORT, () => {
-  console.log(`🚀 Servidor Vida y Ministerio ejecutándose en http://localhost:${PORT}`);
+  console.log(`\n============================================================`);
+  console.log(`🚀 Vida y Ministerio — Villa Concha (Servidor Activo)`);
+  console.log(`📡 Puerto: ${PORT} | Modo: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`☁ Firestore: ${isConnected ? 'Conectado (Google Cloud)' : 'Modo Local'}`);
+  console.log(`============================================================\n`);
 });

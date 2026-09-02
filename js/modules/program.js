@@ -327,6 +327,7 @@ function getSongDisplayLabel(it) {
 // Renderizado de cada fila de asignación
 function renderItemRow(bim, w, it, idx) {
   const displayLabel = formatDisplayLabel(it);
+  const isFixedIntroConcl = /palabras de (introducci[oó]n|conclusi[oó]n)/i.test(it.label || '');
 
   // 1. Canción independiente
   if (isPureSongLine(it)) {
@@ -442,13 +443,13 @@ function renderItemRow(bim, w, it, idx) {
             ${escapeHtml(displayLabel)}
           </span>
         </span>
-        ${isAdmin && !pdfExportMode && reqCat !== 'intro_conclusion' ? `
-          <button class="edit-pencil" onclick="editItemPrompt('${w.id}', ${idx})" title="Editar texto">✎</button>
+        ${isAdmin && !pdfExportMode ? `
+          ${!isFixedIntroConcl ? `<button class="edit-pencil" onclick="editItemPrompt('${w.id}', ${idx})" title="Editar texto">✎</button>` : ''}
           ${it.section === 'MAESTROS' ? `
             <button class="edit-pencil" title="Editar tipo de asignación (Solo Nombre / Nombre + Ayudante)" onclick="openEditMaestrosStructureModal('${w.id}', ${idx})">⚙</button>
             <button class="edit-pencil" style="color:#b42318;" onclick="deleteAssignmentItem('${w.id}', ${idx})" title="Eliminar asignación">×</button>
           ` : ''}
-          ${it.section === 'NVC' ? `
+          ${it.section === 'NVC' && !isFixedIntroConcl ? `
             <button class="edit-pencil" title="Cambiar quién puede dar esta parte" onclick="openChangeNvcCategoryModal('${w.id}', ${idx})">⚙</button>
             <button class="edit-pencil" style="color:#b42318;" onclick="deleteAssignmentItem('${w.id}', ${idx})" title="Eliminar asignación">×</button>
           ` : ''}
@@ -921,9 +922,14 @@ function openAddBimestreModal() {
       return;
     }
 
-    // Clonar desde el bimestre actual o template
-    const template = PROGRAM || { weeks: [] };
-    const newBim = JSON.parse(JSON.stringify(template));
+    const templateName = overlay.querySelector('#new-bim-template-select').value;
+    let template = PROGRAM;
+    if (typeof DEFAULT_PROGRAM !== 'undefined') {
+      const found = DEFAULT_PROGRAM.find(b => b.bimestre === templateName);
+      if (found) template = found;
+    }
+
+    const newBim = JSON.parse(JSON.stringify(template || { weeks: [] }));
     newBim.bimestre = name;
 
     newBim.weeks = (newBim.weeks || []).map((w, wi) => {
@@ -991,13 +997,14 @@ function deleteAssignmentItem(weekId, itemIdx) {
 
 async function switchBimestre(bimestreName) {
   currentBimestre = bimestreName;
+  showToast(`Cargando ${bimestreName}...`, 'info', 1000);
   const prog = await apiLoadPrograma(bimestreName);
   if (prog) {
     PROGRAM = prog;
     openWeeks.clear();
     render();
   } else {
-    showToast(`Cargando ${bimestreName}...`, 'info');
+    showToast(`No se encontraron datos para ${bimestreName}`, 'warning');
   }
 }
 

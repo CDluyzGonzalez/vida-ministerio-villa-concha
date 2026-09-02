@@ -101,9 +101,10 @@ function auditCurrentProgram(programData, peopleList) {
       const entries = countsInWeek[normKey];
       if (entries.length > 1) {
         // Excepción válida: Introducción y Conclusión por el mismo hermano es el papel normal de Presidencia
-        const isIntroConclPair = entries.length === 2 &&
-          entries.some(e => /introducci[oó]n/i.test(e.part)) &&
-          entries.some(e => /conclusi[oó]n/i.test(e.part));
+        const partsNormalized = entries.map(e => normName(e.part || ''));
+        const hasIntro = partsNormalized.some(p => p.includes('introduccion'));
+        const hasConcl = partsNormalized.some(p => p.includes('conclusion'));
+        const isIntroConclPair = (entries.length === 2 && hasIntro && hasConcl);
 
         if (!isIntroConclPair) {
           result.sameWeekConflicts.push({
