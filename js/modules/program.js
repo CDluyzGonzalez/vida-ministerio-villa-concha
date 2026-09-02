@@ -408,14 +408,14 @@ function renderItemRow(bim, w, it, idx) {
     `;
   }
 
-  // 3. Seamos Mejores Maestros con Dos Personas (Nombre + Ayudante en 3 columnas)
+  // 3. Seamos Mejores Maestros con Dos Personas (Nombre + Ayudante)
   if (Array.isArray(it.subs)) {
     const nombre = it.subs.find(s => normName(s?.role) === 'nombre')?.name || it.subs[0]?.name || '';
     const ayudante = it.subs.find(s => normName(s?.role) === 'ayudante')?.name || it.subs[1]?.name || '';
     const reqPriv = computeCat(it);
 
     return `
-      <div class="item-row maestros-pair-row" style="display:grid; grid-template-columns:minmax(300px,1fr) minmax(145px,190px) minmax(145px,190px); gap:14px; align-items:end;">
+      <div class="item-row maestros-pair-row">
         <div class="item-label label-with-pencil" style="min-width:0;">
           <span>${escapeHtml(displayLabel)}</span>
           ${isAdmin && !pdfExportMode ? `
@@ -425,26 +425,28 @@ function renderItemRow(bim, w, it, idx) {
           ` : ''}
         </div>
 
-        <div class="maestros-person-column" style="display:flex; flex-direction:column; gap:4px; min-width:0;">
-          <span style="font-size:12px; font-weight:700; color:#363535;">Nombre</span>
-          ${isAdmin && !pdfExportMode ? `
-            <button type="button" class="assign-btn ${nombre ? '' : 'empty'}" onclick="openAssignModal('${reqPriv}', '${escapeHtml(nombre)}', (name) => applyAssignmentSlot('${w.id}', ${idx}, 'sub0', name))">
-              ${nombre ? escapeHtml(nombre) : 'Sin asignar'}
-            </button>
-          ` : `
-            <span class="assign-static ${nombre ? '' : 'public-empty'}">${nombre ? escapeHtml(nombre) : ''}</span>
-          `}
-        </div>
+        <div class="maestros-slots-wrap">
+          <div class="maestros-person-column">
+            <span class="maestros-slot-title">Nombre</span>
+            ${isAdmin && !pdfExportMode ? `
+              <button type="button" class="assign-btn ${nombre ? '' : 'empty'}" onclick="openAssignModal('${reqPriv}', '${escapeHtml(nombre)}', (name) => applyAssignmentSlot('${w.id}', ${idx}, 'sub0', name))">
+                ${nombre ? escapeHtml(nombre) : 'Sin asignar'}
+              </button>
+            ` : `
+              <span class="assign-static ${nombre ? '' : 'public-empty'}">${nombre ? escapeHtml(nombre) : 'Por asignar'}</span>
+            `}
+          </div>
 
-        <div class="maestros-person-column" style="display:flex; flex-direction:column; gap:4px; min-width:0;">
-          <span style="font-size:12px; font-weight:700; color:#363535;">Ayudante</span>
-          ${isAdmin && !pdfExportMode ? `
-            <button type="button" class="assign-btn ${ayudante ? '' : 'empty'}" onclick="openAssignModal('${reqPriv}', '${escapeHtml(ayudante)}', (name) => applyAssignmentSlot('${w.id}', ${idx}, 'sub1', name))">
-              ${ayudante ? escapeHtml(ayudante) : 'Sin asignar'}
-            </button>
-          ` : `
-            <span class="assign-static ${ayudante ? '' : 'public-empty'}">${ayudante ? escapeHtml(ayudante) : ''}</span>
-          `}
+          <div class="maestros-person-column">
+            <span class="maestros-slot-title">Ayudante</span>
+            ${isAdmin && !pdfExportMode ? `
+              <button type="button" class="assign-btn ${ayudante ? '' : 'empty'}" onclick="openAssignModal('${reqPriv}', '${escapeHtml(ayudante)}', (name) => applyAssignmentSlot('${w.id}', ${idx}, 'sub1', name))">
+                ${ayudante ? escapeHtml(ayudante) : 'Sin asignar'}
+              </button>
+            ` : `
+              <span class="assign-static ${ayudante ? '' : 'public-empty'}">${ayudante ? escapeHtml(ayudante) : 'Por asignar'}</span>
+            `}
+          </div>
         </div>
       </div>
     `;

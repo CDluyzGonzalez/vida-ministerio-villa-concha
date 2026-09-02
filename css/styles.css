@@ -306,6 +306,30 @@ body{
 .assign-btn.empty{ color:var(--terra-warn); border-color:var(--terra-warn); background:var(--terra-bg); }
 .assign-btn:hover{ border-style:solid; border-color:var(--gold); }
 
+/* ---- Seamos Mejores Maestros (Nombre + Ayudante) ---- */
+.maestros-pair-row {
+  display: grid;
+  grid-template-columns: minmax(200px, 1fr) minmax(130px, 180px) minmax(130px, 180px);
+  gap: 12px;
+  align-items: end;
+}
+.maestros-slots-wrap {
+  display: contents;
+}
+.maestros-person-column {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.maestros-slot-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: #363535;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
 /* ---- people table ---- */
 .person-card{
   background:var(--card); border:1px solid var(--line); border-radius:12px;
@@ -475,6 +499,87 @@ body{
     font-size:12.5px;
     padding:9px 11px;
     white-space:nowrap;
+  }
+
+  /* ---- Ajuste responsivo de Asignaciones en Móvil ---- */
+  .item-row {
+    gap: 10px;
+  }
+  .item-label {
+    min-width: 0;
+  }
+  .assign-static {
+    max-width: 155px;
+    white-space: normal;
+    word-break: break-word;
+    text-align: right;
+  }
+  .assign-btn {
+    max-width: 155px;
+  }
+
+  /* ---- Seamos Mejores Maestros en Móvil ---- */
+  .maestros-pair-row {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    padding: 10px 0;
+  }
+  .maestros-pair-row .item-label {
+    width: 100%;
+    font-size: 13.5px;
+  }
+  .maestros-slots-wrap {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    width: 100%;
+    margin-top: 2px;
+  }
+  .maestros-person-column {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    background: #fdfbf7;
+    border: 1px solid #f1ebdd;
+    border-radius: 8px;
+    padding: 6px 9px;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+  .maestros-slot-title {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--gold-deep);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .maestros-person-column .assign-btn {
+    width: 100%;
+    max-width: 100%;
+    text-align: left;
+    padding: 6px 8px;
+    font-size: 12.5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    box-sizing: border-box;
+  }
+  .maestros-person-column .assign-static {
+    width: 100%;
+    max-width: 100%;
+    text-align: left;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--teal-deep);
+    white-space: normal;
+    word-break: break-word;
+  }
+  .maestros-person-column .assign-static.public-empty {
+    font-size: 11.5px;
+    font-style: italic;
+    color: #94a3b8;
   }
 
 }
