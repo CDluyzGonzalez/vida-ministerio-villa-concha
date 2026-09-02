@@ -44,7 +44,7 @@ function render() {
 
         <span class="install-app-slot">
           ${!isAppStandalone() ? `
-            <button class="install-btn" onclick="triggerInstallPrompt()" title="Instalar como App">
+            <button class="install-app-btn" onclick="triggerInstallPrompt()" title="Instalar vida y ministerio">
               📲 Instalar App
             </button>
           ` : ''}
