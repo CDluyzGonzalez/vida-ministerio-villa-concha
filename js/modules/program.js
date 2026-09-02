@@ -1,7 +1,7 @@
 // ============================================================
 // VIDA Y MINISTERIO — VILLA CONCHA
 // js/modules/program.js
-// Renderizado del Programa Semanal, Modales de Asignación y Configuración
+// Renderizado del Programa Semanal, Renumeración Dinámica y Edición Completa
 // ============================================================
 
 const BIMESTRE_MONTH_LABELS = {
@@ -16,7 +16,7 @@ const BIMESTRE_MONTH_LABELS = {
 // Obtener bimestres visibles para el publicador según la regla exacta de calendario
 function computeViewerBimestres(date) {
   const d = date || new Date();
-  const m = d.getMonth() + 1; // 1 a 12
+  const m = d.getMonth() + 1;
   const day = d.getDate();
 
   const isFirstMonthOfBimestre = (m % 2 === 1);
@@ -33,20 +33,43 @@ function computeViewerBimestres(date) {
 
   const result = [];
 
-  // 1. Primeros 7 días del primer mes: mantener semana en curso de transición
   if (isFirstMonthOfBimestre && day <= 7) {
     result.push(prevBimestre);
   }
 
-  // 2. Bimestre vigente
   result.push(currentBimestre);
 
-  // 3. A partir del día 1 del segundo mes del bimestre: mostrar el siguiente bimestre
   if (isSecondMonthOfBimestre) {
     result.push(nextBimestre);
   }
 
   return Array.from(new Set(result.filter(Boolean)));
+}
+
+// Renumeración correlativa dinámica continua (1, 2, 3, 4, 5, 6, 7, 8, 9, 10...)
+function recomputeWeekItemNumbers(w) {
+  if (!w || !Array.isArray(w.items)) return;
+
+  let currentNum = 1;
+
+  w.items.forEach(it => {
+    // Si es canción (intermedia o de inicio/fin), no lleva número
+    if (isPureSongLine(it) || /canc[ií]ó[nn]/i.test(it.label || '')) {
+      delete it.num;
+      return;
+    }
+
+    // Si es introducción o conclusión, no lleva número
+    if (/palabras de (introducci[oó]n|conclusi[oó]n)/i.test(it.label || '')) {
+      delete it.num;
+      return;
+    }
+
+    // Asignaciones de Tesoros, Maestros y NVC llevan numeración secuencial
+    if (['TESOROS', 'MAESTROS', 'NVC'].includes(it.section) || it.hasOwnProperty('conductor')) {
+      it.num = currentNum++;
+    }
+  });
 }
 
 // Alternar apertura/cierre de una semana en el acordeón
@@ -67,6 +90,10 @@ function renderProgramTab() {
     'Julio - Agosto',
     'Septiembre - Octubre'
   ];
+
+  if (PROGRAM?.bimestre && !allBimestres.includes(PROGRAM.bimestre)) {
+    allBimestres.push(PROGRAM.bimestre);
+  }
 
   // 1. Vista de Solo Lectura (Público / No Administrador)
   if (!isAdmin) {
@@ -132,6 +159,9 @@ function renderProgramTab() {
 // Renderizado de tarjeta de una semana
 function renderWeekCard(bim, w, weekIndex) {
   const isOpen = pdfExportMode || openWeeks.has(w.id);
+
+  // Asegurar renumeración correlativa antes de pintar
+  recomputeWeekItemNumbers(w);
 
   let itemsHtml = '';
   if (isOpen) {
@@ -205,11 +235,17 @@ function renderWeekCard(bim, w, weekIndex) {
     <div class="week-card ${isOpen ? 'open' : ''}" id="week-${w.id}">
       <div class="week-head" onclick="toggleWeek('${w.id}')">
         <div class="wk-titles">
-          <div class="wk-titles-row">
+          <div class="wk-titles-row" style="display:flex; align-items:center; gap:8px;">
             <p class="wk-semana">${escapeHtml(w.semana.toLowerCase())}</p>
+            ${isAdmin && !pdfExportMode ? `
+              <button class="edit-pencil" title="Editar fechas de la semana" onclick="event.stopPropagation(); editWeekHeaderPrompt('${w.id}', 'semana')">✎</button>
+            ` : ''}
           </div>
-          <div class="wk-lectura-row">
+          <div class="wk-lectura-row" style="display:flex; align-items:center; gap:8px;">
             <p class="wk-lectura">${escapeHtml(w.lectura_semanal || '')}</p>
+            ${isAdmin && !pdfExportMode ? `
+              <button class="edit-pencil" title="Editar lectura semanal" onclick="event.stopPropagation(); editWeekHeaderPrompt('${w.id}', 'lectura')">✎</button>
+            ` : ''}
           </div>
         </div>
 
@@ -243,22 +279,22 @@ function songIconSvg() {
   return `<span class="song-icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 17V5l11-2v12"/><path d="M9 5l11-2"/><circle cx="6" cy="17" r="3"/><circle cx="17" cy="15" r="3"/></svg></span>`;
 }
 
-// Formatear texto de la parte asegurando numeración limpia tipo "1. Título", "• Palabras...", etc.
+// Formatear texto de la parte asegurando numeración limpia tipo "X. Título", "• Palabras...", etc.
 function formatDisplayLabel(item) {
   let label = String(item?.label || '').trim();
 
-  // Si es introducción o conclusión, asegurar que lleve la viñeta "• "
+  // Introducción o conclusión con viñeta
   if (/palabras de (introducci[oó]n|conclusi[oó]n)/i.test(label)) {
     label = label.replace(/^[•·▪◦\-\s]+/, '').trim();
     return '• ' + label;
   }
 
-  // Si es una canción
+  // Canciones
   if (/^canc[ií]ó[nn]/i.test(label) || /canc[ií]ó[nn].*y\s*oraci[oó]n/i.test(label)) {
     return label.replace(/^[•·▪◦\-\s]+/, '').trim();
   }
 
-  // Si tiene número de parte asignado, formatear como "X. Texto"
+  // Partes numeradas
   if (item.num && !isPureSongLine(item)) {
     const cleanText = label.replace(/^#?\d+[\.\-\s]*/, '').trim();
     return `${item.num}. ${cleanText}`;
@@ -292,7 +328,7 @@ function getSongDisplayLabel(it) {
 function renderItemRow(bim, w, it, idx) {
   const displayLabel = formatDisplayLabel(it);
 
-  // 1. Canción independiente (sin asignación de persona)
+  // 1. Canción independiente
   if (isPureSongLine(it)) {
     const songLabel = getSongDisplayLabel(it);
     return `
@@ -392,7 +428,7 @@ function renderItemRow(bim, w, it, idx) {
     `;
   }
 
-  // 4. Asignación individual (Seamos Mejores Maestros Individual, Tesoros, NVC, Oraciones, etc.)
+  // 4. Asignación individual (Seamos Mejores Maestros Individual, NVC, Tesoros, Oraciones, etc.)
   const reqCat = computeCat(it);
   const currentName = it.name || '';
   const isSongWithPrayer = /canc[ií]ó[nn].*y\s*oraci[oó]n/i.test(it.label || '');
@@ -414,6 +450,9 @@ function renderItemRow(bim, w, it, idx) {
           ` : ''}
           ${it.section === 'NVC' ? `
             <button class="edit-pencil" title="Cambiar quién puede dar esta parte" onclick="openChangeNvcCategoryModal('${w.id}', ${idx})">⚙</button>
+            <button class="edit-pencil" style="color:#b42318;" onclick="deleteAssignmentItem('${w.id}', ${idx})" title="Eliminar asignación">×</button>
+          ` : ''}
+          ${it.section === 'TESOROS' ? `
             <button class="edit-pencil" style="color:#b42318;" onclick="deleteAssignmentItem('${w.id}', ${idx})" title="Eliminar asignación">×</button>
           ` : ''}
         ` : ''}
@@ -520,6 +559,28 @@ async function applyAssignmentSlot(weekId, itemIdx, slot, newName) {
   render();
 }
 
+// Editar encabezado de semana (Semana o Lectura)
+function editWeekHeaderPrompt(weekId, field) {
+  const week = (PROGRAM?.weeks || []).find(w => w.id === weekId);
+  if (!week) return;
+
+  if (field === 'semana') {
+    const next = prompt('Editar fechas de la semana:\n(Ej: Semana 2-8 De Marzo 2026)', week.semana || '');
+    if (next && next.trim() && next.trim() !== week.semana) {
+      week.semana = next.trim();
+      apiSavePrograma(PROGRAM.bimestre, PROGRAM, writeToken);
+      render();
+    }
+  } else if (field === 'lectura') {
+    const next = prompt('Editar lectura semanal de la Biblia:\n(Ej: Lectura semanal de la Biblia ISAÍAS 41, 42)', week.lectura_semanal || '');
+    if (next && next.trim() && next.trim() !== week.lectura_semanal) {
+      week.lectura_semanal = next.trim();
+      apiSavePrograma(PROGRAM.bimestre, PROGRAM, writeToken);
+      render();
+    }
+  }
+}
+
 // ============================================================
 // MODAL: EDITAR TIPO DE ASIGNACIÓN (SEAMOS MEJORES MAESTROS)
 // ============================================================
@@ -575,6 +636,7 @@ function openEditMaestrosStructureModal(weekId, itemIdx) {
       item.name = nombre;
     }
 
+    recomputeWeekItemNumbers(week);
     await apiSavePrograma(PROGRAM.bimestre, PROGRAM, writeToken);
     overlay.remove();
     showToast('Tipo de asignación actualizado', 'success');
@@ -610,7 +672,7 @@ function openAddMaestrosAssignmentModal(weekId) {
       </div>
       <div class="field" style="margin-top: 14px;">
         <label style="font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #64748b;">TEXTO DE LA ASIGNACIÓN</label>
-        <input class="search-input" id="add-maestros-label-input" placeholder="Ej: 4. Empiece conversaciones (3 mins.) (lmd lección 4 punto 3.)" style="margin-top: 6px;" />
+        <input class="search-input" id="add-maestros-label-input" placeholder="Ej: Empiece conversaciones (3 mins.) (lmd lección 4 punto 3.)" style="margin-top: 6px;" />
       </div>
       <div class="modal-foot" style="margin-top: 20px;">
         <button class="btn btn-ghost btn-sm" onclick="document.getElementById('wm-add-maestros-modal').remove()">Cancelar</button>
@@ -632,12 +694,8 @@ function openAddMaestrosAssignmentModal(weekId) {
     }
 
     const type = overlay.querySelector('#add-maestros-type-select').value;
-    const currentNums = (week.items || []).filter(it => it.num && Number.isFinite(Number(it.num))).map(it => Number(it.num));
-    const nextNum = currentNums.length ? Math.max(...currentNums) + 1 : 4;
-
     const newItem = {
       section: 'MAESTROS',
-      num: nextNum,
       label
     };
 
@@ -655,6 +713,7 @@ function openAddMaestrosAssignmentModal(weekId) {
     else insertIdx += 1;
 
     week.items.splice(insertIdx, 0, newItem);
+    recomputeWeekItemNumbers(week);
     await apiSavePrograma(PROGRAM.bimestre, PROGRAM, writeToken);
     overlay.remove();
     showToast('Asignación agregada a Seamos Mejores Maestros', 'success');
@@ -690,7 +749,7 @@ function openAddNvcAssignmentModal(weekId) {
       </div>
       <div class="field" style="margin-top: 14px;">
         <label style="font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #64748b;">TEXTO DE LA ASIGNACIÓN</label>
-        <input class="search-input" id="new-nvc-label-input" placeholder="Ej.: Discurso del superintendente de circuito (30 mins.)" style="margin-top: 6px;" />
+        <input class="search-input" id="new-nvc-label-input" placeholder="Ej.: Discurso del circuito (30 mins.)" style="margin-top: 6px;" />
       </div>
       <div class="field" id="new-nvc-restrict-wrap" style="margin-top: 14px;">
         <label style="font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #64748b;">¿QUIÉN PUEDE DAR ESTA PARTE?</label>
@@ -730,14 +789,10 @@ function openAddNvcAssignmentModal(weekId) {
     }
 
     const isEstudio = typeSelect.value === 'estudio';
-    const currentNums = (week.items || []).filter(it => it.num && Number.isFinite(Number(it.num))).map(it => Number(it.num));
-    const nextNum = currentNums.length ? Math.max(...currentNums) + 1 : 8;
-
     let newItem;
     if (isEstudio) {
       newItem = {
         section: 'NVC',
-        num: nextNum,
         label,
         conductor: '',
         lector: ''
@@ -746,7 +801,6 @@ function openAddNvcAssignmentModal(weekId) {
       const isRestricted = overlay.querySelector('#new-nvc-restrict-select').value === 'si';
       newItem = {
         section: 'NVC',
-        num: nextNum,
         label,
         name: ''
       };
@@ -757,6 +811,7 @@ function openAddNvcAssignmentModal(weekId) {
     if (insertIdx === -1) insertIdx = (week.items || []).length;
 
     week.items.splice(insertIdx, 0, newItem);
+    recomputeWeekItemNumbers(week);
     await apiSavePrograma(PROGRAM.bimestre, PROGRAM, writeToken);
     overlay.remove();
     showToast('Asignación agregada a Nuestra Vida Cristiana', 'success');
@@ -812,6 +867,92 @@ function openChangeNvcCategoryModal(weekId, itemIdx) {
   });
 }
 
+// ============================================================
+// MODAL: AGREGAR NUEVO BIMESTRE (+ Agregar bimestre)
+// ============================================================
+function openAddBimestreModal() {
+  const bimOptions = [
+    'Marzo - Abril',
+    'Mayo - Junio',
+    'Julio - Agosto',
+    'Septiembre - Octubre',
+    'Noviembre - Diciembre',
+    'Enero - Febrero'
+  ];
+
+  const existing = document.getElementById('wm-add-bim-modal');
+  if (existing) existing.remove();
+
+  const overlay = document.createElement('div');
+  overlay.id = 'wm-add-bim-modal';
+  overlay.className = 'overlay';
+  overlay.innerHTML = `
+    <div class="modal">
+      <div class="modal-head">
+        <h3>Agregar bimestre</h3>
+        <p>Se copiará la estructura del bimestre elegido con asignaciones vacías para completarlo desde la app.</p>
+      </div>
+      <div class="field" style="margin-top: 12px;">
+        <label style="font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #64748b;">NOMBRE DEL NUEVO BIMESTRE</label>
+        <input class="search-input" id="new-bim-name-input" placeholder="Ej: Noviembre - Diciembre" style="margin-top: 6px;" />
+      </div>
+      <div class="field" style="margin-top: 14px;">
+        <label style="font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #64748b;">USAR COMO PLANTILLA</label>
+        <select class="search-input" id="new-bim-template-select" style="margin-top: 6px;">
+          ${bimOptions.map(b => `<option value="${escapeHtml(b)}">${escapeHtml(b)}</option>`).join('')}
+        </select>
+      </div>
+      <div class="modal-foot" style="margin-top: 20px;">
+        <button class="btn btn-ghost btn-sm" onclick="document.getElementById('wm-add-bim-modal').remove()">Cancelar</button>
+        <button class="btn btn-primary btn-sm" id="btn-save-add-bim">Crear bimestre</button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+
+  const nameInput = overlay.querySelector('#new-bim-name-input');
+  nameInput.focus();
+
+  overlay.querySelector('#btn-save-add-bim').addEventListener('click', async () => {
+    const name = nameInput.value.trim();
+    if (!name) {
+      nameInput.focus();
+      return;
+    }
+
+    // Clonar desde el bimestre actual o template
+    const template = PROGRAM || { weeks: [] };
+    const newBim = JSON.parse(JSON.stringify(template));
+    newBim.bimestre = name;
+
+    newBim.weeks = (newBim.weeks || []).map((w, wi) => {
+      const nw = JSON.parse(JSON.stringify(w));
+      nw.id = `${name}__${wi}`;
+      nw.items = (nw.items || []).map(it => {
+        const ni = JSON.parse(JSON.stringify(it));
+        if (ni.hasOwnProperty('name')) ni.name = '';
+        if (ni.hasOwnProperty('conductor')) ni.conductor = '';
+        if (ni.hasOwnProperty('lector')) ni.lector = '';
+        if (Array.isArray(ni.subs)) {
+          ni.subs = ni.subs.map(s => ({ ...s, name: '' }));
+        }
+        return ni;
+      });
+      return nw;
+    });
+
+    PROGRAM = newBim;
+    currentBimestre = name;
+    openWeeks.clear();
+
+    await apiSavePrograma(name, newBim, writeToken);
+    overlay.remove();
+    showToast(`Bimestre "${name}" creado exitosamente`, 'success');
+    render();
+  });
+}
+
 function editItemPrompt(weekId, itemIdx) {
   const week = (PROGRAM?.weeks || []).find(w => w.id === weekId);
   if (!week || !week.items?.[itemIdx]) return;
@@ -819,6 +960,7 @@ function editItemPrompt(weekId, itemIdx) {
   const next = prompt('Editar texto de la parte:', current);
   if (next && next.trim() && next.trim() !== current) {
     week.items[itemIdx].label = next.trim();
+    recomputeWeekItemNumbers(week);
     apiSavePrograma(PROGRAM.bimestre, PROGRAM, writeToken);
     render();
   }
@@ -840,6 +982,7 @@ function deleteAssignmentItem(weekId, itemIdx) {
   if (!week || !week.items?.[itemIdx]) return;
   if (confirm(`¿Eliminar esta asignación?\n\n"${week.items[itemIdx].label}"`)) {
     week.items.splice(itemIdx, 1);
+    recomputeWeekItemNumbers(week);
     apiSavePrograma(PROGRAM.bimestre, PROGRAM, writeToken);
     showToast('Asignación eliminada', 'info');
     render();
@@ -854,7 +997,7 @@ async function switchBimestre(bimestreName) {
     openWeeks.clear();
     render();
   } else {
-    showToast(`No hay datos disponibles para ${bimestreName}`, 'warning');
+    showToast(`Cargando ${bimestreName}...`, 'info');
   }
 }
 
