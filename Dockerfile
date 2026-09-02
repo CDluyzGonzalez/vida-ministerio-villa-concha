@@ -23,7 +23,6 @@ COPY package*.json ./
 # Copiar código fuente
 COPY server ./server
 COPY database ./database
-COPY scripts ./scripts
 COPY js ./js
 COPY css ./css
 COPY icons ./icons
