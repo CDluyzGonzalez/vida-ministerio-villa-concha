@@ -20,7 +20,7 @@ const rootDir = path.resolve(__dirname, '..');
 
 const app = express();
 const PORT = process.env.PORT || 8080;
-const ADMIN_PIN_HASH = process.env.ADMIN_PIN_HASH || '94dfa9f73f8d689626359f8011c52bd85bb049e6aaebdf5c5ecddaa2abaf42fa'; // PIN 7777
+const ADMIN_PIN_HASH = process.env.ADMIN_PIN_HASH || '79404babda0441a8756da8dc02bae87094fd393739678ccd7f36f90127f651b8';
 
 // Middlewares
 app.use(compression());
@@ -62,6 +62,13 @@ app.get('/api/health', (req, res) => {
     firestore: isConnected ? 'connected' : 'local_storage_mode',
     environment: process.env.NODE_ENV || 'development'
   });
+});
+
+// Verificar PIN de administrador
+app.post('/api/auth/verify', (req, res) => {
+  const { pinHash } = req.body || {};
+  const isValid = pinHash && pinHash.toLowerCase() === ADMIN_PIN_HASH.toLowerCase();
+  res.json({ authorized: isValid });
 });
 
 // ============================================================
@@ -202,9 +209,11 @@ app.put('/api/programa/:bimestreId', async (req, res) => {
 app.get('/api/personas', async (req, res) => {
   try {
     if (db) {
-      const snapshot = await db.collection('personas').orderBy('nombre', 'asc').get();
+      const snapshot = await db.collection('personas').get();
       if (!snapshot.empty) {
-        const personas = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const personas = snapshot.docs
+          .map(doc => ({ id: doc.id, ...doc.data() }))
+          .sort((a, b) => (a.nombre || '').localeCompare(b.nombre || '', 'es'));
         return res.json({ ok: true, personas });
       }
     }

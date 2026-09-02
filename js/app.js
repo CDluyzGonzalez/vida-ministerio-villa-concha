@@ -80,7 +80,7 @@ function render() {
     <main>
       ${currentTab === 'programa' ? renderProgramTab() : ''}
       ${currentTab === 'publicadores' ? renderPeopleTab() : ''}
-      ${currentTab === 'dashboard' ? renderDashboard() : ''}
+      ${currentTab === 'dashboard' ? renderDashboardTab() : ''}
     </main>
   `;
 }
