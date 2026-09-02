@@ -91,6 +91,11 @@ function render() {
       ${currentTab === 'dashboard' ? renderDashboardTab() : ''}
     </main>
   `;
+
+  // Si estamos en dashboard, cargar la sección de no-asignados (necesita async para bimestre anterior)
+  if (currentTab === 'dashboard' && typeof loadUnassignedWithPrevBimestre === 'function') {
+    loadUnassignedWithPrevBimestre();
+  }
 }
 
 // Cambiar de pestaña

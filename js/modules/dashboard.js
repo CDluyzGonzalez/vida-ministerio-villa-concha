@@ -269,25 +269,103 @@ function renderDashboardTab() {
           `}
         </div>
 
-        <!-- 🔵 Publicadores Sin Asignación -->
-        <div class="dash-alert-box alert-info" style="margin-top:16px;">
+        <!-- 🔵 Publicadores Sin Asignación (actual + anterior) -->
+        <div id="dash-unassigned-section" class="dash-alert-box alert-info" style="margin-top:16px;">
           <div class="dash-alert-header">
-            <h3>🔵 Publicadores Sin Asignación en el Bimestre (${audit.unassignedPeople.length})</h3>
+            <h3>🔵 Publicadores Sin Asignación</h3>
           </div>
-          ${audit.unassignedPeople.length === 0 ? `
-            <p class="dash-empty-msg">Todos los publicadores elegibles tienen al menos una parte en el bimestre.</p>
-          ` : `
-            <div class="dash-chips-grid">
-              ${audit.unassignedPeople.map(p => `
-                <div class="dash-chip">
-                  <span>${escapeHtml(p.nombre)}</span>
-                  <small style="color:#64748b;">${p.disponibilidad}</small>
-                </div>
-              `).join('')}
-            </div>
-          `}
+          <p class="dash-empty-msg">⏳ Verificando bimestre actual y anterior...</p>
         </div>
       </div>
     </div>
+  `;
+}
+
+// Obtener nombre del bimestre anterior
+function getPreviousBimestre(currentName) {
+  const idx = BIMESTRES_LIST.indexOf(currentName);
+  if (idx <= 0) return null; // Enero-Febrero no tiene anterior
+  return BIMESTRES_LIST[idx - 1];
+}
+
+// Extraer los nombres usados de un programa
+function extractUsedNorms(programData) {
+  const used = new Set();
+  if (!programData || !Array.isArray(programData.weeks)) return used;
+
+  programData.weeks.forEach(week => {
+    (week.items || []).forEach(item => {
+      if (item.name && item.name.trim()) used.add(normName(item.name));
+      if (item.conductor && item.conductor.trim()) used.add(normName(item.conductor));
+      if (item.lector && item.lector.trim()) used.add(normName(item.lector));
+      if (Array.isArray(item.subs)) {
+        item.subs.forEach(sub => {
+          if (sub.name && sub.name.trim()) used.add(normName(sub.name));
+        });
+      }
+    });
+  });
+  return used;
+}
+
+// Cargar bimestre anterior y actualizar sección de no-asignados
+async function loadUnassignedWithPrevBimestre() {
+  const container = document.getElementById('dash-unassigned-section');
+  if (!container) return;
+
+  const bimestreActual = PROGRAM?.bimestre || currentBimestre;
+  const bimestreAnterior = getPreviousBimestre(bimestreActual);
+
+  // Nombres usados en el bimestre actual
+  const usedCurrent = extractUsedNorms(PROGRAM);
+
+  // Nombres usados en el bimestre anterior
+  let usedPrev = new Set();
+  let prevLoaded = false;
+
+  if (bimestreAnterior) {
+    try {
+      const prevProg = await apiLoadPrograma(bimestreAnterior);
+      if (prevProg && Array.isArray(prevProg.weeks) && prevProg.weeks.length > 0) {
+        usedPrev = extractUsedNorms(prevProg);
+        prevLoaded = true;
+      }
+    } catch (e) {
+      console.warn('No se pudo cargar bimestre anterior:', e.message);
+    }
+  }
+
+  // Publicadores sin asignación en NINGUNO de los dos bimestres
+  const unassigned = (PEOPLE || []).filter(person => {
+    const norm = normName(person.nombre);
+    return !usedCurrent.has(norm) && !usedPrev.has(norm);
+  });
+
+  // Subtítulo descriptivo
+  const subtitle = bimestreAnterior && prevLoaded
+    ? `Sin asignación en <strong>${escapeHtml(bimestreAnterior)}</strong> ni en <strong>${escapeHtml(bimestreActual)}</strong>`
+    : `Sin asignación en <strong>${escapeHtml(bimestreActual)}</strong>`;
+
+  // Actualizar métricas
+  const metricCard = document.querySelector('.dash-metric-card:nth-child(4) .dash-metric-val');
+  if (metricCard) metricCard.textContent = unassigned.length;
+
+  container.innerHTML = `
+    <div class="dash-alert-header">
+      <h3>🔵 Publicadores Sin Asignación (${unassigned.length})</h3>
+    </div>
+    <p style="font-size:12.5px; color:#64748b; margin:4px 16px 8px;">${subtitle}</p>
+    ${unassigned.length === 0 ? `
+      <p class="dash-empty-msg">✅ Todos los publicadores tienen al menos una parte en los últimos 2 bimestres.</p>
+    ` : `
+      <div class="dash-chips-grid">
+        ${unassigned.map(p => `
+          <div class="dash-chip">
+            <span>${escapeHtml(p.nombre)}</span>
+            <small style="color:#64748b;">${p.genero === 'F' ? 'Hna' : 'Hno'}</small>
+          </div>
+        `).join('')}
+      </div>
+    `}
   `;
 }
