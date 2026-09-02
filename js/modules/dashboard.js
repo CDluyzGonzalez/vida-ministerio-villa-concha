@@ -23,6 +23,7 @@ function auditCurrentProgram(programData, peopleList) {
 
   const weeks = programData.weeks;
   const personWeeklyUsage = new Map(); // personaNorm -> Set de indices de semanas
+  const personWeeklyParts = new Map(); // personaNorm -> Map(weekIndex -> [partName])
   const personTotalCount = new Map();  // personaNorm -> conteo total
   const usedPeopleNorms = new Set();
 
@@ -41,6 +42,10 @@ function auditCurrentProgram(programData, peopleList) {
 
         if (!personWeeklyUsage.has(norm)) personWeeklyUsage.set(norm, new Set());
         personWeeklyUsage.get(norm).add(weekIndex);
+
+        if (!personWeeklyParts.has(norm)) personWeeklyParts.set(norm, new Map());
+        if (!personWeeklyParts.get(norm).has(weekIndex)) personWeeklyParts.get(norm).set(weekIndex, []);
+        personWeeklyParts.get(norm).get(weekIndex).push(item.label || 'Parte');
       } else if (item.hasOwnProperty('conductor')) {
         // Conductor y Lector de Estudio Bíblico
         result.stats.totalParts += 2;
@@ -51,6 +56,9 @@ function auditCurrentProgram(programData, peopleList) {
           weekAssignees.push({ name: item.conductor.trim(), norm, part: 'Estudio Bíblico (Conductor)', section: 'NVC' });
           if (!personWeeklyUsage.has(norm)) personWeeklyUsage.set(norm, new Set());
           personWeeklyUsage.get(norm).add(weekIndex);
+          if (!personWeeklyParts.has(norm)) personWeeklyParts.set(norm, new Map());
+          if (!personWeeklyParts.get(norm).has(weekIndex)) personWeeklyParts.get(norm).set(weekIndex, []);
+          personWeeklyParts.get(norm).get(weekIndex).push('Estudio Bíblico (Conductor)');
         } else {
           result.stats.unassignedParts++;
         }
@@ -62,6 +70,9 @@ function auditCurrentProgram(programData, peopleList) {
           weekAssignees.push({ name: item.lector.trim(), norm, part: 'Estudio Bíblico (Lector)', section: 'NVC' });
           if (!personWeeklyUsage.has(norm)) personWeeklyUsage.set(norm, new Set());
           personWeeklyUsage.get(norm).add(weekIndex);
+          if (!personWeeklyParts.has(norm)) personWeeklyParts.set(norm, new Map());
+          if (!personWeeklyParts.get(norm).has(weekIndex)) personWeeklyParts.get(norm).set(weekIndex, []);
+          personWeeklyParts.get(norm).get(weekIndex).push('Estudio Bíblico (Lector)');
         } else {
           result.stats.unassignedParts++;
         }
@@ -83,6 +94,9 @@ function auditCurrentProgram(programData, peopleList) {
 
             if (!personWeeklyUsage.has(norm)) personWeeklyUsage.set(norm, new Set());
             personWeeklyUsage.get(norm).add(weekIndex);
+            if (!personWeeklyParts.has(norm)) personWeeklyParts.set(norm, new Map());
+            if (!personWeeklyParts.get(norm).has(weekIndex)) personWeeklyParts.get(norm).set(weekIndex, []);
+            personWeeklyParts.get(norm).get(weekIndex).push(`${item.label || 'Maestros'} (${sub.role || 'Ayudante'})`);
           } else {
             result.stats.unassignedParts++;
           }
@@ -141,10 +155,15 @@ function auditCurrentProgram(programData, peopleList) {
 
       consecutiveStreaks.forEach(streak => {
         const weekNames = streak.map(idx => weeks[idx]?.semana || `Semana #${idx + 1}`);
+        const partsPerWeek = streak.map(idx => {
+          const partsMap = personWeeklyParts.get(norm);
+          return partsMap?.get(idx) || ['(sin detalle)'];
+        });
         result.consecutiveWeeks.push({
           nombre: name,
           consecutiveCount: streak.length,
-          semanas: weekNames
+          semanas: weekNames,
+          partesPorSemana: partsPerWeek
         });
       });
     }
@@ -237,7 +256,13 @@ function renderDashboardTab() {
               ${audit.consecutiveWeeks.map(c => `
                 <li>
                   <strong>${escapeHtml(c.nombre)}</strong> asignado en <strong>${c.consecutiveCount} semanas seguidas</strong>:
-                  <div class="dash-parts-sub">${c.semanas.map(s => `<span>${escapeHtml(s)}</span>`).join(' ➔ ')}</div>
+                  <div class="dash-parts-sub" style="flex-direction:column; gap:4px;">
+                    ${c.semanas.map((s, i) => {
+                      const parts = (c.partesPorSemana && c.partesPorSemana[i]) ? c.partesPorSemana[i] : [];
+                      const partsText = parts.map(p => escapeHtml(p)).join(', ');
+                      return `<span>${i > 0 ? '➔ ' : ''}${escapeHtml(s)} <em style="color:var(--gold-deep);">(${partsText})</em></span>`;
+                    }).join('')}
+                  </div>
                 </li>
               `).join('')}
             </ul>

@@ -291,10 +291,26 @@ app.post('/api/personas/batch', async (req, res) => {
     if (db) {
       try {
         const batch = db.batch();
+        const sentIds = new Set(personas.map(p => p.id));
+
+        // Upsert todas las personas enviadas
         personas.forEach(p => {
           const docRef = db.collection('personas').doc(p.id);
           batch.set(docRef, p, { merge: true });
         });
+
+        // Eliminar personas que ya no están en la lista
+        try {
+          const snapshot = await db.collection('personas').get();
+          snapshot.docs.forEach(doc => {
+            if (!sentIds.has(doc.id)) {
+              batch.delete(doc.ref);
+            }
+          });
+        } catch (readErr) {
+          console.warn('No se pudo leer personas para cleanup:', readErr.message);
+        }
+
         await batch.commit();
       } catch (firestoreError) {
         console.warn('Firestore personas batch write error:', firestoreError.message);

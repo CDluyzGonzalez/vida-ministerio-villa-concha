@@ -196,6 +196,7 @@ function openPersonModal(personId) {
       <div class="modal-foot">
         <button class="btn btn-ghost btn-sm" onclick="closePersonModal()">Cerrar</button>
         ${isAdmin ? `
+          ${!isNew ? `<button class="btn btn-sm" style="background:var(--terra-warn);color:#fff;margin-right:auto;" onclick="deletePersonFromModal('${person.id}')">🗑 Eliminar</button>` : ''}
           <button class="btn btn-primary btn-sm" onclick="savePersonFromModal('${person.id}', ${isNew})">
             Guardar Cambios
           </button>
@@ -254,5 +255,35 @@ async function savePersonFromModal(personId, isNew) {
 
   closePersonModal();
   showToast('Publicador guardado exitosamente', 'success');
+  render();
+}
+
+async function deletePersonFromModal(personId) {
+  const person = (PEOPLE || []).find(p => String(p.id) === String(personId));
+  if (!person) return;
+
+  const confirmed = confirm(
+    `¿Estás seguro de eliminar a "${person.nombre}"?\n\n` +
+    `Esta acción no se puede deshacer. El publicador será removido de la lista.`
+  );
+  if (!confirmed) return;
+
+  PEOPLE = (PEOPLE || []).filter(p => String(p.id) !== String(personId));
+
+  await appStorageSet('wm-people', JSON.stringify(PEOPLE));
+
+  // Sincronizar con el backend (enviar lista completa actualizada)
+  try {
+    await fetch('/api/personas/batch', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ personas: PEOPLE, token: writeToken })
+    });
+  } catch (e) {
+    console.warn('No se pudo sincronizar eliminación con el servidor:', e.message);
+  }
+
+  closePersonModal();
+  showToast(`"${person.nombre}" eliminado correctamente`, 'success');
   render();
 }
