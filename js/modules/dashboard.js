@@ -114,17 +114,30 @@ function auditCurrentProgram(programData, peopleList) {
     Object.keys(countsInWeek).forEach(normKey => {
       const entries = countsInWeek[normKey];
       if (entries.length > 1) {
-        // Excepción válida: Introducción y Conclusión por el mismo hermano es el papel normal de Presidencia
-        const partsNormalized = entries.map(e => normName(e.part || ''));
-        const hasIntro = partsNormalized.some(p => p.includes('introduccion'));
-        const hasConcl = partsNormalized.some(p => p.includes('conclusion'));
-        const isIntroConclPair = (entries.length === 2 && hasIntro && hasConcl);
+        // Regla de Presidencia: Palabras de Introducción y Palabras de Conclusión son la misma función
+        const hasIntro = entries.some(e => normName(e.part || '').includes('introduccion'));
+        const hasConcl = entries.some(e => normName(e.part || '').includes('conclusion'));
 
-        if (!isIntroConclPair) {
+        let distinctAssignments = [];
+        if (hasIntro && hasConcl) {
+          // Fusionar introducción y conclusión en una sola asignación de Presidencia
+          distinctAssignments.push('Presidencia (Introducción y Conclusión)');
+          entries.forEach(e => {
+            const pNorm = normName(e.part || '');
+            if (!pNorm.includes('introduccion') && !pNorm.includes('conclusion')) {
+              distinctAssignments.push(e.part);
+            }
+          });
+        } else {
+          distinctAssignments = entries.map(e => e.part);
+        }
+
+        // Solo hay conflicto real si tiene más de una función distinta en la semana
+        if (distinctAssignments.length > 1) {
           result.sameWeekConflicts.push({
             semana: week.semana || `Semana #${weekIndex + 1}`,
             nombre: entries[0].name,
-            partes: entries.map(e => e.part)
+            partes: distinctAssignments
           });
         }
       }
@@ -157,7 +170,14 @@ function auditCurrentProgram(programData, peopleList) {
         const weekNames = streak.map(idx => weeks[idx]?.semana || `Semana #${idx + 1}`);
         const partsPerWeek = streak.map(idx => {
           const partsMap = personWeeklyParts.get(norm);
-          return partsMap?.get(idx) || ['(sin detalle)'];
+          const rawParts = partsMap?.get(idx) || ['(sin detalle)'];
+          const hasIntro = rawParts.some(p => normName(p).includes('introduccion'));
+          const hasConcl = rawParts.some(p => normName(p).includes('conclusion'));
+          if (hasIntro && hasConcl) {
+            const others = rawParts.filter(p => !normName(p).includes('introduccion') && !normName(p).includes('conclusion'));
+            return ['Presidencia', ...others];
+          }
+          return rawParts;
         });
         result.consecutiveWeeks.push({
           nombre: name,
