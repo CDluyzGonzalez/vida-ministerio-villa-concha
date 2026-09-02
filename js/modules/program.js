@@ -84,17 +84,6 @@ function toggleWeek(weekId) {
 
 // Renderizado principal de la pestaña Programa
 function renderProgramTab() {
-  const allBimestres = [
-    'Marzo - Abril',
-    'Mayo - Junio',
-    'Julio - Agosto',
-    'Septiembre - Octubre'
-  ];
-
-  if (PROGRAM?.bimestre && !allBimestres.includes(PROGRAM.bimestre)) {
-    allBimestres.push(PROGRAM.bimestre);
-  }
-
   // 1. Vista de Solo Lectura (Público / No Administrador)
   if (!isAdmin) {
     const viewerLabels = computeViewerBimestres();
