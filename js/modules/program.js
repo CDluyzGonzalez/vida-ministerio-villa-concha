@@ -439,7 +439,7 @@ function renderItemRow(bim, w, it, idx) {
         <div class="maestros-person-column" style="display:flex; flex-direction:column; gap:4px; min-width:0;">
           <span style="font-size:12px; font-weight:700; color:#363535;">Ayudante</span>
           ${isAdmin && !pdfExportMode ? `
-            <button type="button" class="assign-btn ${ayudante ? '' : 'empty'}" onclick="openAssignModal('libre', '${escapeHtml(ayudante)}', (name) => applyAssignmentSlot('${w.id}', ${idx}, 'sub1', name))">
+            <button type="button" class="assign-btn ${ayudante ? '' : 'empty'}" onclick="openAssignModal('${reqPriv}', '${escapeHtml(ayudante)}', (name) => applyAssignmentSlot('${w.id}', ${idx}, 'sub1', name))">
               ${ayudante ? escapeHtml(ayudante) : 'Sin asignar'}
             </button>
           ` : `
@@ -565,7 +565,23 @@ async function applyAssignmentSlot(weekId, itemIdx, slot, newName) {
   const item = week.items[itemIdx];
   const value = String(newName || '').trim();
 
-  if (slot === 'name') item.name = value;
+  if (slot === 'name') {
+    item.name = value;
+
+    // Regla de Presidencia: Quien da Palabras de introducción da también Palabras de conclusión
+    const isIntro = /palabras de introducci[oó]n/i.test(item.label || '');
+    const isConcl = /palabras de conclusi[oó]n/i.test(item.label || '');
+
+    if (isIntro || isConcl) {
+      week.items.forEach(otherItem => {
+        if (isIntro && /palabras de conclusi[oó]n/i.test(otherItem.label || '')) {
+          otherItem.name = value;
+        } else if (isConcl && /palabras de introducci[oó]n/i.test(otherItem.label || '')) {
+          otherItem.name = value;
+        }
+      });
+    }
+  }
   else if (slot === 'conductor') item.conductor = value;
   else if (slot === 'lector') item.lector = value;
   else if (slot === 'sub0') {

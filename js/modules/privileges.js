@@ -48,12 +48,12 @@ function computeCat(it) {
   const num = it.num;
 
   // Apertura y Cierre
-  if (section === 'OPEN' || section === 'CLOSE') {
+  if (section === 'OPEN' || section === 'CLOSE' || /oraci[oó]n/i.test(label)) {
     return 'oraciones';
   }
 
   // Introducción y Conclusión
-  if (section === 'INTRO') {
+  if (section === 'INTRO' || section === 'CONCLUSION' || /palabras de (introducci[oó]n|conclusi[oó]n)/i.test(label)) {
     return 'intro_conclusion';
   }
 
