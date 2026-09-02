@@ -7,8 +7,9 @@
 // Estado Global
 let PROGRAM = null;
 let PEOPLE = null;
+let BIMESTRES_LIST = ['Marzo - Abril', 'Mayo - Junio', 'Julio - Agosto', 'Septiembre - Octubre'];
 let currentTab = 'programa'; // 'programa' | 'publicadores' | 'dashboard'
-let currentBimestre = 'Marzo - Abril';
+let currentBimestre = 'Septiembre - Octubre';
 let openWeeks = new Set();
 let peopleSearch = '';
 let isAdmin = false;
@@ -103,10 +104,13 @@ async function boot() {
   render();
 
   try {
-    // 1. Cargar Publicadores
+    // 1. Cargar Lista de Bimestres desde Firestore
+    BIMESTRES_LIST = await apiLoadBimestres();
+
+    // 2. Cargar Publicadores
     PEOPLE = await apiLoadPersonas();
 
-    // 2. Cargar Programa del Bimestre Inicial
+    // 3. Cargar Programa del Bimestre Inicial (el más reciente)
     const prog = await apiLoadPrograma(currentBimestre);
     if (prog) {
       PROGRAM = prog;

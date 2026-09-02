@@ -77,6 +77,27 @@ async function apiLoadPrograma(bimestreId) {
   return null;
 }
 
+// 2b. Cargar Lista de Bimestres Disponibles (desde Firestore)
+async function apiLoadBimestres() {
+  const defaults = ['Marzo - Abril', 'Mayo - Junio', 'Julio - Agosto', 'Septiembre - Octubre'];
+  try {
+    const res = await fetch('/api/bimestres');
+    if (res.ok) {
+      const data = await res.json();
+      if (data.ok && Array.isArray(data.bimestres) && data.bimestres.length > 0) {
+        const nombres = data.bimestres.map(b => b.nombre || b.id);
+        // Fusionar con defaults para no perder ninguno
+        const all = [...new Set([...defaults, ...nombres])];
+        return all;
+      }
+    }
+  } catch (error) {
+    console.warn('No se pudo cargar lista de bimestres:', error.message);
+  }
+  return defaults;
+}
+
+
 // 3. Guardar Programa
 async function apiSavePrograma(bimestreId, programData, token) {
   try {

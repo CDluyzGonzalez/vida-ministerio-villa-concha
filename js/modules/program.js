@@ -122,10 +122,13 @@ function renderProgramTab() {
     `;
   }
 
-  // 2. Vista de Administrador (Con herramientas de edición)
+  // Vista de Administrador (Con herramientas de edición)
   if (!PROGRAM || !Array.isArray(PROGRAM.weeks)) {
     return '<div class="section-pad"><div class="loading">Cargando datos del programa…</div></div>';
   }
+
+  // Usar la lista dinámica de Firestore + asegurar que el bimestre actual esté incluido
+  const allBimestres = [...new Set([...BIMESTRES_LIST, PROGRAM.bimestre].filter(Boolean))];
 
   return `
     <div class="section-pad">
@@ -951,6 +954,11 @@ function openAddBimestreModal() {
     PROGRAM = newBim;
     currentBimestre = name;
     openWeeks.clear();
+
+    // Agregar a la lista local de bimestres para que aparezca en el selector
+    if (!BIMESTRES_LIST.includes(name)) {
+      BIMESTRES_LIST = [...BIMESTRES_LIST, name];
+    }
 
     await apiSavePrograma(name, newBim, writeToken);
     overlay.remove();
