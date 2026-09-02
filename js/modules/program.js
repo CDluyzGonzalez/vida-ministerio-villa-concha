@@ -145,9 +145,9 @@ function renderProgramTab() {
           `).join('')}
         </div>
 
-        <div class="actions">
+        <div class="actions" style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
           <button class="btn btn-ghost btn-sm" onclick="exportProgramPdf()">⬇ Descargar PDF</button>
-          <button class="btn btn-ghost btn-sm" onclick="openAddBimestreModal()">+ Agregar bimestre</button>
+          <button class="btn btn-ghost btn-sm" style="color: var(--terra-warn); border-color: rgba(181,80,46,0.35);" onclick="clearBimestreAssignmentsPrompt()" title="Vaciar las asignaciones de hermanos en este bimestre para volver a programar">🗑 Limpiar asignaciones</button>
         </div>
       </div>
 
@@ -157,6 +157,35 @@ function renderProgramTab() {
       </div>
     </div>
   `;
+}
+
+// Vaciar todas las asignaciones de hermanos en el bimestre activo
+async function clearBimestreAssignmentsPrompt() {
+  if (!PROGRAM || !Array.isArray(PROGRAM.weeks)) return;
+  const bimName = PROGRAM.bimestre || currentBimestre;
+
+  const confirmed = confirm(
+    `¿Estás seguro de vaciar TODAS las asignaciones de hermanos en "${bimName}"?\n\n` +
+    `• Las semanas, temas y partes del programa se mantendrán intactos.\n` +
+    `• Los nombres de los publicadores asignados quedarán en blanco para volver a programar desde cero.`
+  );
+
+  if (!confirmed) return;
+
+  PROGRAM.weeks.forEach(w => {
+    (w.items || []).forEach(it => {
+      if (it.hasOwnProperty('name')) it.name = '';
+      if (it.hasOwnProperty('conductor')) it.conductor = '';
+      if (it.hasOwnProperty('lector')) it.lector = '';
+      if (Array.isArray(it.subs)) {
+        it.subs.forEach(s => { s.name = ''; });
+      }
+    });
+  });
+
+  await apiSavePrograma(bimName, PROGRAM, writeToken);
+  showToast(`Asignaciones de "${bimName}" vaciadas correctamente`, 'success');
+  render();
 }
 
 // Renderizado de tarjeta de una semana

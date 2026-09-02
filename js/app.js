@@ -7,7 +7,14 @@
 // Estado Global
 let PROGRAM = null;
 let PEOPLE = null;
-let BIMESTRES_LIST = ['Marzo - Abril', 'Mayo - Junio', 'Julio - Agosto', 'Septiembre - Octubre'];
+let BIMESTRES_LIST = [
+  'Enero - Febrero',
+  'Marzo - Abril',
+  'Mayo - Junio',
+  'Julio - Agosto',
+  'Septiembre - Octubre',
+  'Noviembre - Diciembre'
+];
 let currentTab = 'programa'; // 'programa' | 'publicadores' | 'dashboard'
 let currentBimestre = 'Septiembre - Octubre';
 let openWeeks = new Set();
