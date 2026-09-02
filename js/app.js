@@ -1,224 +1,129 @@
 // ============================================================
 // VIDA Y MINISTERIO — VILLA CONCHA
-// app.js
-// ============================================================
-// Archivo principal de la aplicación.
-//
-// RESPONSABILIDAD:
-// - Mantener el estado global.
-// - Mantener la configuración general.
-// - Iniciar la aplicación.
-//
-// Las funciones están en:
-// js/functions.js
-//
-// Los datos están en:
-// js/data/
+// js/app.js
+// Punto de Entrada, Estado Global y Router de Pestañas
 // ============================================================
 
-
-// ============================================================
-// ESTADO GLOBAL
-// ============================================================
-
+// Estado Global
 let PROGRAM = null;
-
 let PEOPLE = null;
-
-let currentTab = 'programa';
-
-let currentBimestre = null;
-
+let currentTab = 'programa'; // 'programa' | 'publicadores' | 'dashboard'
+let currentBimestre = 'Marzo - Abril';
 let openWeeks = new Set();
-
 let peopleSearch = '';
-
-let saving = false;
-
 let isAdmin = false;
-
-let openPersonId = null;
-
-let sheetsConnected = false;
-
-// Token que autoriza a guardar en Google Sheets. Es el mismo hash del
-// PIN, calculado en memoria SOLO tras un ingreso de PIN correcto —
-// nunca vive como un valor fijo en el código. Se limpia al salir del
-// modo administrador. Ver openWriteTokenModal() en functions.js.
 let writeToken = null;
 
+// ============================================================
+// RENDERIZADOR PRINCIPAL DE LA APLICACIÓN
+// ============================================================
+
+function render() {
+  const root = document.getElementById('root');
+  if (!root) return;
+
+  // Si no es admin, forzar pestaña programa
+  if (!isAdmin && currentTab !== 'programa') {
+    currentTab = 'programa';
+  }
+
+  root.innerHTML = `
+    <!-- Header Principal -->
+    <header class="app-header">
+      <div class="brand" style="display: flex; align-items: baseline; gap: 10px; margin-bottom: 14px;">
+        <h1>Vida y Ministerio</h1>
+        <span class="sub">Villa Concha</span>
+
+        <span class="install-app-slot"></span>
+
+        <span class="admin-toggle" style="margin-left: auto;">
+          ${isAdmin ? `
+            <button class="admin-btn admin-on" onclick="logoutAdmin()" title="Modo Administrador Activo (Clic para salir)">
+              🔓 Admin
+            </button>
+          ` : `
+            <button class="admin-btn" onclick="openAdminPinModal()" title="Ingresar PIN para editar">
+              🔒 Admin
+            </button>
+          `}
+        </span>
+      </div>
+
+      <!-- Pestañas de Navegación: Publicadores y Dashboard SOLO visibles en Modo Admin -->
+      <div class="tabbar">
+        <button
+          class="${currentTab === 'programa' ? 'active' : ''}"
+          onclick="switchTab('programa')"
+        >
+          Programa
+        </button>
+
+        ${isAdmin ? `
+          <button
+            class="${currentTab === 'publicadores' ? 'active' : ''}"
+            onclick="switchTab('publicadores')"
+          >
+            Publicadores
+          </button>
+
+          <button
+            class="${currentTab === 'dashboard' ? 'active' : ''}"
+            onclick="switchTab('dashboard')"
+          >
+            Dashboard
+          </button>
+        ` : ''}
+      </div>
+    </header>
+
+    <!-- Contenido Principal -->
+    <main>
+      ${currentTab === 'programa' ? renderProgramTab() : ''}
+      ${currentTab === 'publicadores' ? renderPeopleTab() : ''}
+      ${currentTab === 'dashboard' ? renderDashboard() : ''}
+    </main>
+  `;
+}
+
+// Cambiar de pestaña
+function switchTab(tabName) {
+  if (tabName !== 'programa' && !isAdmin) {
+    openAdminPinModal();
+    return;
+  }
+  currentTab = tabName;
+  render();
+}
 
 // ============================================================
-// CONFIGURACIÓN GENERAL
-// ============================================================
-
-// El PIN de administrador NO vive aquí en texto plano. Su huella
-// SHA-256 (DEFAULT_PIN_HASH) está en functions.js, y getAdminPin()/
-// setAdminPin() en ese mismo archivo son las únicas funciones que
-// deben tocar el PIN — nunca se guarda ni compara en texto plano.
-
-
-// URL predeterminada del Web App de Google Apps Script.
-const APPS_SCRIPT_URL_DEFAULT =
-    'https://script.google.com/macros/s/AKfycbxe9AFa9qZJBnqJJpbQ7nLjdNFRTrPlACFKZkA6Z-QFAmA3Pbn2YcRM6JafV3H3Njfo-Q/exec';
-
-
-// URL que realmente utilizará la aplicación.
-let APPS_SCRIPT_URL = '';
-
-
-// ============================================================
-// INICIO DE LA APLICACIÓN
+// ARRANQUE / BOOTSTRAP DE LA APLICACIÓN
 // ============================================================
 
 async function boot() {
+  render();
 
-    // ----------------------------------------------------------
-    // 1. Obtener la URL de Google Sheets
-    // ----------------------------------------------------------
+  try {
+    // 1. Cargar Publicadores
+    PEOPLE = await apiLoadPersonas();
 
-    try {
-
-        await getSheetsUrl();
-
-    } catch (error) {
-
-        console.warn(
-            'No se pudo obtener la URL de Google Sheets.',
-            error
-        );
-
-        APPS_SCRIPT_URL =
-            APPS_SCRIPT_URL_DEFAULT || '';
+    // 2. Cargar Programa del Bimestre Inicial
+    const prog = await apiLoadPrograma(currentBimestre);
+    if (prog) {
+      PROGRAM = prog;
+    } else if (typeof DEFAULT_PROGRAM !== 'undefined' && Array.isArray(DEFAULT_PROGRAM)) {
+      PROGRAM = DEFAULT_PROGRAM[0];
     }
 
-
-    // ----------------------------------------------------------
-    // 2. Mostrar la interfaz inicialmente
-    // ----------------------------------------------------------
-
-    render();
-
-
-    // ----------------------------------------------------------
-    // 3. Cargar los datos
-    // ----------------------------------------------------------
-
-    try {
-
-        await Promise.race([
-
-            loadData(),
-
-            new Promise((_, reject) => {
-
-                setTimeout(() => {
-
-                    reject(
-                        new Error(
-                            'Tiempo de espera de carga'
-                        )
-                    );
-
-                }, 15000);
-
-            })
-
-        ]);
-
-    } catch (error) {
-
-        console.warn(
-            'La carga remota no respondió. ' +
-            'Se utilizarán los datos locales.',
-            error
-        );
-
-
-        // ------------------------------------------------------
-        // Datos locales
-        // ------------------------------------------------------
-
-        if (!PROGRAM) {
-
-            if (
-                typeof DEFAULT_PROGRAM !==
-                'undefined'
-            ) {
-
-                PROGRAM =
-                    JSON.parse(
-                        JSON.stringify(
-                            DEFAULT_PROGRAM
-                        )
-                    );
-            }
-        }
-
-
-        if (!PEOPLE) {
-
-            if (
-                typeof DEFAULT_PEOPLE !==
-                'undefined'
-            ) {
-
-                PEOPLE =
-                    JSON.parse(
-                        JSON.stringify(
-                            DEFAULT_PEOPLE
-                        )
-                    );
-            }
-        }
-
+    // Abrir la primera semana por defecto
+    if (PROGRAM?.weeks?.[0]?.id) {
+      openWeeks.add(PROGRAM.weeks[0].id);
     }
+  } catch (error) {
+    console.warn('Error durante el arranque:', error);
+  }
 
-
-    // ----------------------------------------------------------
-    // 4. Volver a renderizar
-    // ----------------------------------------------------------
-
-    render();
-
-
-    // ----------------------------------------------------------
-    // 5. Actualizar estado de Google Sheets
-    // ----------------------------------------------------------
-
-    if (
-        APPS_SCRIPT_URL &&
-        sheetsConnected
-    ) {
-
-        setSheetsStatus(true);
-
-    } else if (
-        APPS_SCRIPT_URL
-    ) {
-
-        setSheetsStatus(
-            false,
-            '☁ Sheets listo para conectar'
-        );
-
-    } else {
-
-        setSheetsStatus(
-            false,
-            '☁ Sheets no conectado'
-        );
-
-    }
-
+  render();
 }
 
-
-// ============================================================
-// ARRANCAR APLICACIÓN
-// ============================================================
-
-document.addEventListener(
-    'DOMContentLoaded',
-    boot
-);
+// Iniciar al cargar el DOM
+document.addEventListener('DOMContentLoaded', boot);

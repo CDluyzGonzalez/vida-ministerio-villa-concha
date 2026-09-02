@@ -1,0 +1,27 @@
+{
+  "name": "vida-ministerio-villa-concha",
+  "version": "2.0.0",
+  "description": "Aplicación web PWA y API para la gestión del programa semanal Vida y Ministerio con Firestore y Google Cloud Run",
+  "main": "server/server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server/server.js",
+    "dev": "node --watch server/server.js",
+    "migrate": "node scripts/migrate_firestore.js"
+  },
+  "keywords": [
+    "pwa",
+    "firestore",
+    "google-cloud-run",
+    "vida-y-ministerio"
+  ],
+  "author": "Villa Concha",
+  "license": "ISC",
+  "dependencies": {
+    "@google-cloud/firestore": "^7.11.0",
+    "compression": "^1.7.5",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2"
+  }
+}
