@@ -7,7 +7,7 @@
 // Escanear el programa actual para generar auditoría completa
 function auditCurrentProgram(programData, peopleList) {
   const result = {
-    sameWeekConflicts: [], // 🔴 Doble asignación misma semana
+    sameWeekConflicts: [], // 🔴 Doble asignación misma semana (excluyendo Intro + Conclusión del mismo hermano)
     consecutiveWeeks: [],  // 🟡 Asignaciones en semanas consecutivas
     unassignedPeople: [],  // 🔵 Hermanos sin asignación en el bimestre
     stats: {
@@ -27,13 +27,12 @@ function auditCurrentProgram(programData, peopleList) {
   const usedPeopleNorms = new Set();
 
   weeks.forEach((week, weekIndex) => {
-    const weekAssignees = []; // [{ name, partLabel, section }]
+    const weekAssignees = []; // [{ name, norm, part, section }]
 
     (week.items || []).forEach(item => {
-      result.stats.totalParts++;
-
       // Asignación principal
       if (item.name && item.name.trim()) {
+        result.stats.totalParts++;
         result.stats.assignedParts++;
         const norm = normName(item.name);
         usedPeopleNorms.add(norm);
@@ -42,14 +41,41 @@ function auditCurrentProgram(programData, peopleList) {
 
         if (!personWeeklyUsage.has(norm)) personWeeklyUsage.set(norm, new Set());
         personWeeklyUsage.get(norm).add(weekIndex);
-      } else if (!item.subs || item.subs.length === 0) {
+      } else if (item.hasOwnProperty('conductor')) {
+        // Conductor y Lector de Estudio Bíblico
+        result.stats.totalParts += 2;
+        if (item.conductor && item.conductor.trim()) {
+          result.stats.assignedParts++;
+          const norm = normName(item.conductor);
+          usedPeopleNorms.add(norm);
+          weekAssignees.push({ name: item.conductor.trim(), norm, part: 'Estudio Bíblico (Conductor)', section: 'NVC' });
+          if (!personWeeklyUsage.has(norm)) personWeeklyUsage.set(norm, new Set());
+          personWeeklyUsage.get(norm).add(weekIndex);
+        } else {
+          result.stats.unassignedParts++;
+        }
+
+        if (item.lector && item.lector.trim()) {
+          result.stats.assignedParts++;
+          const norm = normName(item.lector);
+          usedPeopleNorms.add(norm);
+          weekAssignees.push({ name: item.lector.trim(), norm, part: 'Estudio Bíblico (Lector)', section: 'NVC' });
+          if (!personWeeklyUsage.has(norm)) personWeeklyUsage.set(norm, new Set());
+          personWeeklyUsage.get(norm).add(weekIndex);
+        } else {
+          result.stats.unassignedParts++;
+        }
+      } else if (!isPureSongLine(item) && (!item.subs || item.subs.length === 0)) {
+        result.stats.totalParts++;
         result.stats.unassignedParts++;
       }
 
       // Sub-asignaciones (ej. demostraciones de maestros)
       if (Array.isArray(item.subs)) {
+        result.stats.totalParts += item.subs.length;
         item.subs.forEach(sub => {
           if (sub.name && sub.name.trim()) {
+            result.stats.assignedParts++;
             const norm = normName(sub.name);
             usedPeopleNorms.add(norm);
             weekAssignees.push({ name: sub.name.trim(), norm, part: `${item.label || 'Maestros'} (${sub.role || 'Ayudante'})`, section: item.section });
@@ -57,6 +83,8 @@ function auditCurrentProgram(programData, peopleList) {
 
             if (!personWeeklyUsage.has(norm)) personWeeklyUsage.set(norm, new Set());
             personWeeklyUsage.get(norm).add(weekIndex);
+          } else {
+            result.stats.unassignedParts++;
           }
         });
       }
@@ -72,11 +100,18 @@ function auditCurrentProgram(programData, peopleList) {
     Object.keys(countsInWeek).forEach(normKey => {
       const entries = countsInWeek[normKey];
       if (entries.length > 1) {
-        result.sameWeekConflicts.push({
-          semana: week.semana || `Semana #${weekIndex + 1}`,
-          nombre: entries[0].name,
-          partes: entries.map(e => e.part)
-        });
+        // Excepción válida: Introducción y Conclusión por el mismo hermano es el papel normal de Presidencia
+        const isIntroConclPair = entries.length === 2 &&
+          entries.some(e => /introducci[oó]n/i.test(e.part)) &&
+          entries.some(e => /conclusi[oó]n/i.test(e.part));
+
+        if (!isIntroConclPair) {
+          result.sameWeekConflicts.push({
+            semana: week.semana || `Semana #${weekIndex + 1}`,
+            nombre: entries[0].name,
+            partes: entries.map(e => e.part)
+          });
+        }
       }
     });
   });
@@ -100,129 +135,131 @@ function auditCurrentProgram(programData, peopleList) {
     if (currentStreak.length >= 2) consecutiveStreaks.push([...currentStreak]);
 
     if (consecutiveStreaks.length > 0) {
-      // Encontrar nombre original
-      const matchedPerson = (peopleList || []).find(p => normName(p.nombre) === norm);
-      const name = matchedPerson ? matchedPerson.nombre : norm;
+      const personObj = (peopleList || []).find(p => normName(p.nombre) === norm);
+      const name = personObj ? personObj.nombre : norm;
 
       consecutiveStreaks.forEach(streak => {
-        const weekNames = streak.map(idx => weeks[idx]?.semana || `Semana ${idx + 1}`);
+        const weekNames = streak.map(idx => weeks[idx]?.semana || `Semana #${idx + 1}`);
         result.consecutiveWeeks.push({
           nombre: name,
-          count: streak.length,
+          consecutiveCount: streak.length,
           semanas: weekNames
         });
       });
     }
   });
 
-  // 3. Hermanos sin Asignaciones en el Bimestre (🔵 Equidad)
-  (peopleList || []).forEach(p => {
-    const norm = normName(p.nombre);
-    if (!usedPeopleNorms.has(norm) && p.estado !== 'inactivo') {
-      result.unassignedPeople.push(p);
+  // 3. Hermanos sin Asignación en el Bimestre (🔵 Equidad)
+  (peopleList || []).forEach(person => {
+    const norm = normName(person.nombre);
+    if (!usedPeopleNorms.has(norm)) {
+      result.unassignedPeople.push({
+        id: person.id,
+        nombre: person.nombre,
+        genero: person.genero || 'M',
+        disponibilidad: person.disponibilidad?.[programData.bimestre] || 'Disponible',
+        privilegios: person.privilegios || []
+      });
     }
   });
 
   return result;
 }
 
-// Renderizado del Dashboard Admin
-function renderDashboard() {
+// Renderizado del Dashboard de Administración
+function renderDashboardTab() {
+  if (!PROGRAM || !Array.isArray(PROGRAM.weeks)) {
+    return '<div class="section-pad"><div class="loading">Cargando auditoría...</div></div>';
+  }
+
   const audit = auditCurrentProgram(PROGRAM, PEOPLE);
-  const percentUsed = audit.stats.totalEligiblePeople > 0
-    ? Math.round((audit.stats.uniquePeopleUsed / audit.stats.totalEligiblePeople) * 100)
-    : 0;
 
   return `
-    <div class="dashboard-container">
-      <div class="dashboard-header">
-        <h2 class="dashboard-title">📊 Dashboard de Auditoría y Control</h2>
-        <p class="dashboard-subtitle">Bimestre activo: <strong>${PROGRAM?.bimestre || currentBimestre || 'Actual'}</strong></p>
+    <div class="section-pad">
+      <div class="dashboard-head">
+        <h2 style="font-size:22px; font-weight:700; color:#1e293b; margin:0 0 4px 0;">Auditoría del Programa</h2>
+        <p style="color:#64748b; font-size:14px; margin:0 0 20px 0;">
+          Bimestre activo: <strong>${escapeHtml(PROGRAM.bimestre || currentBimestre)}</strong> · Análisis en tiempo real de equidad y sobrecarga.
+        </p>
       </div>
 
-      <!-- Tarjetas de Estadísticas -->
-      <div class="stats-grid">
-        <div class="stat-card">
-          <div class="stat-value" style="color: var(--primary, #3b82f6);">${audit.stats.assignedParts} / ${audit.stats.totalParts}</div>
-          <div class="stat-label">Partes Asignadas</div>
+      <!-- Resumen Estadístico -->
+      <div class="dash-metrics-grid">
+        <div class="dash-metric-card">
+          <span class="dash-metric-val">${audit.stats.assignedParts} / ${audit.stats.totalParts}</span>
+          <span class="dash-metric-label">Partes Asignadas</span>
         </div>
-        <div class="stat-card">
-          <div class="stat-value" style="color: var(--success, #10b981);">${audit.stats.uniquePeopleUsed}</div>
-          <div class="stat-label">Publicadores con Asignación (${percentUsed}%)</div>
+        <div class="dash-metric-card">
+          <span class="dash-metric-val">${audit.stats.uniquePeopleUsed} / ${audit.stats.totalEligiblePeople}</span>
+          <span class="dash-metric-label">Publicadores Utilizados</span>
         </div>
-        <div class="stat-card">
-          <div class="stat-value" style="color: ${audit.sameWeekConflicts.length > 0 ? 'var(--danger, #ef4444)' : 'var(--text-secondary, #6b7280)'};">
-            ${audit.sameWeekConflicts.length}
-          </div>
-          <div class="stat-label">Conflictos Misma Semana</div>
+        <div class="dash-metric-card ${audit.sameWeekConflicts.length > 0 ? 'metric-warn' : ''}">
+          <span class="dash-metric-val">${audit.sameWeekConflicts.length}</span>
+          <span class="dash-metric-label">Conflictos Misma Semana</span>
         </div>
-        <div class="stat-card">
-          <div class="stat-value" style="color: var(--warning, #f59e0b);">${audit.consecutiveWeeks.length}</div>
-          <div class="stat-label">Semanas Consecutivas</div>
+        <div class="dash-metric-card">
+          <span class="dash-metric-val">${audit.unassignedPeople.length}</span>
+          <span class="dash-metric-label">Sin Asignación</span>
         </div>
       </div>
 
       <!-- Centro de Alertas -->
-      <div class="alerts-section">
-        <h3 class="section-title">🚨 Centro de Alertas</h3>
-
-        <!-- 🔴 Conflictos Críticos -->
-        <div class="alert-box alert-critical">
-          <div class="alert-box-header">
-            <h4>🔴 Conflictos de Misma Semana (${audit.sameWeekConflicts.length})</h4>
+      <div class="dash-alerts-section" style="margin-top:24px;">
+        <!-- 🔴 Conflictos Misma Semana -->
+        <div class="dash-alert-box alert-danger">
+          <div class="dash-alert-header">
+            <h3>🔴 Conflictos de Misma Semana (${audit.sameWeekConflicts.length})</h3>
           </div>
-          <div class="alert-box-body">
-            ${audit.sameWeekConflicts.length === 0
-              ? '<p class="text-muted">✅ ¡Excelente! Ningún publicador está duplicado en la misma semana.</p>'
-              : `<ul class="alert-list">
-                  ${audit.sameWeekConflicts.map(c => `
-                    <li>
-                      <strong>${escapeHtml(c.nombre)}</strong> tiene <strong>${c.partes.length} partes</strong> en <em>${escapeHtml(c.semana)}</em>:
-                      <br><small style="color: var(--text-secondary, #666);">${c.partes.map(p => escapeHtml(p)).join(' • ')}</small>
-                    </li>
-                  `).join('')}
-                </ul>`
-            }
-          </div>
+          ${audit.sameWeekConflicts.length === 0 ? `
+            <p class="dash-empty-msg">✅ No hay hermanos con partes duplicadas en una misma semana.</p>
+          ` : `
+            <ul class="dash-alert-list">
+              ${audit.sameWeekConflicts.map(c => `
+                <li>
+                  <strong>${escapeHtml(c.nombre)}</strong> tiene ${c.partes.length} partes en <em>${escapeHtml(c.semana)}</em>:
+                  <div class="dash-parts-sub">${c.partes.map(p => `<span>• ${escapeHtml(p)}</span>`).join(' ')}</div>
+                </li>
+              `).join('')}
+            </ul>
+          `}
         </div>
 
         <!-- 🟡 Semanas Consecutivas -->
-        <div class="alert-box alert-warning">
-          <div class="alert-box-header">
-            <h4>🟡 Sobrecarga: Asignaciones Consecutivas (${audit.consecutiveWeeks.length})</h4>
+        <div class="dash-alert-box alert-warning" style="margin-top:16px;">
+          <div class="dash-alert-header">
+            <h3>🟡 Asignaciones en Semanas Consecutivas (${audit.consecutiveWeeks.length})</h3>
           </div>
-          <div class="alert-box-body">
-            ${audit.consecutiveWeeks.length === 0
-              ? '<p class="text-muted">✅ Ningún publicador tiene más de una semana consecutiva asignada.</p>'
-              : `<ul class="alert-list">
-                  ${audit.consecutiveWeeks.map(c => `
-                    <li>
-                      <strong>${escapeHtml(c.nombre)}</strong> asignado en <strong>${c.count} semanas consecutivas</strong>:
-                      <br><small style="color: var(--text-secondary, #666);">${c.semanas.map(s => escapeHtml(s)).join(' → ')}</small>
-                    </li>
-                  `).join('')}
-                </ul>`
-            }
-          </div>
+          ${audit.consecutiveWeeks.length === 0 ? `
+            <p class="dash-empty-msg">✅ Asignaciones bien distribuidas a lo largo del bimestre.</p>
+          ` : `
+            <ul class="dash-alert-list">
+              ${audit.consecutiveWeeks.map(c => `
+                <li>
+                  <strong>${escapeHtml(c.nombre)}</strong> asignado en <strong>${c.consecutiveCount} semanas seguidas</strong>:
+                  <div class="dash-parts-sub">${c.semanas.map(s => `<span>${escapeHtml(s)}</span>`).join(' ➔ ')}</div>
+                </li>
+              `).join('')}
+            </ul>
+          `}
         </div>
 
-        <!-- 🔵 Hermanos sin Asignaciones -->
-        <div class="alert-box alert-info">
-          <div class="alert-box-header">
-            <h4>🔵 Publicadores Elegibles sin Asignación en este Bimestre (${audit.unassignedPeople.length})</h4>
+        <!-- 🔵 Publicadores Sin Asignación -->
+        <div class="dash-alert-box alert-info" style="margin-top:16px;">
+          <div class="dash-alert-header">
+            <h3>🔵 Publicadores Sin Asignación en el Bimestre (${audit.unassignedPeople.length})</h3>
           </div>
-          <div class="alert-box-body">
-            ${audit.unassignedPeople.length === 0
-              ? '<p class="text-muted">🎉 ¡Todos los publicadores elegibles tienen al menos una asignación!</p>'
-              : `<div class="unassigned-pills">
-                  ${audit.unassignedPeople.map(p => `
-                    <span class="unassigned-pill" onclick="openPersonModal('${p.id}')">
-                      ${escapeHtml(p.nombre)}
-                    </span>
-                  `).join('')}
-                </div>`
-            }
-          </div>
+          ${audit.unassignedPeople.length === 0 ? `
+            <p class="dash-empty-msg">Todos los publicadores elegibles tienen al menos una parte en el bimestre.</p>
+          ` : `
+            <div class="dash-chips-grid">
+              ${audit.unassignedPeople.map(p => `
+                <div class="dash-chip">
+                  <span>${escapeHtml(p.nombre)}</span>
+                  <small style="color:#64748b;">${p.disponibilidad}</small>
+                </div>
+              `).join('')}
+            </div>
+          `}
         </div>
       </div>
     </div>

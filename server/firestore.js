@@ -30,16 +30,19 @@ try {
   console.warn('No se pudo cargar seed local:', e.message);
 }
 
-// Intentar inicializar Firestore solo si hay credenciales o en entorno de producción GCP
-if (process.env.GCP_PROJECT_ID || process.env.GOOGLE_APPLICATION_CREDENTIALS || process.env.NODE_ENV === 'production') {
+// Detectar ID de proyecto en Cloud Shell, Cloud Run o entorno local
+const resolvedProjectId = process.env.GCP_PROJECT_ID || process.env.GOOGLE_CLOUD_PROJECT || process.env.DEVSHELL_PROJECT_ID || (process.env.NODE_ENV === 'production' ? 'vida-y-ministerio-507400' : null);
+
+// Intentar inicializar Firestore
+if (resolvedProjectId || process.env.GOOGLE_APPLICATION_CREDENTIALS || process.env.NODE_ENV === 'production') {
   try {
     const options = {};
-    if (process.env.GCP_PROJECT_ID) options.projectId = process.env.GCP_PROJECT_ID;
+    if (resolvedProjectId) options.projectId = resolvedProjectId;
     if (process.env.GOOGLE_APPLICATION_CREDENTIALS) options.keyFilename = process.env.GOOGLE_APPLICATION_CREDENTIALS;
 
     db = new Firestore(options);
     isConnected = true;
-    console.log('✅ Google Cloud Firestore configurado.');
+    console.log(`✅ Google Cloud Firestore configurado (Proyecto: ${resolvedProjectId || 'Default GCP'}).`);
   } catch (error) {
     console.warn('⚠️ Firestore no disponible localmente. Modo local activado:', error.message);
     db = null;

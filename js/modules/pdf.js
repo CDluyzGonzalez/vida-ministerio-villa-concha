@@ -17,7 +17,8 @@ async function exportProgramPdf() {
   render();
 
   try {
-    const element = document.querySelector('.weeks-accordion');
+    // Buscar el contenedor de semanas
+    const element = document.querySelector('.weeks-container') || document.querySelector('.section-pad');
     if (!element) throw new Error('No se encontró el contenido del programa');
 
     // Esperar renderizado del DOM
@@ -27,31 +28,52 @@ async function exportProgramPdf() {
       scale: 2,
       useCORS: true,
       logging: false,
-      backgroundColor: '#ffffff'
+      backgroundColor: '#faf6ee'
     });
 
-    const imgData = canvas.toDataURL('image/png');
+    const imgData = canvas.toDataURL('image/jpeg', 0.95);
     const { jsPDF } = window.jspdf;
-    const pdf = new jsPDF('p', 'mm', 'a4');
+    const pdf = new jsPDF({
+      orientation: 'p',
+      unit: 'mm',
+      format: 'a4',
+      compress: true
+    });
 
-    const imgWidth = 210; // A4 width in mm
-    const pageHeight = 297; // A4 height in mm
-    const imgHeight = (canvas.height * imgWidth) / canvas.width;
-    let heightLeft = imgHeight;
-    let position = 0;
+    const pageW = 210;
+    const pageH = 297;
+    const margin = 8;
+    const contentW = pageW - margin * 2;
+    const contentH = pageH - margin * 2;
 
-    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-    heightLeft -= pageHeight;
+    const pagePxH = Math.max(1, Math.floor((canvas.width * contentH) / contentW));
+    let offsetPx = 0;
+    let firstPage = true;
 
-    while (heightLeft >= 0) {
-      position = heightLeft - imgHeight;
-      pdf.addPage();
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
+    while (offsetPx < canvas.height) {
+      if (!firstPage) {
+        pdf.addPage();
+      }
+      firstPage = false;
+
+      const sliceH = Math.min(pagePxH, canvas.height - offsetPx);
+      const slice = document.createElement('canvas');
+      slice.width = canvas.width;
+      slice.height = sliceH;
+
+      const ctx = slice.getContext('2d');
+      ctx.fillStyle = '#faf6ee';
+      ctx.fillRect(0, 0, slice.width, slice.height);
+      ctx.drawImage(canvas, 0, offsetPx, canvas.width, sliceH, 0, 0, slice.width, slice.height);
+
+      const sliceHmm = (slice.height * contentW) / slice.width;
+      pdf.addImage(slice.toDataURL('image/jpeg', 0.95), 'JPEG', margin, margin, contentW, sliceHmm, undefined, 'FAST');
+
+      offsetPx += sliceH;
     }
 
-    const filename = `Programa_Vida_y_Ministerio_${(PROGRAM?.bimestre || 'Villa_Concha').replace(/\s+/g, '_')}.pdf`;
-    pdf.save(filename);
+    const safeBimName = String(PROGRAM?.bimestre || 'Villa_Concha').replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ -]/g, '').trim().replace(/\s+/g, '_');
+    pdf.save(`Vida_y_Ministerio_${safeBimName}.pdf`);
     showToast('PDF descargado exitosamente', 'success');
   } catch (error) {
     console.error('Error generando PDF:', error);

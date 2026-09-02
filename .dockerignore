@@ -1,8 +1,6 @@
 node_modules
-npm-debug.log
+google-cloud-sdk
 .git
-.gitignore
 .env
-*.md
-database/
-scripts/
+serviceAccountKey.json
+npm-debug.log
