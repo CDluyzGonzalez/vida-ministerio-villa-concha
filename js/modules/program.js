@@ -1,7 +1,7 @@
 // ============================================================
 // VIDA Y MINISTERIO — VILLA CONCHA
 // js/modules/program.js
-// Renderizado del Programa Semanal, Numeración y Bimestres Dinámicos
+// Renderizado del Programa Semanal, Modales de Asignación y Configuración
 // ============================================================
 
 const BIMESTRE_MONTH_LABELS = {
@@ -19,8 +19,8 @@ function computeViewerBimestres(date) {
   const m = d.getMonth() + 1; // 1 a 12
   const day = d.getDate();
 
-  const isFirstMonthOfBimestre = (m % 2 === 1); // Ene (1), Mar (3), May (5), Jul (7), Sep (9), Nov (11)
-  const isSecondMonthOfBimestre = (m % 2 === 0); // Feb (2), Abr (4), Jun (6), Ago (8), Oct (10), Dic (12)
+  const isFirstMonthOfBimestre = (m % 2 === 1);
+  const isSecondMonthOfBimestre = (m % 2 === 0);
 
   const currentPairStart = isFirstMonthOfBimestre ? m : m - 1;
   const currentBimestre = BIMESTRE_MONTH_LABELS[currentPairStart];
@@ -33,17 +33,15 @@ function computeViewerBimestres(date) {
 
   const result = [];
 
-  // 1. Durante los primeros 7 días del primer mes (ej: 1 al 7 de Septiembre, 1 al 7 de Noviembre):
-  // Mantiene visible la semana de transición del bimestre anterior hasta que finalice el domingo.
+  // 1. Primeros 7 días del primer mes: mantener semana en curso de transición
   if (isFirstMonthOfBimestre && day <= 7) {
     result.push(prevBimestre);
   }
 
-  // 2. Bimestre vigente (ej: Septiembre - Octubre)
+  // 2. Bimestre vigente
   result.push(currentBimestre);
 
-  // 3. A partir del primer día del segundo mes del bimestre (ej: 1 de Octubre, 1 de Diciembre, 1 de Febrero...):
-  // Se presenta el bimestre siguiente (ej: Noviembre - Diciembre, Enero - Febrero, etc.)
+  // 3. A partir del día 1 del segundo mes del bimestre: mostrar el siguiente bimestre
   if (isSecondMonthOfBimestre) {
     result.push(nextBimestre);
   }
@@ -81,7 +79,6 @@ function renderProgramTab() {
         </div>
 
         ${viewerLabels.map(label => {
-          // Buscar el programa cargado para este bimestre
           const bim = (PROGRAM?.bimestre === label) ? PROGRAM : (typeof DEFAULT_PROGRAM !== 'undefined' ? DEFAULT_PROGRAM.find(b => b.bimestre === label) : null);
           if (!bim || !Array.isArray(bim.weeks) || bim.weeks.length === 0) return '';
 
@@ -263,7 +260,6 @@ function formatDisplayLabel(item) {
 
   // Si tiene número de parte asignado, formatear como "X. Texto"
   if (item.num && !isPureSongLine(item)) {
-    // Remover numeración previa en el texto (ej: "1. ", "1 ", "#1 ")
     const cleanText = label.replace(/^#?\d+[\.\-\s]*/, '').trim();
     return `${item.num}. ${cleanText}`;
   }
@@ -325,8 +321,8 @@ function renderItemRow(bim, w, it, idx) {
           <div class="item-label label-with-pencil">
             <span>${escapeHtml(displayLabel)}</span>
             ${isAdmin && !pdfExportMode ? `
-              <button class="edit-pencil" onclick="editItemPrompt('${w.id}', ${idx})">✎</button>
-              <button class="edit-pencil" style="color:#b42318;" onclick="deleteAssignmentItem('${w.id}', ${idx})" title="Eliminar parte">×</button>
+              <button class="edit-pencil" onclick="editItemPrompt('${w.id}', ${idx})" title="Editar texto">✎</button>
+              <button class="edit-pencil" style="color:#b42318;" onclick="deleteAssignmentItem('${w.id}', ${idx})" title="Eliminar asignación">×</button>
             ` : ''}
           </div>
           ${isAdmin && !pdfExportMode ? `
@@ -365,8 +361,9 @@ function renderItemRow(bim, w, it, idx) {
         <div class="item-label label-with-pencil" style="min-width:0;">
           <span>${escapeHtml(displayLabel)}</span>
           ${isAdmin && !pdfExportMode ? `
-            <button class="edit-pencil" onclick="editItemPrompt('${w.id}', ${idx})">✎</button>
-            <button class="edit-pencil" style="color:#b42318;" onclick="deleteAssignmentItem('${w.id}', ${idx})" title="Eliminar parte">×</button>
+            <button class="edit-pencil" onclick="editItemPrompt('${w.id}', ${idx})" title="Editar texto">✎</button>
+            <button class="edit-pencil" title="Editar tipo de asignación (Solo Nombre / Nombre + Ayudante)" onclick="openEditMaestrosStructureModal('${w.id}', ${idx})">⚙</button>
+            <button class="edit-pencil" style="color:#b42318;" onclick="deleteAssignmentItem('${w.id}', ${idx})" title="Eliminar asignación">×</button>
           ` : ''}
         </div>
 
@@ -395,7 +392,7 @@ function renderItemRow(bim, w, it, idx) {
     `;
   }
 
-  // 4. Asignación individual estándar (Oraciones, Palabras de conclusión, Tesoros, etc.)
+  // 4. Asignación individual (Seamos Mejores Maestros Individual, Tesoros, NVC, Oraciones, etc.)
   const reqCat = computeCat(it);
   const currentName = it.name || '';
   const isSongWithPrayer = /canc[ií]ó[nn].*y\s*oraci[oó]n/i.test(it.label || '');
@@ -410,10 +407,14 @@ function renderItemRow(bim, w, it, idx) {
           </span>
         </span>
         ${isAdmin && !pdfExportMode && reqCat !== 'intro_conclusion' ? `
-          <button class="edit-pencil" onclick="editItemPrompt('${w.id}', ${idx})">✎</button>
+          <button class="edit-pencil" onclick="editItemPrompt('${w.id}', ${idx})" title="Editar texto">✎</button>
+          ${it.section === 'MAESTROS' ? `
+            <button class="edit-pencil" title="Editar tipo de asignación (Solo Nombre / Nombre + Ayudante)" onclick="openEditMaestrosStructureModal('${w.id}', ${idx})">⚙</button>
+            <button class="edit-pencil" style="color:#b42318;" onclick="deleteAssignmentItem('${w.id}', ${idx})" title="Eliminar asignación">×</button>
+          ` : ''}
           ${it.section === 'NVC' ? `
-            <button class="edit-pencil" title="Cambiar restricción" onclick="changeNvcCategoryModal('${w.id}', ${idx})">⚙</button>
-            <button class="edit-pencil" style="color:#b42318;" onclick="deleteAssignmentItem('${w.id}', ${idx})" title="Eliminar parte">×</button>
+            <button class="edit-pencil" title="Cambiar quién puede dar esta parte" onclick="openChangeNvcCategoryModal('${w.id}', ${idx})">⚙</button>
+            <button class="edit-pencil" style="color:#b42318;" onclick="deleteAssignmentItem('${w.id}', ${idx})" title="Eliminar asignación">×</button>
           ` : ''}
         ` : ''}
       </div>
@@ -519,81 +520,296 @@ async function applyAssignmentSlot(weekId, itemIdx, slot, newName) {
   render();
 }
 
-// Modales para agregar asignaciones dinámicas
+// ============================================================
+// MODAL: EDITAR TIPO DE ASIGNACIÓN (SEAMOS MEJORES MAESTROS)
+// ============================================================
+function openEditMaestrosStructureModal(weekId, itemIdx) {
+  const week = (PROGRAM?.weeks || []).find(w => w.id === weekId);
+  if (!week || !week.items?.[itemIdx]) return;
+  const item = week.items[itemIdx];
+  const isPair = Array.isArray(item.subs);
+
+  const existing = document.getElementById('wm-maestros-type-modal');
+  if (existing) existing.remove();
+
+  const overlay = document.createElement('div');
+  overlay.id = 'wm-maestros-type-modal';
+  overlay.className = 'overlay';
+  overlay.innerHTML = `
+    <div class="modal">
+      <div class="modal-head">
+        <h3>Editar tipo de asignación</h3>
+        <p>${escapeHtml(item.label || '')}</p>
+      </div>
+      <div class="field" style="margin-top: 12px;">
+        <label style="font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #64748b;">PERSONAS QUE NECESITA</label>
+        <select class="search-input" id="edit-maestros-structure-select" style="margin-top: 6px;">
+          <option value="single" ${!isPair ? 'selected' : ''}>Solo Nombre</option>
+          <option value="pair" ${isPair ? 'selected' : ''}>Nombre + Ayudante</option>
+        </select>
+      </div>
+      <div class="modal-foot" style="margin-top: 20px;">
+        <button class="btn btn-ghost btn-sm" onclick="document.getElementById('wm-maestros-type-modal').remove()">Cancelar</button>
+        <button class="btn btn-primary btn-sm" id="btn-save-maestros-type">Guardar</button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+
+  overlay.querySelector('#btn-save-maestros-type').addEventListener('click', async () => {
+    const val = overlay.querySelector('#edit-maestros-structure-select').value;
+    if (val === 'pair') {
+      const oldSubs = Array.isArray(item.subs) ? item.subs : [];
+      const nombre = oldSubs.find(s => normName(s.role) === 'nombre')?.name || item.name || '';
+      const ayudante = oldSubs.find(s => normName(s.role) === 'ayudante')?.name || '';
+      delete item.name;
+      item.subs = [
+        { role: 'Nombre', name: nombre },
+        { role: 'Ayudante', name: ayudante }
+      ];
+    } else {
+      const oldSubs = Array.isArray(item.subs) ? item.subs : [];
+      const nombre = oldSubs.find(s => normName(s.role) === 'nombre')?.name || item.name || '';
+      delete item.subs;
+      item.name = nombre;
+    }
+
+    await apiSavePrograma(PROGRAM.bimestre, PROGRAM, writeToken);
+    overlay.remove();
+    showToast('Tipo de asignación actualizado', 'success');
+    render();
+  });
+}
+
+// ============================================================
+// MODAL: AGREGAR ASIGNACIÓN DE SEAMOS MEJORES MAESTROS
+// ============================================================
 function openAddMaestrosAssignmentModal(weekId) {
   const week = (PROGRAM?.weeks || []).find(w => w.id === weekId);
   if (!week) return;
 
-  const text = prompt('Texto de la nueva asignación de Seamos Mejores Maestros:\n(Ej: Empiece conversaciones (3 mins.) (lmd lección 4 punto 3.))');
-  if (!text || !text.trim()) return;
+  const existing = document.getElementById('wm-add-maestros-modal');
+  if (existing) existing.remove();
 
-  const withAyudante = confirm('¿Esta parte requiere Ayudante? (Aceptar = Sí, Cancelar = Individual/Discurso)');
+  const overlay = document.createElement('div');
+  overlay.id = 'wm-add-maestros-modal';
+  overlay.className = 'overlay';
+  overlay.innerHTML = `
+    <div class="modal">
+      <div class="modal-head">
+        <h3>Agregar asignación</h3>
+        <p>Seamos Mejores Maestros · ${escapeHtml(week.semana || '')}</p>
+      </div>
+      <div class="field" style="margin-top: 12px;">
+        <label style="font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #64748b;">PERSONAS QUE NECESITA</label>
+        <select class="search-input" id="add-maestros-type-select" style="margin-top: 6px;">
+          <option value="pair">Nombre + Ayudante</option>
+          <option value="single">Solo Nombre</option>
+        </select>
+      </div>
+      <div class="field" style="margin-top: 14px;">
+        <label style="font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #64748b;">TEXTO DE LA ASIGNACIÓN</label>
+        <input class="search-input" id="add-maestros-label-input" placeholder="Ej: 4. Empiece conversaciones (3 mins.) (lmd lección 4 punto 3.)" style="margin-top: 6px;" />
+      </div>
+      <div class="modal-foot" style="margin-top: 20px;">
+        <button class="btn btn-ghost btn-sm" onclick="document.getElementById('wm-add-maestros-modal').remove()">Cancelar</button>
+        <button class="btn btn-primary btn-sm" id="btn-save-add-maestros">Agregar</button>
+      </div>
+    </div>
+  `;
 
-  // Calcular número correlativo para la nueva parte
-  const currentNums = (week.items || []).filter(it => it.num && Number.isFinite(Number(it.num))).map(it => Number(it.num));
-  const nextNum = currentNums.length ? Math.max(...currentNums) + 1 : 4;
+  document.body.appendChild(overlay);
 
-  const newItem = {
-    section: 'MAESTROS',
-    num: nextNum,
-    label: text.trim()
-  };
+  const input = overlay.querySelector('#add-maestros-label-input');
+  input.focus();
 
-  if (withAyudante) {
-    newItem.subs = [
-      { role: 'Nombre', name: '' },
-      { role: 'Ayudante', name: '' }
-    ];
-  } else {
-    newItem.name = '';
-  }
+  overlay.querySelector('#btn-save-add-maestros').addEventListener('click', async () => {
+    const label = input.value.trim();
+    if (!label) {
+      input.focus();
+      return;
+    }
 
-  let insertIdx = (week.items || []).findLastIndex(it => it.section === 'MAESTROS');
-  if (insertIdx === -1) insertIdx = (week.items || []).length;
-  else insertIdx += 1;
+    const type = overlay.querySelector('#add-maestros-type-select').value;
+    const currentNums = (week.items || []).filter(it => it.num && Number.isFinite(Number(it.num))).map(it => Number(it.num));
+    const nextNum = currentNums.length ? Math.max(...currentNums) + 1 : 4;
 
-  week.items.splice(insertIdx, 0, newItem);
-  apiSavePrograma(PROGRAM.bimestre, PROGRAM, writeToken);
-  showToast('Asignación agregada a Seamos Mejores Maestros', 'success');
-  render();
+    const newItem = {
+      section: 'MAESTROS',
+      num: nextNum,
+      label
+    };
+
+    if (type === 'pair') {
+      newItem.subs = [
+        { role: 'Nombre', name: '' },
+        { role: 'Ayudante', name: '' }
+      ];
+    } else {
+      newItem.name = '';
+    }
+
+    let insertIdx = (week.items || []).findLastIndex(it => it.section === 'MAESTROS');
+    if (insertIdx === -1) insertIdx = (week.items || []).length;
+    else insertIdx += 1;
+
+    week.items.splice(insertIdx, 0, newItem);
+    await apiSavePrograma(PROGRAM.bimestre, PROGRAM, writeToken);
+    overlay.remove();
+    showToast('Asignación agregada a Seamos Mejores Maestros', 'success');
+    render();
+  });
 }
 
+// ============================================================
+// MODAL: AGREGAR ASIGNACIÓN DE NUESTRA VIDA CRISTIANA
+// ============================================================
 function openAddNvcAssignmentModal(weekId) {
   const week = (PROGRAM?.weeks || []).find(w => w.id === weekId);
   if (!week) return;
 
-  const isEstudio = confirm('¿Deseas agregar el Estudio Bíblico de la congregación (Conductor + Lector)?\n(Aceptar = Estudio Bíblico, Cancelar = Asignación individual)');
+  const existing = document.getElementById('wm-add-nvc-modal');
+  if (existing) existing.remove();
 
-  const currentNums = (week.items || []).filter(it => it.num && Number.isFinite(Number(it.num))).map(it => Number(it.num));
-  const nextNum = currentNums.length ? Math.max(...currentNums) + 1 : 8;
+  const overlay = document.createElement('div');
+  overlay.id = 'wm-add-nvc-modal';
+  overlay.className = 'overlay';
+  overlay.innerHTML = `
+    <div class="modal">
+      <div class="modal-head">
+        <h3>Agregar asignación</h3>
+        <p>Nuestra Vida Cristiana · ${escapeHtml(week.semana || '')}</p>
+      </div>
+      <div class="field" style="margin-top: 12px;">
+        <label style="font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #64748b;">TIPO DE ASIGNACIÓN</label>
+        <select class="search-input" id="new-nvc-type-select" style="margin-top: 6px;">
+          <option value="single">Asignación individual (un discurso, una parte)</option>
+          <option value="estudio">Estudio bíblico de la congregación (Conductor + Lector)</option>
+        </select>
+      </div>
+      <div class="field" style="margin-top: 14px;">
+        <label style="font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #64748b;">TEXTO DE LA ASIGNACIÓN</label>
+        <input class="search-input" id="new-nvc-label-input" placeholder="Ej.: Discurso del superintendente de circuito (30 mins.)" style="margin-top: 6px;" />
+      </div>
+      <div class="field" id="new-nvc-restrict-wrap" style="margin-top: 14px;">
+        <label style="font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #64748b;">¿QUIÉN PUEDE DAR ESTA PARTE?</label>
+        <select class="search-input" id="new-nvc-restrict-select" style="margin-top: 6px;">
+          <option value="no">Igual que las demás partes de Nuestra Vida Cristiana</option>
+          <option value="si">Restringido — solo quienes dan Introducción/Conclusión</option>
+        </select>
+      </div>
+      <div class="modal-foot" style="margin-top: 20px;">
+        <button class="btn btn-ghost btn-sm" onclick="document.getElementById('wm-add-nvc-modal').remove()">Cancelar</button>
+        <button class="btn btn-primary btn-sm" id="btn-save-add-nvc">Agregar</button>
+      </div>
+    </div>
+  `;
 
-  let newItem;
-  if (isEstudio) {
-    newItem = {
-      section: 'NVC',
-      num: nextNum,
-      label: 'Estudio bíblico de la congregación (30 mins.)',
-      conductor: '',
-      lector: ''
-    };
-  } else {
-    const text = prompt('Texto de la asignación de Nuestra Vida Cristiana:');
-    if (!text || !text.trim()) return;
-    newItem = {
-      section: 'NVC',
-      num: nextNum,
-      label: text.trim(),
-      name: ''
-    };
-  }
+  document.body.appendChild(overlay);
 
-  let insertIdx = (week.items || []).findIndex(it => it.section === 'CONCLUSION' || it.label?.includes('conclusión') || it.section === 'CLOSE');
-  if (insertIdx === -1) insertIdx = (week.items || []).length;
+  const typeSelect = overlay.querySelector('#new-nvc-type-select');
+  const labelInput = overlay.querySelector('#new-nvc-label-input');
+  const restrictWrap = overlay.querySelector('#new-nvc-restrict-wrap');
 
-  week.items.splice(insertIdx, 0, newItem);
-  apiSavePrograma(PROGRAM.bimestre, PROGRAM, writeToken);
-  showToast('Asignación agregada a Nuestra Vida Cristiana', 'success');
-  render();
+  typeSelect.addEventListener('change', () => {
+    const isEstudio = typeSelect.value === 'estudio';
+    restrictWrap.style.display = isEstudio ? 'none' : 'block';
+    if (isEstudio && !labelInput.value.trim()) {
+      labelInput.value = 'Estudio bíblico de la congregación (30 mins.)';
+    }
+  });
+
+  labelInput.focus();
+
+  overlay.querySelector('#btn-save-add-nvc').addEventListener('click', async () => {
+    const label = labelInput.value.trim();
+    if (!label) {
+      labelInput.focus();
+      return;
+    }
+
+    const isEstudio = typeSelect.value === 'estudio';
+    const currentNums = (week.items || []).filter(it => it.num && Number.isFinite(Number(it.num))).map(it => Number(it.num));
+    const nextNum = currentNums.length ? Math.max(...currentNums) + 1 : 8;
+
+    let newItem;
+    if (isEstudio) {
+      newItem = {
+        section: 'NVC',
+        num: nextNum,
+        label,
+        conductor: '',
+        lector: ''
+      };
+    } else {
+      const isRestricted = overlay.querySelector('#new-nvc-restrict-select').value === 'si';
+      newItem = {
+        section: 'NVC',
+        num: nextNum,
+        label,
+        name: ''
+      };
+      if (isRestricted) newItem.forceCat = 'intro_conclusion';
+    }
+
+    let insertIdx = (week.items || []).findIndex(it => it.section === 'CONCLUSION' || it.label?.includes('conclusión') || it.section === 'CLOSE');
+    if (insertIdx === -1) insertIdx = (week.items || []).length;
+
+    week.items.splice(insertIdx, 0, newItem);
+    await apiSavePrograma(PROGRAM.bimestre, PROGRAM, writeToken);
+    overlay.remove();
+    showToast('Asignación agregada a Nuestra Vida Cristiana', 'success');
+    render();
+  });
+}
+
+// ============================================================
+// MODAL: CAMBIAR QUIÉN PUEDE DAR ESTA PARTE (NVC)
+// ============================================================
+function openChangeNvcCategoryModal(weekId, itemIdx) {
+  const week = (PROGRAM?.weeks || []).find(w => w.id === weekId);
+  if (!week || !week.items?.[itemIdx]) return;
+  const item = week.items[itemIdx];
+  const isRestricted = item.forceCat === 'intro_conclusion';
+
+  const existing = document.getElementById('wm-change-nvc-modal');
+  if (existing) existing.remove();
+
+  const overlay = document.createElement('div');
+  overlay.id = 'wm-change-nvc-modal';
+  overlay.className = 'overlay';
+  overlay.innerHTML = `
+    <div class="modal">
+      <div class="modal-head">
+        <h3>¿Quién puede dar esta parte?</h3>
+        <p>${escapeHtml(item.label || '')}</p>
+      </div>
+      <div class="field" style="margin-top: 14px;">
+        <select class="search-input" id="edit-nvc-restrict-select">
+          <option value="no" ${!isRestricted ? 'selected' : ''}>Igual que las demás partes de Nuestra Vida Cristiana</option>
+          <option value="si" ${isRestricted ? 'selected' : ''}>Restringido — solo quienes dan Introducción/Conclusión</option>
+        </select>
+      </div>
+      <div class="modal-foot" style="margin-top: 20px;">
+        <button class="btn btn-ghost btn-sm" onclick="document.getElementById('wm-change-nvc-modal').remove()">Cancelar</button>
+        <button class="btn btn-primary btn-sm" id="btn-save-change-nvc">Guardar</button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+
+  overlay.querySelector('#btn-save-change-nvc').addEventListener('click', async () => {
+    const isRestr = overlay.querySelector('#edit-nvc-restrict-select').value === 'si';
+    if (isRestr) item.forceCat = 'intro_conclusion';
+    else delete item.forceCat;
+
+    await apiSavePrograma(PROGRAM.bimestre, PROGRAM, writeToken);
+    overlay.remove();
+    showToast('Restricción actualizada', 'success');
+    render();
+  });
 }
 
 function editItemPrompt(weekId, itemIdx) {
@@ -622,25 +838,10 @@ function editSongPrompt(weekId, itemIdx, currentLabel) {
 function deleteAssignmentItem(weekId, itemIdx) {
   const week = (PROGRAM?.weeks || []).find(w => w.id === weekId);
   if (!week || !week.items?.[itemIdx]) return;
-  if (confirm(`¿Eliminar esta parte?\n"${week.items[itemIdx].label}"`)) {
+  if (confirm(`¿Eliminar esta asignación?\n\n"${week.items[itemIdx].label}"`)) {
     week.items.splice(itemIdx, 1);
     apiSavePrograma(PROGRAM.bimestre, PROGRAM, writeToken);
-    showToast('Parte eliminada', 'info');
-    render();
-  }
-}
-
-function changeNvcCategoryModal(weekId, itemIdx) {
-  const week = (PROGRAM?.weeks || []).find(w => w.id === weekId);
-  if (!week || !week.items?.[itemIdx]) return;
-  const item = week.items[itemIdx];
-  const isRestricted = item.forceCat === 'intro_conclusion';
-  const choice = confirm(`¿Quién puede dar esta parte?\n\nActualmente: ${isRestricted ? 'Restringido (solo quienes dan Intro/Conclusión)' : 'Normal (cualquier publicador de NVC)'}\n\n¿Deseas cambiar su categoría?`);
-  if (choice) {
-    if (isRestricted) delete item.forceCat;
-    else item.forceCat = 'intro_conclusion';
-    apiSavePrograma(PROGRAM.bimestre, PROGRAM, writeToken);
-    showToast('Categoría actualizada', 'success');
+    showToast('Asignación eliminada', 'info');
     render();
   }
 }
