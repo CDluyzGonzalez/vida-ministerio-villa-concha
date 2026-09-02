@@ -1024,14 +1024,35 @@ function deleteAssignmentItem(weekId, itemIdx) {
 async function switchBimestre(bimestreName) {
   currentBimestre = bimestreName;
   showToast(`Cargando ${bimestreName}...`, 'info', 1000);
-  const prog = await apiLoadPrograma(bimestreName);
-  if (prog) {
-    PROGRAM = prog;
-    openWeeks.clear();
-    render();
-  } else {
-    showToast(`No se encontraron datos para ${bimestreName}`, 'warning');
+  let prog = await apiLoadPrograma(bimestreName);
+  if (!prog) {
+    // Si no existía todavía, generar estructura limpia basada en plantilla
+    const template = (PROGRAM && Array.isArray(PROGRAM.weeks) && PROGRAM.weeks.length > 0) ? PROGRAM : (typeof DEFAULT_PROGRAM !== 'undefined' ? DEFAULT_PROGRAM[0] : { weeks: [] });
+    const clean = JSON.parse(JSON.stringify(template || { weeks: [] }));
+    clean.id = sanitizeBimestreId(bimestreName);
+    clean.bimestre = bimestreName;
+    clean.weeks = (clean.weeks || []).map((w, idx) => {
+      const nw = JSON.parse(JSON.stringify(w));
+      nw.id = `${clean.id}__${idx}`;
+      nw.items = (nw.items || []).map(it => {
+        const ni = JSON.parse(JSON.stringify(it));
+        if (ni.hasOwnProperty('name')) ni.name = '';
+        if (ni.hasOwnProperty('conductor')) ni.conductor = '';
+        if (ni.hasOwnProperty('lector')) ni.lector = '';
+        if (Array.isArray(ni.subs)) {
+          ni.subs = ni.subs.map(s => ({ ...s, name: '' }));
+        }
+        return ni;
+      });
+      return nw;
+    });
+    prog = clean;
+    await apiSavePrograma(bimestreName, prog, writeToken);
   }
+
+  PROGRAM = prog;
+  openWeeks.clear();
+  render();
 }
 
 function expandAllWeeks() {
