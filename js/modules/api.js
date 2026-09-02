@@ -28,6 +28,7 @@ async function apiLoadPersonas() {
       const data = await res.json();
       if (data.ok && Array.isArray(data.personas) && data.personas.length > 0) {
         setApiStatus(true);
+        await appStorageSet('wm-people', JSON.stringify(data.personas));
         return data.personas;
       }
     }
@@ -160,7 +161,7 @@ async function apiSavePrograma(bimestreId, programData, token) {
   return true;
 }
 
-// 4. Guardar Publicador
+// 4. Guardar Publicador Individual
 async function apiSavePersona(personaData, token) {
   try {
     const res = await fetch('/api/personas', {
@@ -171,12 +172,62 @@ async function apiSavePersona(personaData, token) {
 
     if (res.ok) {
       const data = await res.json();
-      if (data.ok) return data.persona;
+      if (data.ok) {
+        setApiStatus(true);
+        return data.persona;
+      }
     }
   } catch (error) {
     console.warn('No se pudo guardar publicador en la nube:', error.message);
   }
   return personaData;
+}
+
+// 4b. Eliminar Publicador Individual
+async function apiDeletePersona(personId, token) {
+  try {
+    const res = await fetch(`/api/personas/${encodeURIComponent(personId)}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-admin-token': token || ''
+      },
+      body: JSON.stringify({ token })
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      if (data.ok) {
+        setApiStatus(true);
+        return true;
+      }
+    }
+  } catch (error) {
+    console.warn(`No se pudo eliminar publicador ${personId} en la nube:`, error.message);
+  }
+  return false;
+}
+
+// 4c. Sincronizar Lote Completo de Publicadores
+async function apiSyncAllPersonas(personas, token) {
+  try {
+    const res = await fetch('/api/personas/batch', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ personas, token })
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      if (data.ok) {
+        setApiStatus(true);
+        return true;
+      }
+    }
+  } catch (error) {
+    console.warn('No se pudo sincronizar lote de publicadores:', error.message);
+  }
+  return false;
 }
 
 // 5. Verificar PIN de Administrador

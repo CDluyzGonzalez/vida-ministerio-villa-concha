@@ -249,9 +249,10 @@ async function savePersonFromModal(personId, isNew) {
     }
   }
 
-  // Guardar en almacenamiento local y sincronizar con la API
+  // Guardar en almacenamiento local y sincronizar con la API y Firestore
   await appStorageSet('wm-people', JSON.stringify(PEOPLE));
-  apiSavePersona(personaData, writeToken);
+  await apiSavePersona(personaData, writeToken);
+  apiSyncAllPersonas(PEOPLE, writeToken);
 
   closePersonModal();
   showToast('Publicador guardado exitosamente', 'success');
@@ -272,16 +273,9 @@ async function deletePersonFromModal(personId) {
 
   await appStorageSet('wm-people', JSON.stringify(PEOPLE));
 
-  // Sincronizar con el backend (enviar lista completa actualizada)
-  try {
-    await fetch('/api/personas/batch', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ personas: PEOPLE, token: writeToken })
-    });
-  } catch (e) {
-    console.warn('No se pudo sincronizar eliminación con el servidor:', e.message);
-  }
+  // Eliminar en backend individual y sincronizar lote con Firestore
+  await apiDeletePersona(personId, writeToken);
+  apiSyncAllPersonas(PEOPLE, writeToken);
 
   closePersonModal();
   showToast(`"${person.nombre}" eliminado correctamente`, 'success');

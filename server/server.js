@@ -275,9 +275,75 @@ app.get('/api/personas', async (req, res) => {
   }
 });
 
+// Guardar o actualizar publicador individual
+app.post('/api/personas', async (req, res) => {
+  const { persona, token } = req.body || {};
+
+  if (token && token !== ADMIN_PIN_HASH) {
+    return res.status(401).json({ ok: false, error: 'Token no autorizado' });
+  }
+
+  if (!persona || !persona.id || !persona.nombre) {
+    return res.status(400).json({ ok: false, error: 'Datos de persona incompletos' });
+  }
+
+  try {
+    if (db) {
+      try {
+        const docRef = db.collection('personas').doc(String(persona.id));
+        await docRef.set(persona, { merge: true });
+      } catch (firestoreError) {
+        console.warn('Firestore single persona write error:', firestoreError.message);
+      }
+    }
+
+    if (!localData.personas) localData.personas = [];
+    const idx = localData.personas.findIndex(p => String(p.id) === String(persona.id));
+    if (idx >= 0) {
+      localData.personas[idx] = { ...localData.personas[idx], ...persona };
+    } else {
+      localData.personas.push(persona);
+    }
+
+    res.json({ ok: true, persona, message: 'Publicador guardado correctamente' });
+  } catch (error) {
+    console.error('Error al guardar persona:', error);
+    res.json({ ok: true, persona, message: 'Guardado en memoria' });
+  }
+});
+
+// Eliminar publicador individual
+app.delete('/api/personas/:id', async (req, res) => {
+  const { id } = req.params;
+  const token = req.headers['x-admin-token'] || req.query.token || req.body?.token;
+
+  if (token && token !== ADMIN_PIN_HASH) {
+    return res.status(401).json({ ok: false, error: 'Token no autorizado' });
+  }
+
+  try {
+    if (db) {
+      try {
+        await db.collection('personas').doc(String(id)).delete();
+      } catch (firestoreError) {
+        console.warn(`Firestore delete persona error for ${id}:`, firestoreError.message);
+      }
+    }
+
+    if (Array.isArray(localData.personas)) {
+      localData.personas = localData.personas.filter(p => String(p.id) !== String(id));
+    }
+
+    res.json({ ok: true, id, message: 'Publicador eliminado correctamente' });
+  } catch (error) {
+    console.error(`Error al eliminar persona ${id}:`, error);
+    res.json({ ok: true, id, message: 'Eliminado en memoria' });
+  }
+});
+
 // Guardar o actualizar lote completo de publicadores
 app.post('/api/personas/batch', async (req, res) => {
-  const { personas, token } = req.body;
+  const { personas, token } = req.body || {};
 
   if (token && token !== ADMIN_PIN_HASH) {
     return res.status(401).json({ ok: false, error: 'Token no autorizado' });
@@ -291,11 +357,11 @@ app.post('/api/personas/batch', async (req, res) => {
     if (db) {
       try {
         const batch = db.batch();
-        const sentIds = new Set(personas.map(p => p.id));
+        const sentIds = new Set(personas.map(p => String(p.id)));
 
         // Upsert todas las personas enviadas
         personas.forEach(p => {
-          const docRef = db.collection('personas').doc(p.id);
+          const docRef = db.collection('personas').doc(String(p.id));
           batch.set(docRef, p, { merge: true });
         });
 
@@ -303,7 +369,7 @@ app.post('/api/personas/batch', async (req, res) => {
         try {
           const snapshot = await db.collection('personas').get();
           snapshot.docs.forEach(doc => {
-            if (!sentIds.has(doc.id)) {
+            if (!sentIds.has(String(doc.id))) {
               batch.delete(doc.ref);
             }
           });
@@ -318,7 +384,7 @@ app.post('/api/personas/batch', async (req, res) => {
     }
 
     localData.personas = personas;
-    res.json({ ok: true, count: personas.length, message: 'Publicadores guardados' });
+    res.json({ ok: true, count: personas.length, message: 'Publicadores sincronizados' });
   } catch (error) {
     console.error('Error al guardar personas:', error);
     res.json({ ok: true, count: personas.length, message: 'Publicadores guardados en memoria' });
