@@ -42,7 +42,13 @@ function render() {
         <h1>Vida y Ministerio</h1>
         <span class="sub">Villa Concha</span>
 
-        <span class="install-app-slot"></span>
+        <span class="install-app-slot">
+          ${!isAppStandalone() ? `
+            <button class="install-btn" onclick="promptInstallApp()" title="Instalar como App">
+              📲 Instalar App
+            </button>
+          ` : ''}
+        </span>
 
         <span class="admin-toggle" style="margin-left: auto;">
           ${isAdmin ? `
@@ -158,3 +164,46 @@ async function boot() {
 
 // Iniciar al cargar el DOM
 document.addEventListener('DOMContentLoaded', boot);
+
+// ============================================================
+// SISTEMA DE INSTALLACIÓN DE APP PWA
+// ============================================================
+
+// Capturar el evento de instalación de PWA en el navegador
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  // guardar el evento en una variable global para usarlo con el botón de instalación
+  window.wmDeferredInstallPrompt = e;
+  console.log("Instalacion Preparada");
+});
+
+function isAppStandalone() {
+  return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+}
+
+async function triggerInstallPrompt() {
+  const promptEvent = window.wmDeferredInstallPrompt;
+
+  if (promptEvent) {
+    promptEvent.prompt();
+
+    // Esperar a que el usuario elija una opción
+    const choiceResult = await promptEvent.userChoice;
+    if (choiceResult.outcome === 'accepted') {
+      console.log('El usuario acepto la instalación');
+    } else {
+      console.log('El usuario rechaza la instalación');
+    }
+
+    //El evento ya no se puede usar de nuevo, así que lo eliminamos
+    window.wmDeferredInstallPrompt = null;
+  } else {
+    // Mensaje de respaldo solo si es sistema Ios que no soporta la API
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    if (isIOS) {
+      alert('Para instalar la aplicación en tu iPhone o iPad:\n\n1. Asegúrate de estar usando el navegador Safari.\n2. Toca el botón "Compartir" (el cuadrado con la flecha hacia arriba).\n3. Busca y selecciona la opción "Agregar al inicio".');
+    } else {
+      alert('Para instalar la aplicación:\n\n1. Asegúrate de estar usando el navegador Chrome o Firefox.\n2. Haz clic en el botón "Instalar App".');
+    }
+  }
+}
