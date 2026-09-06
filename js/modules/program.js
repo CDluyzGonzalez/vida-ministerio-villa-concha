@@ -13,11 +13,55 @@ const BIMESTRE_MONTH_LABELS = {
   11: 'Noviembre - Diciembre'
 };
 
-// Obtener bimestres visibles para el publicador según la regla exacta de calendario
+const MESES_MAP = {
+  enero: 1, febrero: 2, marzo: 3, abril: 4, mayo: 5, junio: 6,
+  julio: 7, agosto: 8, septiembre: 9, setiembre: 9, octubre: 10, noviembre: 11, diciembre: 12
+};
+
+// Obtener la fecha de fin (Date) de una semana a partir de su texto
+function parseWeekEndDate(weekLabel, year) {
+  if (!weekLabel) return null;
+  const str = weekLabel.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  const y = year || new Date().getFullYear();
+
+  // Caso 1: Rango entre dos meses con palabra aislada " a " (ej. "31 de agosto a 6 de septiembre" o "26 de octubre a 1 de noviembre")
+  const matchRangoMeses = str.match(/\s+a\s+(\d{1,2})\s+de\s+([a-z]+)/i);
+  if (matchRangoMeses) {
+    const dFin = parseInt(matchRangoMeses[1], 10);
+    const mFin = MESES_MAP[matchRangoMeses[2]];
+    if (mFin && !isNaN(dFin)) {
+      return new Date(y, mFin - 1, dFin, 23, 59, 59, 999);
+    }
+  }
+
+  // Caso 2: Rango dentro del mismo mes con guión (ej. "Semana 2-8 De Marzo" o "Semana 6-12 De Julio")
+  const matchRangoMismoMes = str.match(/(\d{1,2})\s*[-–]\s*(\d{1,2})\s+de\s+([a-z]+)/i);
+  if (matchRangoMismoMes) {
+    const dFin = parseInt(matchRangoMismoMes[2], 10);
+    const mFin = MESES_MAP[matchRangoMismoMes[3]];
+    if (mFin && !isNaN(dFin)) {
+      return new Date(y, mFin - 1, dFin, 23, 59, 59, 999);
+    }
+  }
+
+  // Caso 3: Fallback general, tomar la última fecha mencionada en el texto
+  const matches = [...str.matchAll(/(\d{1,2})\s+de\s+([a-z]+)/gi)];
+  if (matches.length > 0) {
+    const last = matches[matches.length - 1];
+    const dFin = parseInt(last[1], 10);
+    const mFin = MESES_MAP[last[2]];
+    if (mFin && !isNaN(dFin)) {
+      return new Date(y, mFin - 1, dFin, 23, 59, 59, 999);
+    }
+  }
+
+  return null;
+}
+
+// Obtener bimestres visibles para el publicador según la regla exacta de calendario automatizada
 function computeViewerBimestres(date) {
   const d = date || new Date();
   const m = d.getMonth() + 1;
-  const day = d.getDate();
 
   const isFirstMonthOfBimestre = (m % 2 === 1);
   const isSecondMonthOfBimestre = (m % 2 === 0);
@@ -33,12 +77,25 @@ function computeViewerBimestres(date) {
 
   const result = [];
 
-  if (isFirstMonthOfBimestre && day <= 7) {
-    result.push(prevBimestre);
+  // 1. Revisar si la última semana del bimestre anterior aún está vigente hoy
+  const prevProg = (PROGRAM?.bimestre && PROGRAM.bimestre.trim().toLowerCase() === prevBimestre.trim().toLowerCase())
+    ? PROGRAM
+    : (typeof DEFAULT_PROGRAM !== 'undefined' && Array.isArray(DEFAULT_PROGRAM)
+        ? DEFAULT_PROGRAM.find(b => b.bimestre && b.bimestre.trim().toLowerCase() === prevBimestre.trim().toLowerCase())
+        : null);
+
+  if (prevProg && Array.isArray(prevProg.weeks) && prevProg.weeks.length > 0) {
+    const lastWeek = prevProg.weeks[prevProg.weeks.length - 1];
+    const endDate = parseWeekEndDate(lastWeek?.semana, d.getFullYear());
+    if (endDate && d <= endDate) {
+      result.push(prevBimestre);
+    }
   }
 
+  // 2. Bimestre actual siempre visible
   result.push(currentBimestre);
 
+  // 3. El siguiente bimestre se muestra en el segundo mes (ej. en Octubre se ve Noviembre - Diciembre)
   if (isSecondMonthOfBimestre) {
     result.push(nextBimestre);
   }
@@ -86,7 +143,16 @@ function toggleWeek(weekId) {
 function renderProgramTab() {
   // 1. Vista de Solo Lectura (Público / No Administrador)
   if (!isAdmin) {
-    const viewerLabels = computeViewerBimestres();
+    const now = new Date();
+    const currentMonth = now.getMonth() + 1;
+    const isFirstMonth = (currentMonth % 2 === 1);
+    const isSecondMonth = (currentMonth % 2 === 0);
+    const currentPairStart = isFirstMonth ? currentMonth : currentMonth - 1;
+    const currentBimName = BIMESTRE_MONTH_LABELS[currentPairStart];
+    const prevPairStart = currentPairStart === 1 ? 11 : currentPairStart - 2;
+    const prevBimName = BIMESTRE_MONTH_LABELS[prevPairStart];
+
+    const viewerLabels = computeViewerBimestres(now);
 
     return `
       <div class="section-pad">
@@ -95,15 +161,34 @@ function renderProgramTab() {
         </div>
 
         ${viewerLabels.map(label => {
-          const bim = (PROGRAM?.bimestre === label) ? PROGRAM : (typeof DEFAULT_PROGRAM !== 'undefined' ? DEFAULT_PROGRAM.find(b => b.bimestre === label) : null);
+          const bim = (PROGRAM?.bimestre && PROGRAM.bimestre.trim().toLowerCase() === label.trim().toLowerCase())
+            ? PROGRAM
+            : (typeof DEFAULT_PROGRAM !== 'undefined' && Array.isArray(DEFAULT_PROGRAM)
+                ? DEFAULT_PROGRAM.find(b => b.bimestre && b.bimestre.trim().toLowerCase() === label.trim().toLowerCase())
+                : null);
           if (!bim || !Array.isArray(bim.weeks) || bim.weeks.length === 0) return '';
+
+          // Si es el bimestre anterior que aún tiene días en el mes actual, mostrar SOLO la última semana
+          const isPrevBimestre = (label === prevBimName);
+          let weeksToShow = bim.weeks;
+
+          if (isPrevBimestre) {
+            weeksToShow = [bim.weeks[bim.weeks.length - 1]];
+          } else if (label === currentBimName && isSecondMonth) {
+            // Si estamos en la última semana del bimestre actual que cruza al mes siguiente
+            const lastWeek = bim.weeks[bim.weeks.length - 1];
+            const lastWeekEnd = parseWeekEndDate(lastWeek?.semana, now.getFullYear());
+            if (lastWeekEnd && now >= new Date(lastWeekEnd.getTime() - 7 * 24 * 60 * 60 * 1000) && (lastWeekEnd.getMonth() + 1) !== currentMonth) {
+              weeksToShow = [lastWeek];
+            }
+          }
 
           return `
             <div class="viewer-bimester-title">
               ${escapeHtml(bim.bimestre)}
             </div>
             <div class="weeks-container">
-              ${bim.weeks.map((week, idx) => renderWeekCard(bim, week, idx)).join('')}
+              ${weeksToShow.map((week, idx) => renderWeekCard(bim, week, idx)).join('')}
             </div>
           `;
         }).join('')}

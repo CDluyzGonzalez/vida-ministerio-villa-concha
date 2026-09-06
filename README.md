@@ -1,507 +1,213 @@
-# &#x20;Vida y Ministerio — Villa Concha
+# Vida y Ministerio
 
-> Aplicación web progresiva (PWA) para la gestión, consulta y organización de las asignaciones semanales del programa **Vida y Ministerio.**
+> Aplicación web progresiva (PWA) de nivel empresarial para la gestión, consulta y auditoría inteligente de las asignaciones semanales del programa **Vida y Ministerio**. Desarrollada con arquitectura serverless sobre **Google Cloud Platform** (Cloud Run + Firestore Nativo) bajo costo \$0 permanente.
 
-🌐 [**Ver aplicación en producción**](https://vida-ministerio-villa-concha.vercel.app/)
-
-📦 [**Ver código fuente en GitHub**](https://github.com/CDluyzGonzalez/vida-ministerio-villa-concha)
-
----
-
-## 📋 Descripción
-
-**Vida y Ministerio** —  es una aplicación web desarrollada para facilitar la consulta y gestión de las asignaciones correspondientes a las reuniones semanales.
-
-La aplicación presenta la información organizada por períodos y semanas, proporcionando una interfaz clara, responsive y accesible desde computadores, tablets y dispositivos móviles.
+🌐 [**Ver aplicación en producción (Google Cloud)**](https://vida-ministerio-248389608743.us-central1.run.app/)  
+📦 [**Repositorio en GitHub**](https://github.com/CDluyzGonzalez/vida-ministerio-villa-concha)
 
 ---
 
-## 🎯 Objetivo del proyecto
+## 📋 Descripción del Proyecto
 
-El objetivo principal es transformar un proceso de consulta basado en una hoja de cálculo extensa en una **experiencia más sencilla, visual y accesible**, manteniendo la información centralizada y facilitando la organización de las asignaciones.
-
-La aplicación permite consultar de manera estructurada quién participa en cada sección de la reunión, organizar los programas por períodos bimestrales y gestionar las responsabilidades asignadas a los participantes.
+**Vida y Ministerio — Villa Concha** transforma la gestión tradicional basada en hojas de cálculo extensas en una plataforma web interactiva, moderna y automatizada. Permite programar reuniones bimestrales, asignar participantes respetando privilegios bíblicos específicos, auditar conflictos en tiempo real y brindar a la congregación una vista de solo lectura limpia, rápida y accesible desde cualquier dispositivo.
 
 ---
 
-## ✨ Características principales
+## 🎯 Objetivos y Solución Aportada
 
-### 📅 Organización semanal
-
-Las asignaciones están organizadas por semanas, permitiendo consultar rápidamente:
-
-* Fecha de la reunión.
-* Secciones del programa.
-* Participantes asignados.
-* Responsabilidades específicas.
-* Información correspondiente a cada parte de la reunión.
-
-### 🗓️ Organización por bimestres
-
-La aplicación permite trabajar con diferentes períodos del programa mediante archivos de datos independientes.
-
-Actualmente contempla períodos como:
-
-* Marzo — Abril
-* Mayo — Junio
-* Julio — Agosto
-* Septiembre — Octubre
-
-Esta estructura facilita la actualización y mantenimiento de la información.
-
-### 👥 Gestión de participantes
-
-La aplicación utiliza información de los publicadores autorizados para organizar las asignaciones semanales y bimestrales.
-
-La utilización de los nombres de los participantes en la fuente de datos cuenta con la autorización correspondiente para este propósito.
-
-Por razones de privacidad y seguridad, los identificadores, URLs internas y configuraciones sensibles de la fuente de datos no forman parte del repositorio público.
-
-### 🔎 Consulta rápida
-
-La interfaz permite localizar participantes y consultar sus asignaciones sin tener que navegar por una hoja de cálculo extensa.
-
-### 👤 Asignación de responsabilidades
-
-El sistema contempla diferentes tipos de responsabilidades y restricciones para determinar qué participantes pueden ser asignados a determinadas partes del programa.
-
-Entre las categorías contempladas se encuentran:
-
-* Busquemos perlas escondidas.
-* Tesoros de la Biblia.
-* Nuestra Vida Cristiana.
-* Estudio bíblico.
-* Lectura de la Biblia.
-* Seamos mejores maestros.
-* Introducción y conclusión.
-* Oraciones.
-* Otras asignaciones.
-
-### 📄 Generación de PDF
-
-La aplicación permite generar una versión en PDF del programa utilizando:
-
-* `jsPDF`
-* `html2canvas`
-
-El PDF se prepara en un modo de visualización específico para conservar una presentación limpia y adecuada para compartir o imprimir.
+* **De Hojas de Cálculo a Base de Datos en la Nube:** Reemplazo de tablas estáticas por **Google Cloud Firestore** (modo nativo) con esquema híbrido normalizado en 3FN.
+* **Cero Costo Operativo (\$0 USD):** Arquitectura serverless que escala a cero instancias en periodos de inactividad, aprovechando la capa gratuita permanente (*Always Free Tier*) de Google Cloud.
+* **Auditoría Automática en Tiempo Real:** Algoritmos ejecutados del lado del cliente que detectan conflictos de misma semana, sobrecarga por semanas consecutivas y publicadores sin asignación.
+* **Doble Modo (Público vs. Administrador):** Los hermanos disfrutan de una vista limpia y segura sin riesgo de alterar datos; el encargado administra con PIN seguro SHA-256.
 
 ---
 
-# 📱 Progressive Web App
+## ✨ Características Principales
 
-El proyecto incorpora características de **Progressive Web App (PWA)** para ofrecer una experiencia similar a una aplicación instalada.
+### 1. 📅 Gestión y Visualización de Programas
+* **Navegación Bimestral:** Soporte completo para los 6 períodos del año (Enero - Febrero, Marzo - Abril, Mayo - Junio, Julio - Agosto, Septiembre - Octubre, Noviembre - Diciembre).
+* **Transición Automatizada de Semanas:**
+  * El sistema analiza la fecha exacta de fin de cada semana (`parseWeekEndDate`).
+  * Si la última semana de un bimestre cruza al mes siguiente (ej. *Semana 31 De Agosto A 6 De Septiembre*), permanece visible hasta el último día domingo **mostrando únicamente esa última semana** y ocultando automáticamente las semanas pasadas.
+  * Al vencer esa semana, el bimestre anterior desaparece solo.
+  * Durante el segundo mes de cada bimestre (ej. Octubre), se activa automáticamente la vista anticipada del bimestre siguiente (Noviembre - Diciembre).
+* **Renumeración Dinámica Continua:** Las partes del programa se renumeran correlativamente (1, 2, 3...) de forma automática, omitiendo los cánticos de apertura, intermedios y de cierre.
 
-Actualmente cuenta con:
+### 2. 🛡️ Presidencia Unificada
+* Regla canónica implementada: Quien preside la reunión presenta las **Palabras de introducción (1 min.)** y las **Palabras de conclusión (3 min.)**.
+* Al asignar al presidente en una de las partes, el sistema **sincroniza automáticamente la otra parte**, garantizando coherencia en todo momento.
 
-* Web App Manifest.
-* Nombre de la aplicación.
-* Iconos de instalación.
-* Configuración `standalone`.
-* Orientación para dispositivos móviles.
-* Color de tema.
-* Instalación en dispositivos compatibles.
-* Capturas de pantalla específicas para la interfaz de instalación.
+### 3. 👥 Directorio de Publicadores y Privilegios Normalizados (3FN)
+Cada publicador cuenta con un ID único, datos de contacto y un catálogo de **privilegios independientes** correspondientes a las asignaciones del programa:
 
-La configuración del manifest permite que la aplicación pueda instalarse como una aplicación independiente en los dispositivos compatibles.
+| ID Privilegio | Nombre Visible / Checkbox | Uso en el Programa |
+| :--- | :--- | :--- |
+| `lectura_biblia` | **Lectura de la Biblia** | Asignación #3 de Tesoros (4 mins.) |
+| `que_diria` | **¿Qué diría?** | Partes de Maestros con título "¿Qué diría?" |
+| `maestros` | **Seamos Mejores Maestros** | Discursos, conversaciones y explicaciones |
+| `perlas` | **Busquemos perlas escondidas** | Análisis de perlas (10 mins.) |
+| `tesoros_p1` | **Asignación #1 (Tesoros)** | Discurso temático principal de Tesoros |
+| `nvc` | **Nuestra Vida Cristiana** | Puntos temáticos de Vida Cristiana |
+| `estudio_conductor` | **Estudio bíblico (Conductor)** | Dirigir el estudio bíblico de congregación |
+| `estudio_lector` | **Estudio bíblico (Lector)** | Lectura de párrafos en el estudio bíblico |
+| `intro_conclusion` | **Introducción / Conclusión** | Presidencia de la reunión |
+| `oraciones` | **Oraciones** | Oración de apertura y de conclusión |
+
+* **Gestión en Tiempo Real:** El administrador puede crear nuevos publicadores, editar sus privilegios (añadir o retirar casillas) y eliminarlos con sincronización atómica e inmediata en Firestore.
+
+### 4. 📊 Dashboard de Auditoría y Control (Centro de Alertas)
+El Dashboard realiza un análisis instantáneo en la memoria del navegador sin generar lecturas ni costos en Firestore:
+* 🔴 **Conflictos de Misma Semana:** Detecta si un hermano tiene dos o más asignaciones distintas en la misma semana. *(Excepción inteligente: Introducción y Conclusión se consolidan como 1 sola función de Presidencia sin generar falsos positivos).*
+* 🟡 **Asignaciones en Semanas Consecutivas:** Identifica rachas de hermanos asignados en 2 o más semanas seguidas, desglosando las partes asignadas en cada semana (ej. *Semana X (oración) ➔ Semana Y (perlas)*).
+* 🔵 **Publicadores Sin Asignación:** Identifica hermanos disponibles que no han recibido asignación en el bimestre actual ni en el bimestre anterior, fomentando una distribución equitativa.
+* 📈 **Métricas Generales:** Estadísticas de partes cubiertas, pendientes y cantidad de publicadores únicos utilizados.
+
+### 5. 🔒 Seguridad y Persistencia de Sesión
+* **Protección por PIN:** Acceso al modo Administrador mediante hash criptográfico **SHA-256**.
+* **Sesión Persistente:** Al recargar la página o cambiar de aplicación en el celular, el token se conserva en `sessionStorage`/`localStorage`, evitando perder el estado de edición.
+* **Control de Autorización en Backend:** Endpoints protegidos mediante validación estricta de token en cabeceras y cuerpo de peticiones.
+
+### 6. 📄 Exportación a PDF de Alta Fidelidad
+* Generación del programa completo a PDF mediante **jsPDF** y **html2canvas**.
+* Modo de renderizado especial que oculta botones de edición, expande todas las semanas y aplica tipografías y bordes limpios para impresión o distribución digital.
+* Disponible exclusivamente para el Administrador.
+
+### 7. 📲 Progressive Web App (PWA)
+* Botón integrado en el encabezado: **📲 Descargar app**.
+* Instalación nativa en Android, Windows, macOS y Linux mediante `beforeinstallprompt`.
+* Guía de instalación rápida asistida para usuarios de iOS (Safari).
+* Detección automática de modo independiente (`display-mode: standalone`) para ocultar el botón cuando la app ya está instalada.
 
 ---
 
-## 🖥️ Diseño responsive
-
-Uno de los objetivos principales del proyecto fue mejorar la experiencia de consulta frente al sistema anterior basado en Google Sheets.
-
-La interfaz fue diseñada para adaptarse a:
-
-* 📱 Smartphones.
-* 📲 Tablets.
-* 💻 Laptops.
-* 🖥️ Computadores de escritorio.
-
-El diseño prioriza especialmente la **legibilidad y facilidad de navegación**, reduciendo la cantidad de información visual presentada simultáneamente.
-
----
-
-# 🏗️ Arquitectura
-
-La aplicación utiliza una arquitectura frontend basada en JavaScript y una capa externa de integración para la comunicación y persistencia de información.
+## 🏗️ Arquitectura del Sistema
 
 ```text
-┌─────────────────────────────────────┐
-│             Usuario                 │
-│   Smartphone / Tablet / Desktop     │
-└──────────────────┬──────────────────┘
-                   │
-                   ▼
-┌─────────────────────────────────────┐
-│          Aplicación Web             │
-│                                     │
-│ HTML5 + CSS3 + JavaScript           │
-│                                     │
-│ • Interfaz                          │
-│ • Estado de la aplicación           │
-│ • Asignaciones                      │
-│ • Búsqueda                          │
-│ • Validaciones                      │
-│ • Generación de PDF                 │
-└──────────────────┬──────────────────┘
-                   │
-                   ▼
-┌─────────────────────────────────────┐
-│        Google Apps Script           │
-│        Capa de integración          │
-│                                     │
-│ • Lectura de información            │
-│ • Escritura de cambios              │
-│ • Comunicación con Google Sheets    │
-└──────────────────┬──────────────────┘
-                   │
-                   ▼
-┌─────────────────────────────────────┐
-│          Google Sheets              │
-│       Persistencia remota           │
-│                                     │
-│ • Participantes                     │
-│ • Configuración                     │
-│ • Asignaciones                      │
-│ • Cambios realizados desde la app  │
-└─────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────────────┐
+│                          DISPOSITIVOS (CLIENTES)                       │
+│             Smartphones  ·  Tablets  ·  Laptops  ·  Desktops           │
+└───────────────────────────────────┬────────────────────────────────────┘
+                                    │
+                                    │ HTTPS (PWA / REST)
+                                    ▼
+┌────────────────────────────────────────────────────────────────────────┐
+│                 GOOGLE CLOUD RUN (Contenedor Serverless)               │
+│                                                                        │
+│   • Node.js 20 + Express API REST (server/server.js)                   │
+│   • Compresión Gzip + Cabeceras de Seguridad + CORS                    │
+│   • Serving Estático Optimizado (HTML, CSS, JS Modular)                │
+│   • Auto-escalado a 0 instancias (Costo $0 en inactividad)             │
+│   • Autenticación con Application Default Credentials (ADC)            │
+└───────────────────────────────────┬────────────────────────────────────┘
+                                    │
+                                    │ gRPC Interno (roles/datastore.user)
+                                    ▼
+┌────────────────────────────────────────────────────────────────────────┐
+│                 GOOGLE CLOUD FIRESTORE (Modo Nativo)                   │
+│                                                                        │
+│   • Colección /programas (documentos bimestrales con array de semanas) │
+│   • Colección /personas (121 publicadores con privilegios 3FN)         │
+│   • Cuota Gratuita: 50.000 lecturas / 20.000 escrituras diarias        │
+└────────────────────────────────────────────────────────────────────────┘
 ```
-
-**Google Sheets funciona como fuente remota y sistema de persistencia de datos**, almacenando información de participantes, configuraciones, asignaciones y cambios realizados desde la aplicación.
-
-**Google Apps Script** actúa como capa de integración entre el frontend y Google Sheets, permitiendo gestionar las operaciones de lectura y escritura sin exponer directamente las configuraciones internas.
-
-La aplicación también mantiene **datos locales como plantilla y mecanismo de respaldo**, permitiendo conservar la experiencia de consulta cuando la fuente remota no está disponible.
 
 ---
 
-# 📁 Estructura del proyecto
+## 📁 Estructura del Código Fuente
 
 ```text
 vida-ministerio-villa-concha/
 │
-├── apps-script/
-│   └── codigo.gs
-│
-├── css/
-│   └── styles.css
+├── server/
+│   ├── server.js               # API REST Express (Rutas para programas, personas, PIN)
+│   └── firestore.js            # Inicializador de Firestore con Application Default Credentials
 │
 ├── js/
-│   ├── app.js
-│   ├── functions.js
+│   ├── app.js                  # Bootstrap, estado global, router de pestañas y PWA
+│   │
+│   ├── modules/
+│   │   ├── api.js              # Cliente HTTP hacia Cloud Run con fallback offline
+│   │   ├── privileges.js       # Catálogo de 10 privilegios, reglas y filtros
+│   │   ├── people.js           # Directorio de publicadores y modal con 10 checkboxes
+│   │   ├── program.js          # Renderizado de semanas, cálculo de fechas y asignaciones
+│   │   ├── dashboard.js        # Motor de auditoría en tiempo real (conflictos y equidad)
+│   │   ├── admin.js            # Autenticación PIN SHA-256 y sesión persistente
+│   │   ├── pdf.js              # Motor de exportación a PDF (jsPDF + html2canvas)
+│   │   └── utils.js            # Normalización de texto, toasts y almacenamiento local
 │   │
 │   └── data/
-│       ├── people.js
-│       ├── varones.js
-│       ├── program.js
-│       ├── marzo-abril.js
-│       ├── mayo-junio.js
-│       ├── julio-agosto.js
-│       └── septiembre-octubre.js
+│       ├── people.js           # Semilla de respaldo offline de publicadores
+│       ├── varones.js          # Datos auxiliares
+│       └── program.js          # Semilla de respaldo offline del programa
 │
-├── icons/
-│   ├── icon-192.png
-│   └── icon-512.png
+├── css/
+│   └── styles.css              # Sistema de diseño responsivo (Dark Teal + Terra Cotta)
 │
-├── screenshots/
-│   ├── desktop.png
-│   └── mobile.png
-│
-├── index.html
-├── manifest.json
-├── apple-touch-icon.png
-├── .gitignore
-└── README.md
+├── icons/                      # Iconos PWA para alta resolución (192px, 512px)
+├── screenshots/                # Capturas de pantalla para instalación PWA
+├── Dockerfile                  # Empaquetado Docker multi-stage en Node.js 20 Alpine
+├── cloudbuild.yaml             # Configuración de despliegue automatizado en Google Cloud
+├── index.html                  # Punto de entrada HTML5 con cache-busting dinámico
+├── manifest.json               # Configuración oficial de Progressive Web App
+├── package.json                # Dependencias (Express, @google-cloud/firestore, cors, compression)
+└── README.md                   # Documentación técnica completa del proyecto
 ```
 
-> ⚠️ La configuración utilizada para la integración con Google Apps Script y cualquier identificador o información sensible se mantiene fuera del repositorio público.
+---
+
+## 🛠️ Tecnologías Utilizadas
+
+### Frontend
+* **HTML5 Semántico** & **CSS3 Moderno** (Flexbox, CSS Grid, Variables CSS, Media Queries).
+* **JavaScript Moderno (ES6+)** bajo arquitectura modular por responsabilidades.
+* **jsPDF** & **html2canvas** para renderizado e impresión de documentos vectoriales/rasterizados.
+
+### Backend & Nube
+* **Node.js 20 LTS** & **Express.js**.
+* **Google Cloud Run** (Despliegue serverless contenerizado).
+* **Google Cloud Firestore** (Base de datos NoSQL documental nativa).
+* **Google Cloud IAM** (`roles/datastore.user` para autorización de mínima fricción).
+* **Docker** (Contenedor optimizado Alpine Linux).
 
 ---
 
-# 🛠️ Tecnologías utilizadas
+## 🚀 Guía de Despliegue y Mantenimiento
 
-## Frontend
-
-* **HTML5**
-* **CSS3**
-* **JavaScript (Vanilla JS)**
-* Responsive Web Design
-
-## PWA
-
-* **Web App Manifest**
-* **PWA Icons**
-* `beforeinstallprompt`
-* `appinstalled`
-* Responsive PWA Screenshots
-
-## Integración y datos
-
-* **Google Apps Script**
-* **Google Sheets**
-* **JavaScript Fetch API**
-* **LocalStorage**
-
-## Generación de documentos
-
-* **jsPDF**
-* **html2canvas**
-
-## Seguridad
-
-* **SHA-256**
-* Token temporal para autorización de operaciones de escritura.
-* Separación de configuraciones sensibles respecto al repositorio público.
-
-## Desarrollo y despliegue
-
-* **Git**
-* **GitHub**
-* **Vercel**
-* **Visual Studio Code**
-* **Chrome DevTools**
-* **Live Server**
-
----
-
-# 🔐 Seguridad y privacidad
-
-La aplicación utiliza información de participantes para poder organizar las asignaciones del programa.
-
-El uso de los nombres de los publicadores almacenados en la fuente de datos cuenta con la autorización correspondiente para la gestión de las asignaciones.
-
-Para mantener el repositorio público seguro:
-
-* No se incluyen identificadores de Google Sheets.
-* No se incluyen configuraciones privadas de Google Apps Script.
-* No se publican tokens de acceso.
-* No se almacenan credenciales en el repositorio.
-* El PIN administrativo no se almacena en texto plano.
-* Las configuraciones sensibles se mantienen fuera del código público.
-
-El repositorio contiene únicamente los componentes necesarios para comprender y ejecutar la parte pública de la aplicación.
-
----
-
-# ⚙️ Ejecución local
-
-## Requisitos
-
-Para ejecutar la aplicación localmente se necesita:
-
-* Navegador web moderno.
-* Visual Studio Code.
-* Extensión Live Server.
-
-## 1. Clonar el repositorio
-
+### 1. Pruebas Locales en Computadora
 ```bash
-git clone https://github.com/CDluyzGonzalez/vida-ministerio-villa-concha.git
+# Iniciar el servidor local
+node server/server.js
 ```
+Abre en tu navegador: `http://localhost:8080`.
 
-## 2. Entrar al proyecto
+### 2. Despliegue a Producción en Google Cloud Run
 
+Cada vez que realices ajustes en tu repositorio local, el flujo de actualización es:
+
+#### Paso A: En tu terminal local
 ```bash
-cd vida-ministerio-villa-concha
+git add -A
+git commit -m "feat: descripcion del cambio realizado"
+git push origin cloudrun
 ```
 
-## 3. Abrir el proyecto
-
-Abrir la carpeta desde Visual Studio Code.
-
-## 4. Ejecutar con Live Server
-
-Abrir `index.html` y seleccionar:
-
-```text
-Open with Live Server
+#### Paso B: En Google Cloud Shell
+```bash
+git pull origin cloudrun && gcloud run deploy vida-ministerio --source . --region us-central1 --allow-unauthenticated --set-env-vars GCP_PROJECT_ID=vida-y-ministerio-507400,NODE_ENV=production
 ```
 
-La aplicación se abrirá en el navegador mediante un servidor local.
-
-> La configuración necesaria para conectar la aplicación con los servicios externos debe mantenerse fuera del repositorio público.
-
 ---
 
-# 📸 Capturas de pantalla
+## 👨‍💻 Autor
 
-## 💻 Vista de escritorio
+### Carlos D'Luyz
+**Desarrollador de Software | Estudiante de Ingeniería de Sistemas**  
+Interesado en desarrollo web full stack, arquitectura serverless en la nube, automatización de procesos y diseño centrado en el usuario.
 
-![Vida y Ministerio — Vista de escritorio](./screenshots/desktop.png)
-
-## 📱 Vista móvil
-
-![Vida y Ministerio — Vista móvil](./screenshots/mobile.png)
-
----
-
-# 💡 Problema → Solución
-
-## Problema
-
-Antes de desarrollar esta aplicación, las asignaciones de las reuniones se gestionaban mediante una hoja de cálculo de Google Sheets.
-
-Aunque este sistema permitía compartir la información, presentaba diferentes dificultades en el uso cotidiano:
-
-* La información podía no actualizarse correctamente para todos los usuarios.
-* Era más difícil encontrar rápidamente una asignación.
-* La gran cantidad de cuadros y columnas hacía que la información se mostrara en tamaños reducidos.
-* Consultar las asignaciones desde un teléfono no era una experiencia óptima.
-* Las personas mayores podían encontrar especialmente complejo navegar y localizar información dentro de la hoja de cálculo.
-
-## Solución
-
-Se diseñó y desarrolló una aplicación web enfocada específicamente en la **consulta rápida, claridad visual y facilidad de uso**.
-
-La nueva interfaz permite:
-
-```text
-Seleccionar período
-       ↓
-Seleccionar semana
-       ↓
-Consultar programa
-       ↓
-Ver participantes y responsabilidades
-```
-
-La aplicación mantiene Google Sheets como sistema de persistencia de la información, pero incorpora una interfaz web especializada para presentar y gestionar los datos de una manera más clara y práctica.
-
-De esta manera, la información que anteriormente estaba distribuida en una hoja de cálculo extensa se presenta mediante una interfaz organizada y adaptada al uso cotidiano.
-
----
-
-# 🧠 Retos técnicos
-
-Durante el desarrollo se trabajó en diferentes retos técnicos:
-
-### Gestión del estado
-
-La aplicación mantiene diferentes estados para controlar:
-
-* Programa actual.
-* Bimestre seleccionado.
-* Semanas abiertas.
-* Búsqueda de participantes.
-* Estado administrativo.
-* Estado de conexión con Google Sheets.
-* Procesos de guardado.
-
-### Normalización de nombres
-
-Se implementó normalización de nombres para facilitar las comparaciones entre diferentes fuentes de datos.
-
-Esto permite manejar diferencias como:
-
-* Mayúsculas y minúsculas.
-* Tildes.
-* Espacios adicionales.
-* Algunos caracteres especiales.
-
-### Reglas de asignación
-
-Se implementaron reglas para determinar qué personas pueden participar en determinadas secciones.
-
-Esto permite automatizar parte del proceso de organización de las reuniones y reducir asignaciones incompatibles.
-
-### Respaldo local
-
-Cuando la fuente de datos remota no responde correctamente, la aplicación puede utilizar los datos locales disponibles para mantener la experiencia de consulta.
-
-### Generación de PDF
-
-Se implementó un modo específico para preparar la interfaz antes de exportarla, ocultando elementos de edición y adaptando la visualización para generar un documento más limpio.
-
----
-
-# 📈 Impacto de la solución
-
-La aplicación transforma un proceso de consulta basado en una hoja de cálculo extensa en una interfaz diseñada específicamente para el uso cotidiano.
-
-### Antes
-
-**Google Sheets**
-
-* Información distribuida en múltiples cuadros.
-* Mayor dificultad para localizar asignaciones.
-* Información visualmente pequeña.
-* Experiencia limitada en dispositivos móviles.
-* Mayor dificultad para usuarios con poca familiaridad con hojas de cálculo.
-
-### Después
-
-**Aplicación web**
-
-* Organización semanal.
-* Información visualmente más clara.
-* Consulta rápida de asignaciones.
-* Búsqueda de participantes.
-* Consulta desde cualquier dispositivo.
-* Interfaz responsive.
-* Instalación como PWA.
-* Gestión estructurada de asignaciones.
-* Generación de PDF.
-* Proceso de asignación de participantes más práctico y ágil.
-
----
-
-# 🚀 Mejoras futuras
-
-Algunas funcionalidades que podrían incorporarse posteriormente:
-
-* Incorporar notificaciones de nuevas asignaciones.
-* Añadir historial de cambios.
-* Incorporar estadísticas de participación.
-* Crear un panel administrativo más avanzado.
-* Implementar una API backend propia.
-* Migrar progresivamente la información a una base de datos dedicada.
-* Mejorar las pruebas automatizadas.
-* Incorporar métricas de rendimiento y accesibilidad.
-
----
-
-# 🎓 Propósito del proyecto
-
-Este proyecto forma parte de mi portafolio como desarrollador y representa la aplicación práctica de conocimientos de:
-
-* Desarrollo web.
-* JavaScript.
-* Diseño responsive.
-* Progressive Web Apps.
-* Gestión de datos.
-* Integración con servicios externos.
-* Automatización de procesos.
-* Diseño centrado en el usuario.
-* Control de versiones.
-* Despliegue de aplicaciones web.
-
-Más allá de la implementación técnica, el proyecto representa un enfoque de **resolución de problemas reales mediante software**: identificar una necesidad, analizar las limitaciones del proceso existente, diseñar una solución y convertirla en una aplicación funcional.
-
----
-
-# 👨‍💻 Autor
-
-## Carlos D'Luyz
-
-**Desarrollador de Software | Estudiante de Ingeniería de Sistemas**
-
-Interesado en desarrollo web, aplicaciones full stack, automatización y creación de soluciones digitales orientadas a resolver problemas reales.
-
-### Tecnologías utilizadas en este proyecto
-
-`HTML5` · `CSS3` · `JavaScript` · `Google Apps Script` · `Google Sheets` · `PWA` · `jsPDF` · `html2canvas` · `Git` · `GitHub` · `Vercel`
-
-### GitHub
-
-[CDluyzGonzalez](https://github.com/CDluyzGonzalez)
+* GitHub: [@CDluyzGonzalez](https://github.com/CDluyzGonzalez)
+* Repositorio: [vida-ministerio-villa-concha](https://github.com/CDluyzGonzalez/vida-ministerio-villa-concha)
 
 ---
 
 ## 📄 Licencia
-
-Proyecto desarrollado con fines de portafolio profesional y demostración de habilidades de desarrollo de software.
-
----
-
-⭐ **Si encuentras interesante el proyecto, puedes explorar el código fuente y conocer otros proyectos en mi perfil de GitHub.**
+Este proyecto ha sido desarrollado con fines de servicio comunitario y demostración de competencias profesionales de ingeniería de software.
