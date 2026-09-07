@@ -15,7 +15,7 @@ let BIMESTRES_LIST = [
   'Septiembre - Octubre',
   'Noviembre - Diciembre'
 ];
-let currentTab = 'programa'; // 'programa' | 'publicadores' | 'dashboard'
+let currentTab = 'programa'; // 'programa' | 'salidas' | 'publicadores' | 'dashboard'
 let currentBimestre = 'Septiembre - Octubre';
 let openWeeks = new Set();
 let peopleSearch = '';
@@ -30,8 +30,8 @@ function render() {
   const root = document.getElementById('root');
   if (!root) return;
 
-  // Si no es admin, forzar pestaña programa
-  if (!isAdmin && currentTab !== 'programa') {
+  // Si no es admin y está en una pestaña privada (publicadores o dashboard), redirigir a programa
+  if (!isAdmin && currentTab !== 'programa' && currentTab !== 'salidas') {
     currentTab = 'programa';
   }
 
@@ -63,13 +63,20 @@ function render() {
         </span>
       </div>
 
-      <!-- Pestañas de Navegación: Publicadores y Dashboard SOLO visibles en Modo Admin -->
+      <!-- Pestañas de Navegación: Programa y Salidas al servicio son públicas; Publicadores y Dashboard SOLO en Admin -->
       <div class="tabbar">
         <button
           class="${currentTab === 'programa' ? 'active' : ''}"
           onclick="switchTab('programa')"
         >
           Programa
+        </button>
+
+        <button
+          class="${currentTab === 'salidas' ? 'active' : ''}"
+          onclick="switchTab('salidas')"
+        >
+          Salidas al servicio
         </button>
 
         ${isAdmin ? `
@@ -93,6 +100,7 @@ function render() {
     <!-- Contenido Principal -->
     <main>
       ${currentTab === 'programa' ? renderProgramTab() : ''}
+      ${currentTab === 'salidas' ? (typeof renderServiceTab === 'function' ? renderServiceTab() : '') : ''}
       ${currentTab === 'publicadores' ? renderPeopleTab() : ''}
       ${currentTab === 'dashboard' ? renderDashboardTab() : ''}
     </main>
@@ -106,11 +114,18 @@ function render() {
 
 // Cambiar de pestaña
 function switchTab(tabName) {
-  if (tabName !== 'programa' && !isAdmin) {
+  // 'programa' y 'salidas' son públicas para toda la congregación
+  if (tabName !== 'programa' && tabName !== 'salidas' && !isAdmin) {
     openAdminPinModal();
     return;
   }
   currentTab = tabName;
+
+  // Si cambia a salidas y aún no se han cargado datos, cargarlos
+  if (tabName === 'salidas' && typeof loadSalidasData === 'function' && !CURRENT_SALIDAS) {
+    loadSalidasData();
+  }
+
   render();
 }
 
@@ -154,6 +169,11 @@ async function boot() {
     // Abrir la primera semana por defecto
     if (PROGRAM?.weeks?.[0]?.id) {
       openWeeks.add(PROGRAM.weeks[0].id);
+    }
+
+    // 4. Cargar datos de Salidas al Servicio en segundo plano para disponibilidad instantánea
+    if (typeof loadSalidasData === 'function') {
+      loadSalidasData();
     }
   } catch (error) {
     console.warn('Error durante el arranque:', error);

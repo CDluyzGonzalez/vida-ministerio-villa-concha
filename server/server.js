@@ -408,6 +408,314 @@ app.post('/api/personas/batch', async (req, res) => {
 });
 
 // ============================================================
+// ENDPOINTS DE SALIDAS AL SERVICIO (PREDICACIÓN)
+// ============================================================
+
+// Obtener salidas al servicio de un mes específico (ej: '2026-09')
+app.get('/api/salidas/:mesId', async (req, res) => {
+  const { mesId } = req.params;
+  const cleanId = String(mesId || '').trim();
+
+  if (!cleanId) {
+    return res.status(400).json({ ok: false, error: 'mesId es requerido' });
+  }
+
+  try {
+    // 1. Si Firestore está conectado, buscar en la colección 'salidas'
+    if (db) {
+      try {
+        const docRef = db.collection('salidas').doc(cleanId);
+        const docSnap = await docRef.get();
+        if (docSnap.exists) {
+          return res.json({ ok: true, source: 'firestore', salidas: docSnap.data() });
+        }
+      } catch (firestoreError) {
+        console.warn(`Error al consultar Firestore salidas/${cleanId}:`, firestoreError.message);
+      }
+    }
+
+    // 2. Si no existe en Firestore o no está conectado, buscar en localData
+    if (!localData.salidas) localData.salidas = {};
+    if (localData.salidas[cleanId]) {
+      return res.json({ ok: true, source: 'local', salidas: localData.salidas[cleanId] });
+    }
+
+    // 3. Fallback: Si es el mes semilla de Septiembre 2026 y no existe, retornar plantilla base
+    const defaultData = getDefaultSalidasForMonth(cleanId);
+    return res.json({ ok: true, source: 'seed_template', salidas: defaultData });
+  } catch (error) {
+    console.error(`Error al procesar GET /api/salidas/${cleanId}:`, error);
+    res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
+// Guardar o actualizar salidas al servicio de un mes (requiere PIN de admin)
+app.put('/api/salidas/:mesId', async (req, res) => {
+  const { mesId } = req.params;
+  const { salidas, token } = req.body || {};
+  const cleanId = String(mesId || '').trim();
+
+  if (token && String(token).trim().toLowerCase() !== ADMIN_PIN_HASH.trim().toLowerCase()) {
+    return res.status(401).json({ ok: false, error: 'Token no autorizado' });
+  }
+
+  if (!cleanId || !salidas || typeof salidas !== 'object') {
+    return res.status(400).json({ ok: false, error: 'Datos inválidos' });
+  }
+
+  try {
+    salidas.id = cleanId;
+    salidas.actualizado_en = new Date().toISOString();
+
+    if (db) {
+      try {
+        const docRef = db.collection('salidas').doc(cleanId);
+        await docRef.set(salidas, { merge: true });
+      } catch (firestoreError) {
+        console.warn(`Error al escribir salidas/${cleanId} en Firestore:`, firestoreError.message);
+      }
+    }
+
+    if (!localData.salidas) localData.salidas = {};
+    localData.salidas[cleanId] = salidas;
+
+    res.json({ ok: true, mesId: cleanId, message: 'Salidas al servicio guardadas correctamente' });
+  } catch (error) {
+    console.error(`Error al guardar salidas/${cleanId}:`, error);
+    res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
+// ============================================================
+// CATÁLOGO DE LUGARES DE SALIDA FRECUENTES
+// ============================================================
+
+const DEFAULT_LUGARES = [
+  { id: 'lug_1', nombre: 'Mileydis Rodriguez (San Francisco) Calle 1F # 16-68' },
+  { id: 'lug_2', nombre: 'Familia Quiñonez (San Carlos) Calle 1D 16-39' },
+  { id: 'lug_3', nombre: 'Familia Prada (San Carlos) Carrera 17A # 1N-54' },
+  { id: 'lug_4', nombre: 'Predicación por carta / llamadas telefónicas' },
+  { id: 'lug_5', nombre: 'Vereda Limonal Casa los Pinos' },
+  { id: 'lug_6', nombre: 'Patricia Avila (San Francisco) Carrera 18 # 1E-16' },
+  { id: 'lug_7', nombre: 'Familia Prieto (San Francisco) Cll. 1E # 15-23' },
+  { id: 'lug_8', nombre: 'Salón del Reino (Punto de salida)' }
+];
+
+// Obtener lista de lugares frecuentes
+app.get('/api/lugares-salidas', async (req, res) => {
+  try {
+    if (db) {
+      try {
+        const docRef = db.collection('configuracion').doc('lugares_salidas');
+        const snap = await docRef.get();
+        if (snap.exists && Array.isArray(snap.data()?.lugares)) {
+          return res.json({ ok: true, source: 'firestore', lugares: snap.data().lugares });
+        }
+      } catch (fErr) {
+        console.warn('Error al leer lugares de Firestore:', fErr.message);
+      }
+    }
+
+    if (Array.isArray(localData.lugares_salidas)) {
+      return res.json({ ok: true, source: 'local', lugares: localData.lugares_salidas });
+    }
+
+    res.json({ ok: true, source: 'default', lugares: DEFAULT_LUGARES });
+  } catch (error) {
+    console.error('Error al obtener lugares:', error);
+    res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
+// Guardar lista completa de lugares frecuentes
+app.put('/api/lugares-salidas', async (req, res) => {
+  const { lugares, token } = req.body || {};
+
+  if (token && String(token).trim().toLowerCase() !== ADMIN_PIN_HASH.trim().toLowerCase()) {
+    return res.status(401).json({ ok: false, error: 'Token no autorizado' });
+  }
+
+  if (!Array.isArray(lugares)) {
+    return res.status(400).json({ ok: false, error: 'Formato de lugares inválido' });
+  }
+
+  try {
+    if (db) {
+      try {
+        const docRef = db.collection('configuracion').doc('lugares_salidas');
+        await docRef.set({ lugares, actualizado_en: new Date().toISOString() }, { merge: true });
+      } catch (fErr) {
+        console.warn('Error al guardar lugares en Firestore:', fErr.message);
+      }
+    }
+
+    localData.lugares_salidas = lugares;
+    res.json({ ok: true, count: lugares.length, message: 'Lugares guardados correctamente' });
+  } catch (error) {
+    console.error('Error al guardar lugares:', error);
+    res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
+// Helper para generar estructura por defecto si no existe
+function getDefaultSalidasForMonth(mesId) {
+  const [yearStr, monthStr] = (mesId || '2026-09').split('-');
+  const monthNames = [
+    'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+    'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+  ];
+  const mIndex = parseInt(monthStr, 10) - 1;
+  const mesNombre = (mIndex >= 0 && mIndex < 12) ? monthNames[mIndex] : 'Mes';
+  const anio = parseInt(yearStr, 10) || 2026;
+
+  // Si es Septiembre 2026, proveer los datos reales iniciales
+  if (mesId === '2026-09') {
+    return {
+      id: '2026-09',
+      mes: 'Septiembre',
+      anio: 2026,
+      titulo: 'HORARIOS DE PREDICACIÓN SEPTIEMBRE 2026',
+      lunes_especial: {
+        activo: false,
+        fecha: 'Lunes 14 de Septiembre',
+        hora: '8:45 a.m.',
+        lugar: 'Salón del Reino (Punto de salida)',
+        capitan: '',
+        destino: 'Territorio Vereda Limonal (Sector Alto)'
+      },
+      entre_semana: [
+        { id: 'es_mar', dia: 'Martes', hora: '8:45 a.m.', lugar: 'Mileydis Rodriguez (San Francisco) Calle 1F # 16-68', capitan: 'Eduardo Parra' },
+        { id: 'es_mie', dia: 'Miércoles', hora: '8:45 a.m.', lugar: 'Familia Quiñonez (San Carlos) Calle 1D 16-39', capitan: 'Sergio Rojas' },
+        { id: 'es_jue_am', dia: 'Jueves (Mañana)', hora: '8:45 a.m.', lugar: 'Familia Prada (San Carlos) Carrera 17A # 1N-54', capitan: 'Anderson Gómez' },
+        { id: 'es_jue_pm', dia: 'Jueves (Tarde)', hora: '6:00 p.m.', lugar: 'Predicación por carta / llamadas telefónicas', nota: 'ZOOM', capitan: 'Eduardo Parra' },
+        { id: 'es_vie_am', dia: 'Viernes (Mañana)', hora: '8:45 a.m.', lugar: 'Vereda Limonal Casa los Pinos', capitan: 'Wilmer Reyes' },
+        { id: 'es_vie_pm', dia: 'Viernes (Tarde)', hora: '6:00 p.m.', lugar: 'Patricia Avila (San Francisco) Carrera 18 # 1E-16', capitan: 'Eliu Rodriguez' }
+      ],
+      sabados: [
+        { id: 'sab_1', fecha: '5 de Septiembre', hora: '8:30 a.m.', lugar: 'Familia Prieto (San Francisco) Cll. 1E # 15-23', nota: 'PREDICACION POR CARTA', capitan: 'Johan Duarte' },
+        { id: 'sab_2', fecha: '12 de Septiembre', hora: '8:30 a.m.', lugar: 'Familia Prieto (San Francisco) Cll. 1E # 15-23', nota: 'PREDICACION PUBLICA', capitan: 'Edgar Sandoval' },
+        { id: 'sab_3', fecha: '19 de Septiembre', hora: '8:30 a.m.', lugar: 'Familia Prieto (San Francisco) Cll. 1E # 15-23', nota: 'TABLANCA', capitan: 'Eliu Rodriguez' },
+        { id: 'sab_4', fecha: '26 de Septiembre', hora: '8:30 a.m.', lugar: 'Familia Prieto (San Francisco) Cll. 1E # 15-23', nota: 'PREDICACION PUBLICA', capitan: 'Johan Duarte' }
+      ],
+      domingos: [
+        {
+          id: 'dom_1',
+          fecha: '6 de Septiembre',
+          tipo: 'grupos',
+          hora: '9:00 a.m.',
+          salidas: [
+            { grupo: 'Grupos 1, 2, 3, 4, 10', lugar: 'Familia Prada (San Carlos) Carrera 17A # 1N-54', capitan: 'Eduardo Parra' },
+            { grupo: 'Grupos 5, 6, 7, 8, 9', lugar: 'Mileydis Rodriguez (San Francisco) Calle 1F # 16-68', capitan: 'Sergio Rojas' }
+          ]
+        },
+        {
+          id: 'dom_2',
+          fecha: '13 de Septiembre',
+          tipo: 'grupos',
+          hora: '9:00 a.m.',
+          salidas: [
+            { grupo: 'Grupos 1, 2, 3, 4, 10', lugar: 'Familia Prada (San Carlos) Carrera 17A # 1N-54', capitan: 'Sergio Cespedes' },
+            { grupo: 'Grupos 5, 6, 7, 8, 9', lugar: 'Mileydis Rodriguez (San Francisco) Calle 1F # 16-68', capitan: 'Nicolas Medina' }
+          ]
+        },
+        {
+          id: 'dom_3',
+          fecha: '20 de Septiembre',
+          tipo: 'general',
+          hora: '9:00 a.m.',
+          lugar: 'Familia Prada (San Carlos) Carrera 17A # 1N-54',
+          capitan: 'Eliu Rodriguez'
+        },
+        {
+          id: 'dom_4',
+          fecha: '27 de Septiembre',
+          tipo: 'grupos',
+          hora: '9:00 a.m.',
+          salidas: [
+            { grupo: 'Grupos 1, 2, 3, 4, 10', lugar: 'Familia Prada (San Carlos) Carrera 17A # 1N-54', capitan: 'Anderson Gomez' },
+            { grupo: 'Grupos 5, 6, 7, 8, 9', lugar: 'Mileydis Rodriguez (San Francisco) Calle 1F # 16-68', capitan: "Carlos D'Luyz" }
+          ]
+        }
+      ]
+    };
+  }
+
+  // Plantilla limpia para otros meses calculada con el calendario real
+  const mNum = parseInt(monthStr, 10) || 1;
+  const totalDays = new Date(anio, mNum, 0).getDate();
+  const sabados = [];
+  const domingos = [];
+  const sabNotas = ['PREDICACION POR CARTA', 'PREDICACION PUBLICA', 'TABLANCA', 'PREDICACION PUBLICA', 'PREDICACION POR CARTA'];
+  let sabCount = 0;
+  let domCount = 0;
+
+  for (let d = 1; d <= totalDays; d++) {
+    const dt = new Date(anio, mIndex, d);
+    const dow = dt.getDay(); // 0 = Domingo, 6 = Sábado
+    if (dow === 6) {
+      sabCount++;
+      sabados.push({
+        id: `sab_${sabCount}_${d}`,
+        fecha: `${d} de ${mesNombre}`,
+        hora: '8:30 a.m.',
+        lugar: '',
+        nota: sabNotas[(sabCount - 1) % sabNotas.length],
+        capitan: ''
+      });
+    } else if (dow === 0) {
+      domCount++;
+      const isGeneral = domCount === 3;
+      if (isGeneral) {
+        domingos.push({
+          id: `dom_${domCount}_${d}`,
+          fecha: `${d} de ${mesNombre}`,
+          tipo: 'general',
+          hora: '9:00 a.m.',
+          lugar: '',
+          capitan: ''
+        });
+      } else {
+        domingos.push({
+          id: `dom_${domCount}_${d}`,
+          fecha: `${d} de ${mesNombre}`,
+          tipo: 'grupos',
+          hora: '9:00 a.m.',
+          salidas: [
+            { grupo: 'Grupos 1, 2, 3, 4, 10', lugar: '', capitan: '' },
+            { grupo: 'Grupos 5, 6, 7, 8, 9', lugar: '', capitan: '' }
+          ]
+        });
+      }
+    }
+  }
+
+  return {
+    id: mesId,
+    mes: mesNombre,
+    anio: anio,
+    titulo: `HORARIOS DE PREDICACIÓN ${mesNombre.toUpperCase()} ${anio}`,
+    lunes_especial: {
+      activo: false,
+      fecha: '',
+      hora: '8:45 a.m.',
+      lugar: '',
+      capitan: '',
+      destino: ''
+    },
+    entre_semana: [
+      { id: 'es_mar', dia: 'Martes', hora: '8:45 a.m.', lugar: '', capitan: '' },
+      { id: 'es_mie', dia: 'Miércoles', hora: '8:45 a.m.', lugar: '', capitan: '' },
+      { id: 'es_jue_am', dia: 'Jueves (Mañana)', hora: '8:45 a.m.', lugar: '', capitan: '' },
+      { id: 'es_jue_pm', dia: 'Jueves (Tarde)', hora: '6:00 p.m.', lugar: 'Predicación por carta / llamadas', nota: 'ZOOM', capitan: '' },
+      { id: 'es_vie_am', dia: 'Viernes (Mañana)', hora: '8:45 a.m.', lugar: '', capitan: '' },
+      { id: 'es_vie_pm', dia: 'Viernes (Tarde)', hora: '6:00 p.m.', lugar: '', capitan: '' }
+    ],
+    sabados,
+    domingos
+  };
+}
+
+// ============================================================
 // FALLBACK SPA
 // ============================================================
 app.get('*', (req, res) => {

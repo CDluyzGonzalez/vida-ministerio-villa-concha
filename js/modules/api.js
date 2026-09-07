@@ -259,3 +259,127 @@ async function apiVerifyPin(pinHash) {
   // Fallback local: comparar hash con DEFAULT_PIN_HASH
   return pinHash.toLowerCase() === DEFAULT_PIN_HASH.toLowerCase();
 }
+
+// 6. Cargar Salidas al Servicio de un Mes
+async function apiLoadSalidas(mesId) {
+  try {
+    const res = await fetch(`/api/salidas/${encodeURIComponent(mesId)}`);
+    if (res.ok) {
+      const data = await res.json();
+      if (data.ok && data.salidas) {
+        setApiStatus(true);
+        await appStorageSet(`wm-salidas-${mesId}`, JSON.stringify(data.salidas));
+        return data.salidas;
+      }
+    }
+  } catch (error) {
+    console.warn(`API /api/salidas/${mesId} no disponible, usando caché local:`, error.message);
+  }
+
+  // Fallback a almacenamiento local o plantilla básica
+  setApiStatus(false);
+  const stored = await appStorageGet(`wm-salidas-${mesId}`);
+  if (stored?.value) {
+    try {
+      const parsed = JSON.parse(stored.value);
+      if (parsed) return parsed;
+    } catch (_) {}
+  }
+
+  return null;
+}
+
+// 7. Guardar Salidas al Servicio de un Mes
+async function apiSaveSalidas(mesId, salidasData, token) {
+  // 1. Guardar de inmediato en almacenamiento local (optimista)
+  try {
+    await appStorageSet(`wm-salidas-${mesId}`, JSON.stringify(salidasData));
+  } catch (storageError) {
+    console.warn('Error al guardar salidas localmente:', storageError);
+  }
+
+  // 2. Persistir en la nube vía REST API (Firestore)
+  try {
+    const res = await fetch(`/api/salidas/${encodeURIComponent(mesId)}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ salidas: salidasData, token })
+    });
+
+    const data = await res.json().catch(() => ({}));
+
+    if (res.ok && data.ok) {
+      setApiStatus(true);
+      showToast('☁ Salidas al servicio guardadas en la nube', 'success');
+      return true;
+    } else {
+      console.warn('Error al guardar salidas en la nube:', res.status, data);
+      showToast('⚠️ Guardado localmente (sin conexión nube)', 'warning');
+      return false;
+    }
+  } catch (error) {
+    console.warn(`No se pudo guardar salidas/${mesId} en la nube:`, error.message);
+    showToast('⚠️ Guardado localmente (sin conexión)', 'warning');
+    return false;
+  }
+}
+
+// 8. Cargar Catálogo de Lugares Frecuentes
+async function apiLoadLugares() {
+  try {
+    const res = await fetch('/api/lugares-salidas');
+    if (res.ok) {
+      const data = await res.json();
+      if (data.ok && Array.isArray(data.lugares)) {
+        await appStorageSet('wm-lugares-salidas', JSON.stringify(data.lugares));
+        return data.lugares;
+      }
+    }
+  } catch (error) {
+    console.warn('API /api/lugares-salidas no disponible, usando caché:', error.message);
+  }
+
+  const stored = await appStorageGet('wm-lugares-salidas');
+  if (stored?.value) {
+    try {
+      const parsed = JSON.parse(stored.value);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    } catch (_) {}
+  }
+
+  return [
+    { id: 'lug_1', nombre: 'Mileydis Rodriguez (San Francisco) Calle 1F # 16-68' },
+    { id: 'lug_2', nombre: 'Familia Quiñonez (San Carlos) Calle 1D 16-39' },
+    { id: 'lug_3', nombre: 'Familia Prada (San Carlos) Carrera 17A # 1N-54' },
+    { id: 'lug_4', nombre: 'Predicación por carta / llamadas telefónicas' },
+    { id: 'lug_5', nombre: 'Vereda Limonal Casa los Pinos' },
+    { id: 'lug_6', nombre: 'Patricia Avila (San Francisco) Carrera 18 # 1E-16' },
+    { id: 'lug_7', nombre: 'Familia Prieto (San Francisco) Cll. 1E # 15-23' },
+    { id: 'lug_8', nombre: 'Salón del Reino (Punto de salida)' }
+  ];
+}
+
+// 9. Guardar Catálogo de Lugares Frecuentes
+async function apiSaveLugares(lugares, token) {
+  try {
+    await appStorageSet('wm-lugares-salidas', JSON.stringify(lugares));
+  } catch (err) {
+    console.warn('Error al guardar lugares localmente:', err);
+  }
+
+  try {
+    const res = await fetch('/api/lugares-salidas', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ lugares, token })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (res.ok && data.ok) {
+      showToast('☁ Lugares guardados en la nube', 'success');
+      return true;
+    }
+  } catch (error) {
+    console.warn('No se pudo guardar lugares en la nube:', error.message);
+  }
+  return false;
+}

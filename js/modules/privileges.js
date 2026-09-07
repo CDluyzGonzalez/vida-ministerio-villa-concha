@@ -4,7 +4,7 @@
 // Catálogo de Privilegios, Reglas de Asignación y Detección Automática
 // ============================================================
 
-// Catálogo de los 10 privilegios exclusivos de Vida y Ministerio
+// Catálogo de los privilegios de Vida y Ministerio y Servicio
 const PRIVILEGES_CATALOG = [
   { id: 'lectura_biblia', label: 'Lectura de la Biblia (4 mins.)', section: 'TESOROS' },
   { id: 'que_diria', label: '¿Qué diría?', section: 'MAESTROS' },
@@ -15,7 +15,8 @@ const PRIVILEGES_CATALOG = [
   { id: 'estudio_conductor', label: 'Estudio bíblico (Conductor)', section: 'NVC' },
   { id: 'estudio_lector', label: 'Estudio bíblico (Lector)', section: 'NVC' },
   { id: 'intro_conclusion', label: 'Palabras de introducción / conclusión', section: 'INTRO/CLOSE' },
-  { id: 'oraciones', label: 'Oraciones', section: 'OPEN/CLOSE' }
+  { id: 'oraciones', label: 'Oraciones', section: 'OPEN/CLOSE' },
+  { id: 'capitan', label: 'Capitán (Salidas al servicio)', section: 'PREDICACION' }
 ];
 
 const CAT_LABELS = {
@@ -29,6 +30,7 @@ const CAT_LABELS = {
   estudio_lector: 'Estudio bíblico (Lector)',
   intro_conclusion: 'Palabras de introducción / conclusión',
   oraciones: 'Oraciones (apertura y cierre)',
+  capitan: 'Capitán (Salidas al servicio)',
   libre: 'Sin restricción'
 };
 
@@ -112,8 +114,9 @@ function hasPrivilege(person, privilegeId) {
   if (privilegeId === 'estudio_lector') return !!person.elig_lector_estudio;
   if (privilegeId === 'intro_conclusion') return !!person.elig_intro_conclusion;
   if (privilegeId === 'oraciones') return !!person.elig_oraciones;
+  if (privilegeId === 'capitan') return !!(person.elig_capitan || person.capitan);
 
-  return true;
+  return false;
 }
 
 // Filtrar publicadores elegibles para una categoría

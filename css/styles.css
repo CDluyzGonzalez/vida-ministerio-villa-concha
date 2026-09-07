@@ -1039,4 +1039,548 @@ body{
   .dash-metrics-grid {
     grid-template-columns: repeat(2, 1fr);
   }
+}
+
+/* ============================================================
+   ESTILOS DE SALIDAS AL SERVICIO (PREDICACIÓN)
+   ============================================================ */
+
+.service-schedule-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 1060px;
+  margin: 0 auto;
+}
+
+.service-loading-box {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--muted);
+}
+
+.service-header-bar {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 16px 20px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.service-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.service-title-row h2 {
+  font-family: 'Fraunces', serif;
+  font-size: 19px;
+  color: var(--teal-deep);
+  margin: 0;
+  letter-spacing: -0.2px;
+}
+
+.service-subtitle {
+  font-size: 12px;
+  color: var(--muted);
+  margin: 4px 0 0;
+}
+
+.service-badge {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.service-badge-live {
+  background: #e6f4ea;
+  color: #137333;
+  border: 1px solid #ceead6;
+}
+
+.service-badge-draft {
+  background: #fef7e0;
+  color: #b06000;
+  border: 1px solid #feefc3;
+}
+
+.service-month-switcher {
+  display: flex;
+  gap: 6px;
+  background: var(--paper-2);
+  padding: 4px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+}
+
+.service-switcher-btn {
+  appearance: none;
+  border: none;
+  background: transparent;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  border-radius: 7px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.service-switcher-btn.active {
+  background: var(--teal-deep);
+  color: #fff;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.service-prep-control-box {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--paper-2);
+  padding: 4px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  flex-wrap: wrap;
+}
+
+.service-prep-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.service-prep-select {
+  appearance: auto;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  background: #ffffff;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.service-prep-select:focus {
+  outline: none;
+  border-color: var(--teal-deep);
+}
+
+/* Tarjetas de Contenedor de Salidas */
+.service-card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+}
+
+.service-card-head {
+  background: #7a1d2e;
+  color: #ffffff;
+  padding: 10px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Botón Destacado de Agregar Salida (Alto Contraste y Fácil de Ver) */
+.service-add-btn-featured {
+  appearance: none;
+  border: 1.5px solid #ffffff;
+  background: #ffffff;
+  color: #7a1d2e;
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 6px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+  transition: all 0.2s ease;
+}
+
+.service-add-btn-featured:hover {
+  background: #fdf2f4;
+  color: #601422;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35);
+}
+
+.service-add-btn-featured:active {
+  transform: translateY(0);
+}
+
+.service-card-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.service-card-title h3 {
+  margin: 0;
+  font-size: 13.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #ffffff;
+}
+
+.service-head-note {
+  font-size: 11px;
+  color: #fce8ec;
+  font-family: 'IBM Plex Mono', monospace;
+}
+
+/* Lunes Especial */
+.service-lunes-card {
+  border: 2px dashed #e0a352;
+  background: #fdfaf4;
+}
+
+.service-lunes-head {
+  background: #92400e;
+  color: #ffffff;
+  padding: 10px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.service-lunes-head h3 {
+  color: #ffffff;
+}
+
+.service-lunes-thead {
+  background: #faedd9 !important;
+  color: #6b3506 !important;
+}
+
+.service-add-lunes-banner {
+  background: var(--card);
+  border: 2px dashed var(--line);
+  border-radius: 12px;
+  padding: 16px 20px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.service-add-lunes-banner p {
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* Tabla de Salidas */
+.service-desktop-table-wrap {
+  overflow-x: auto;
+}
+
+.service-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 13px;
+}
+
+.service-table thead tr {
+  background: var(--paper-2);
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  border-bottom: 1px solid var(--line);
+}
+
+.service-table th {
+  padding: 11px 16px;
+}
+
+.service-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: middle;
+  color: var(--ink);
+}
+
+.service-table tbody tr:hover {
+  background: rgba(179, 142, 70, 0.04);
+}
+
+.service-time-cell {
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 700;
+  color: var(--gold-deep);
+  white-space: nowrap;
+}
+
+.service-date-cell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.service-place-cell {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  line-height: 1.4;
+}
+
+.service-pin {
+  color: #d9383a;
+  font-size: 14px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.service-captain-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  padding: 4px 10px;
+  border-radius: 20px;
+  max-width: 100%;
+}
+
+.service-avatar {
+  font-size: 13px;
+}
+
+.service-captain-name {
+  color: var(--teal-deep);
+  font-size: 12.5px;
+}
+
+.service-edit-cap-btn {
+  appearance: none;
+  border: 1px solid #f2dfa9;
+  background: #fff8e6;
+  color: #92400e;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 6px;
+  cursor: pointer;
+  margin-left: 4px;
+}
+
+.service-edit-cap-btn:hover {
+  background: #fde68a;
+}
+
+.service-action-btn {
+  appearance: none;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--muted);
+  padding: 4px;
+  border-radius: 4px;
+}
+
+.service-action-btn:hover {
+  color: var(--teal-deep);
+  background: var(--paper-2);
+}
+
+.service-action-btn.service-delete-btn:hover {
+  color: #dc2626 !important;
+  background: #fee2e2 !important;
+}
+
+.service-tag {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  font-family: 'IBM Plex Mono', monospace;
+  padding: 1px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+
+.service-tag-zoom {
+  background: #e8f0fe;
+  color: #1967d2;
+  border: 1px solid #d2e3fc;
+}
+
+.service-badge-tag {
+  display: inline-block;
+  margin-top: 3px;
+  font-size: 10.5px;
+  font-weight: 700;
+  font-family: 'IBM Plex Mono', monospace;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: #fdf3e7;
+  color: #92400e;
+  border: 1px solid #f9dfbe;
+}
+
+.service-territorio-tag {
+  display: inline-block;
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 6px;
+  background: #e6f4ea;
+  color: #137333;
+  border: 1px solid #ceead6;
+}
+
+.service-group-pill {
+  display: inline-block;
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 8px;
+  background: #fff8e6;
+  color: #7a5c10;
+  border: 1px solid #f5e4b2;
+}
+
+.service-general-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 8px;
+  background: var(--paper-2);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  letter-spacing: 0.04em;
+}
+
+.service-domingo-fecha-cell {
+  background: var(--paper);
+  border-right: 1px solid var(--line);
+  vertical-align: top;
+}
+
+.service-time-sub {
+  font-size: 11px;
+  color: var(--muted);
+  font-family: 'IBM Plex Mono', monospace;
+  margin-top: 2px;
+  margin-left: 20px;
+}
+
+.service-row-group-end td {
+  border-bottom: 2px solid var(--line) !important;
+}
+
+/* Modal Selector de Capitán */
+.captain-candidate-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  border: 1px solid transparent;
+}
+
+.captain-candidate-item:hover {
+  background: #fff8e6;
+  border-color: #f2dfa9;
+}
+
+/* Vista Móvil (< 768px) */
+.service-mobile-cards {
+  display: none;
+  padding: 12px;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.service-m-card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 12px 14px;
+}
+
+.service-m-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 6px;
+}
+
+.service-m-captain-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  padding: 6px 10px;
+  border-radius: 8px;
+  margin-top: 8px;
+}
+
+.service-m-subgroup-box {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px;
+  margin-top: 8px;
+}
+
+.service-territorio-box {
+  font-size: 11.5px;
+  color: #137333;
+  background: #e6f4ea;
+  border: 1px solid #ceead6;
+  padding: 5px 10px;
+  border-radius: 6px;
+  margin: 6px 0;
+}
+
+@media (max-width: 768px) {
+  .service-desktop-table-wrap {
+    display: none;
+  }
+  .service-mobile-cards {
+    display: flex;
+  }
+  .service-header-bar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .service-month-switcher {
+    width: 100%;
+    justify-content: stretch;
+  }
+  .service-switcher-btn {
+    flex: 1;
+    text-align: center;
+  }
 }
