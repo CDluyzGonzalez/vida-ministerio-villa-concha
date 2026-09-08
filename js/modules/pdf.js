@@ -276,21 +276,29 @@ async function exportSalidasPdf() {
             </tr>
           </thead>
           <tbody>
-            ${sabados.map((item, idx) => `
-              <tr style="border-bottom: 1px solid #e2e8f0; background: ${idx % 2 === 0 ? '#ffffff' : '#f8fafc'};">
-                <td style="padding: 5.5px 10px; font-weight: 700; color: #0f172a;">
-                  <span>📅</span> ${escapeHtml(item.fecha)}
-                </td>
-                <td style="padding: 5.5px 8px; color: #475569; font-weight: 600;">${escapeHtml(item.hora)}</td>
-                <td style="padding: 5.5px 10px; color: #1e293b;">
-                  <span style="color: #e11d48;">📍</span> ${escapeHtml(item.lugar)}
-                  ${item.nota ? `<span style="display: inline-block; background: #e0f2fe; color: #0369a1; padding: 1px 6px; border-radius: 4px; font-size: 9px; font-weight: 700; margin-left: 6px;">${escapeHtml(item.nota)}</span>` : ''}
-                </td>
-                <td style="padding: 5.5px 10px; font-weight: 600; color: #0f172a;">
-                  <span style="color: #0284c7;">👤</span> ${escapeHtml(item.capitan || 'Por asignar')}
-                </td>
-              </tr>
-            `).join('')}
+            ${sabados.map((item, idx) => {
+              const puntos = Array.isArray(item.puntos) && item.puntos.length > 0
+                ? item.puntos
+                : [{ hora: item.hora, lugar: item.lugar, nota: item.nota, capitan: item.capitan }];
+
+              return puntos.map((p, pIdx) => `
+                <tr style="border-bottom: 1px solid #e2e8f0; background: ${idx % 2 === 0 ? '#ffffff' : '#f8fafc'};">
+                  ${pIdx === 0 ? `
+                    <td rowspan="${puntos.length}" style="padding: 5.5px 10px; font-weight: 700; color: #0f172a; vertical-align: middle; border-right: 1px solid #e2e8f0;">
+                      <span>📅</span> ${escapeHtml(item.fecha)}
+                    </td>
+                  ` : ''}
+                  <td style="padding: 5.5px 8px; color: #475569; font-weight: 600;">${escapeHtml(p.hora)}</td>
+                  <td style="padding: 5.5px 10px; color: #1e293b;">
+                    <span style="color: #e11d48;">📍</span> ${escapeHtml(p.lugar)}
+                    ${p.nota ? `<span style="display: inline-block; background: #e0f2fe; color: #0369a1; padding: 1px 6px; border-radius: 4px; font-size: 9px; font-weight: 700; margin-left: 6px;">${escapeHtml(p.nota)}</span>` : ''}
+                  </td>
+                  <td style="padding: 5.5px 10px; font-weight: 600; color: #0f172a;">
+                    <span style="color: #0284c7;">👤</span> ${escapeHtml(p.capitan || 'Por asignar')}
+                  </td>
+                </tr>
+              `).join('');
+            }).join('')}
           </tbody>
         </table>
       </div>

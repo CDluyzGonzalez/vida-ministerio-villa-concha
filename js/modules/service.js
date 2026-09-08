@@ -93,6 +93,23 @@ function hasDummyDates(salidas) {
   return sabDummy || domDummy;
 }
 
+// Obtener lista normalizada de puntos de salida de un sábado
+function getSabadoPuntos(item) {
+  if (!item) return [];
+  if (Array.isArray(item.puntos) && item.puntos.length > 0) {
+    return item.puntos;
+  }
+  return [
+    {
+      id: item.id || `p_${Date.now()}`,
+      hora: item.hora || '8:30 a.m.',
+      lugar: item.lugar || '',
+      nota: item.nota || 'PREDICACION PUBLICA',
+      capitan: item.capitan || ''
+    }
+  ];
+}
+
 // Ajustar automáticamente las fechas de sábados y domingos al calendario real
 function adjustSalidasDatesToCalendar(salidas, monthKey) {
   if (!salidas) return salidas;
@@ -113,14 +130,22 @@ function adjustSalidasDatesToCalendar(salidas, monthKey) {
   const newSabados = [];
   cal.sabados.forEach((cSab, i) => {
     const existing = salidas.sabados[i] || {};
-    newSabados.push({
-      id: existing.id || `sab_${i + 1}_${cSab.dayNum}`,
-      fecha: cSab.fecha, // ej: "3 de Octubre"
-      hora: existing.hora || '8:30 a.m.',
-      lugar: existing.lugar || '',
-      nota: existing.nota || cSab.nota,
-      capitan: existing.capitan || ''
-    });
+    if (Array.isArray(existing.puntos) && existing.puntos.length > 0) {
+      newSabados.push({
+        id: existing.id || `sab_${i + 1}_${cSab.dayNum}`,
+        fecha: cSab.fecha,
+        puntos: existing.puntos
+      });
+    } else {
+      newSabados.push({
+        id: existing.id || `sab_${i + 1}_${cSab.dayNum}`,
+        fecha: cSab.fecha, // ej: "3 de Octubre"
+        hora: existing.hora || '8:30 a.m.',
+        lugar: existing.lugar || '',
+        nota: existing.nota || cSab.nota,
+        capitan: existing.capitan || ''
+      });
+    }
   });
   salidas.sabados = newSabados;
 
@@ -683,79 +708,106 @@ function renderServiceTab() {
                 </tr>
               </thead>
               <tbody>
-                ${sabados.map((item, idx) => `
-                  <tr>
-                    <td>
-                      <div class="service-date-cell">
-                        <span>📅</span>
-                        <strong>${escapeHtml(item.fecha)}</strong>
-                      </div>
-                    </td>
-                    <td class="service-time-cell">${escapeHtml(item.hora)}</td>
-                    <td>
-                      <div class="service-place-cell">
-                        <span class="service-pin">📍</span>
-                        <div>
-                          <div style="font-weight: 500;">${escapeHtml(item.lugar || 'Por asignar')}</div>
-                          ${item.nota ? `
-                            <span class="service-badge-tag">${escapeHtml(item.nota)}</span>
+                ${sabados.map((item, idx) => {
+                  const puntos = getSabadoPuntos(item);
+                  return puntos.map((p, pIdx) => `
+                    <tr class="${pIdx === puntos.length - 1 ? 'service-row-group-end' : ''}">
+                      ${pIdx === 0 ? `
+                        <td rowspan="${puntos.length}" class="service-domingo-fecha-cell">
+                          <div class="service-date-cell">
+                            <span>📅</span>
+                            <strong>${escapeHtml(item.fecha)}</strong>
+                          </div>
+                          ${isAdmin ? `
+                            <div style="margin-top: 6px; padding-left: 4px;">
+                              <button class="service-add-subsalida-btn" onclick="openAddPuntoSabadoModal(${idx})" title="Agregar otro punto de salida a este sábado (ej. Carritos, Territorio Especial)">
+                                <span style="font-weight:bold; font-size:12px;">+</span> Punto
+                              </button>
+                            </div>
+                          ` : ''}
+                        </td>
+                      ` : ''}
+                      <td class="service-time-cell">${escapeHtml(p.hora)}</td>
+                      <td>
+                        <div class="service-place-cell">
+                          <span class="service-pin">📍</span>
+                          <div>
+                            <div style="font-weight: 500;">${escapeHtml(p.lugar || 'Por asignar')}</div>
+                            ${p.nota ? `
+                              <span class="service-badge-tag">${escapeHtml(p.nota)}</span>
+                            ` : ''}
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        <div class="service-captain-cell">
+                          <span class="service-avatar">👤</span>
+                          <strong class="service-captain-name">${escapeHtml(p.capitan || 'Por asignar')}</strong>
+                          ${isAdmin ? `
+                            <button class="service-edit-cap-btn" onclick="openAssignCaptainModal('sabados', '${item.id || idx}', ${pIdx})" title="Asignar Capitán">✎</button>
                           ` : ''}
                         </div>
-                      </div>
-                    </td>
-                    <td>
-                      <div class="service-captain-cell">
-                        <span class="service-avatar">👤</span>
-                        <strong class="service-captain-name">${escapeHtml(item.capitan || 'Por asignar')}</strong>
-                        ${isAdmin ? `
-                          <button class="service-edit-cap-btn" onclick="openAssignCaptainModal('sabados', '${item.id || idx}', 0)" title="Asignar Capitán">✎</button>
-                        ` : ''}
-                      </div>
-                    </td>
-                    ${isAdmin ? `
-                      <td style="text-align: center; white-space: nowrap;">
-                        <button class="service-action-btn" onclick="openEditRegularModal('sabados', '${item.id || idx}')" title="Editar lugar, hora o tipo">✏️</button>
-                        <button class="service-action-btn service-delete-btn" onclick="eliminarSalidaSabado('${item.id || idx}')" title="Eliminar este sábado (ej. por Asamblea)">🗑️</button>
                       </td>
-                    ` : ''}
-                  </tr>
-                `).join('')}
+                      ${isAdmin ? `
+                        <td style="text-align: center; white-space: nowrap;">
+                          <button class="service-action-btn" onclick="openEditPuntoSabadoModal(${idx}, ${pIdx})" title="Editar hora, lugar o tipo de este punto">✏️</button>
+                          <button class="service-action-btn service-delete-btn" onclick="eliminarPuntoSabado(${idx}, ${pIdx})" title="Eliminar este punto de salida">🗑️</button>
+                        </td>
+                      ` : ''}
+                    </tr>
+                  `).join('');
+                }).join('')}
               </tbody>
             </table>
           </div>
 
           <!-- Tarjetas Móvil -->
           <div class="service-mobile-cards">
-            ${sabados.map((item, idx) => `
-              <div class="service-m-card">
-                <div class="service-m-head">
-                  <span class="service-date-cell">
-                    <span>📅</span>
-                    <strong>${escapeHtml(item.fecha)}</strong>
-                  </span>
-                  <span class="service-time-cell">${escapeHtml(item.hora)}</span>
-                </div>
-                <div class="service-place-cell" style="margin: 6px 0;">
-                  <span class="service-pin">📍</span>
-                  <div>
-                    <div style="font-weight: 500;">${escapeHtml(item.lugar || 'Por asignar')}</div>
-                    ${item.nota ? `<span class="service-badge-tag">${escapeHtml(item.nota)}</span>` : ''}
+            ${sabados.map((item, idx) => {
+              const puntos = getSabadoPuntos(item);
+              return `
+                <div class="service-m-card">
+                  <div class="service-m-head">
+                    <span class="service-date-cell">
+                      <span>📅</span>
+                      <strong>${escapeHtml(item.fecha)}</strong>
+                    </span>
+                    ${puntos.length > 1 ? `<span class="service-head-note" style="color:#0f766e; font-weight:700;">${puntos.length} Salidas</span>` : ''}
                   </div>
+                  
+                  ${puntos.map((p, pIdx) => `
+                    <div class="service-m-subgroup-box" style="margin-top: ${pIdx === 0 ? '6px' : '10px'};">
+                      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                        <span class="service-time-cell" style="font-weight: 700; color: #0f766e;">⏰ ${escapeHtml(p.hora)}</span>
+                        ${p.nota ? `<span class="service-badge-tag">${escapeHtml(p.nota)}</span>` : ''}
+                      </div>
+                      <div class="service-place-cell" style="margin: 6px 0;">
+                        <span class="service-pin">📍</span>
+                        <div style="font-weight: 500;">${escapeHtml(p.lugar || 'Por asignar')}</div>
+                      </div>
+                      <div class="service-m-captain-row">
+                        <span style="color: var(--muted); font-size: 11px;">Capitán:</span>
+                        <div class="service-captain-cell">
+                          <span class="service-avatar">👤</span>
+                          <strong class="service-captain-name">${escapeHtml(p.capitan || 'Por asignar')}</strong>
+                          ${isAdmin ? `
+                            <button class="service-edit-cap-btn" onclick="openAssignCaptainModal('sabados', '${item.id || idx}', ${pIdx})">✎</button>
+                            <button class="service-action-btn" onclick="openEditPuntoSabadoModal(${idx}, ${pIdx})">✏️</button>
+                            <button class="service-action-btn service-delete-btn" onclick="eliminarPuntoSabado(${idx}, ${pIdx})" title="Eliminar punto de salida">🗑️</button>
+                          ` : ''}
+                        </div>
+                      </div>
+                    </div>
+                  `).join('')}
+
+                  ${isAdmin ? `
+                    <button class="service-add-subsalida-btn-m" onclick="openAddPuntoSabadoModal(${idx})" title="Agregar otro punto de salida a este sábado">
+                      <span style="font-weight:bold; font-size:14px;">+</span> Agregar Punto de Salida
+                    </button>
+                  ` : ''}
                 </div>
-                <div class="service-m-captain-row">
-                  <span style="color: var(--muted); font-size: 11px;">Capitán:</span>
-                  <div class="service-captain-cell">
-                    <span class="service-avatar">👤</span>
-                    <strong class="service-captain-name">${escapeHtml(item.capitan || 'Por asignar')}</strong>
-                    ${isAdmin ? `
-                      <button class="service-edit-cap-btn" onclick="openAssignCaptainModal('sabados', '${item.id || idx}', 0)">✎</button>
-                      <button class="service-action-btn" onclick="openEditRegularModal('sabados', '${item.id || idx}')">✏️</button>
-                      <button class="service-action-btn service-delete-btn" onclick="eliminarSalidaSabado('${item.id || idx}')" title="Eliminar sábado">🗑️</button>
-                    ` : ''}
-                  </div>
-                </div>
-              </div>
-            `).join('')}
+              `;
+            }).join('')}
           </div>
         </div>
 
@@ -828,6 +880,13 @@ function renderServiceTab() {
                               <strong>${escapeHtml(dom.fecha)}</strong>
                             </div>
                             <div class="service-time-sub">${escapeHtml(dom.hora || '9:00 a.m.')}</div>
+                            ${isAdmin ? `
+                              <div style="margin-top: 6px; padding-left: 4px;">
+                                <button class="service-add-subsalida-btn" onclick="openAddSubSalidaModal(${dIdx})" title="Agregar salida o grupo especial a este domingo (ej. Visita a grupo)">
+                                  <span style="font-weight:bold; font-size:12px;">+</span> Grupo
+                                </button>
+                              </div>
+                            ` : ''}
                           </td>
                         ` : ''}
                         <td class="service-group-name-cell">
@@ -925,27 +984,34 @@ function renderServiceTab() {
                         </div>
                       ` : ''}
                     </div>
-                  ` : isGrupos ? dom.salidas.map((sal, sIdx) => `
-                    <div class="service-m-subgroup-box">
-                      <div class="service-group-pill" style="margin-bottom: 4px;">${escapeHtml(sal.grupo)}</div>
-                      <div class="service-place-cell" style="margin-bottom: 6px;">
-                        <span class="service-pin">📍</span>
-                        <span>${escapeHtml(sal.lugar || 'Por asignar')}</span>
-                      </div>
-                      <div class="service-m-captain-row">
-                        <span style="color: var(--muted); font-size: 11px;">Capitán:</span>
-                        <div class="service-captain-cell">
-                          <span class="service-avatar">👤</span>
-                          <strong class="service-captain-name">${escapeHtml(sal.capitan || 'Por asignar')}</strong>
-                          ${isAdmin ? `
-                            <button class="service-edit-cap-btn" onclick="openAssignCaptainModal('domingos', ${dIdx}, ${sIdx})">✎</button>
-                            <button class="service-action-btn" onclick="openEditDomingoModal(${dIdx}, ${sIdx})">✏️</button>
-                            <button class="service-action-btn service-delete-btn" onclick="eliminarSubSalidaDomingo(${dIdx}, ${sIdx})" title="Eliminar división">🗑️</button>
-                          ` : ''}
+                  ` : isGrupos ? `
+                    ${dom.salidas.map((sal, sIdx) => `
+                      <div class="service-m-subgroup-box">
+                        <div class="service-group-pill" style="margin-bottom: 4px;">${escapeHtml(sal.grupo)}</div>
+                        <div class="service-place-cell" style="margin-bottom: 6px;">
+                          <span class="service-pin">📍</span>
+                          <span>${escapeHtml(sal.lugar || 'Por asignar')}</span>
+                        </div>
+                        <div class="service-m-captain-row">
+                          <span style="color: var(--muted); font-size: 11px;">Capitán:</span>
+                          <div class="service-captain-cell">
+                            <span class="service-avatar">👤</span>
+                            <strong class="service-captain-name">${escapeHtml(sal.capitan || 'Por asignar')}</strong>
+                            ${isAdmin ? `
+                              <button class="service-edit-cap-btn" onclick="openAssignCaptainModal('domingos', ${dIdx}, ${sIdx})">✎</button>
+                              <button class="service-action-btn" onclick="openEditDomingoModal(${dIdx}, ${sIdx})">✏️</button>
+                              <button class="service-action-btn service-delete-btn" onclick="eliminarSubSalidaDomingo(${dIdx}, ${sIdx})" title="Eliminar división">🗑️</button>
+                            ` : ''}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  `).join('') : `
+                    `).join('')}
+                    ${isAdmin ? `
+                      <button class="service-add-subsalida-btn-m" onclick="openAddSubSalidaModal(${dIdx})" title="Agregar salida o grupo especial a este domingo">
+                        <span style="font-weight:bold; font-size:14px;">+</span> Agregar Grupo / Salida Especial
+                      </button>
+                    ` : ''}
+                  ` : `
                     <div class="service-m-subgroup-box">
                       <span class="service-general-badge" style="margin-bottom: 4px;">TODA LA CONGREGACIÓN</span>
                       <div class="service-place-cell" style="margin-bottom: 6px;">
@@ -1007,7 +1073,7 @@ function openAssignCaptainModal(section, index, subIndex) {
         </div>
       </div>
 
-      <div style="padding: 16px;">
+      <div class="modal-form-body">
         <div style="background: #fff8e6; border: 1px solid #f2dfa9; border-radius: 8px; padding: 10px 12px; margin-bottom: 12px; font-size: 12px; color: #7a5c10;">
           ℹ️ <strong>Filtro Automático:</strong> Solo se listan los publicadores que tienen la casilla <strong>"Capitán (Salidas al servicio)"</strong> marcada en su ficha.
         </div>
@@ -1026,7 +1092,7 @@ function openAssignCaptainModal(section, index, subIndex) {
         </div>
       </div>
 
-      <div class="modal-actions" style="padding: 12px 16px; border-top: 1px solid var(--line); display: flex; justify-content: space-between;">
+      <div class="modal-actions" style="justify-content: space-between;">
         <button class="btn btn-sm btn-ghost" onclick="assignCaptainDirectly('')">
           Sin Capitán (Limpiar)
         </button>
@@ -1097,8 +1163,18 @@ async function assignCaptainDirectly(captainName) {
     const target = CURRENT_SALIDAS.entre_semana.find(x => x && (x.id === index || x === CURRENT_SALIDAS.entre_semana[index]));
     if (target) target.capitan = captainName;
   } else if (section === 'sabados' && CURRENT_SALIDAS.sabados) {
-    const target = CURRENT_SALIDAS.sabados.find(x => x && (x.id === index || x === CURRENT_SALIDAS.sabados[index]));
-    if (target) target.capitan = captainName;
+    let target = CURRENT_SALIDAS.sabados.find(x => x && (x.id === index || x === CURRENT_SALIDAS.sabados[index]));
+    if (!target) {
+      const n = typeof index === 'number' ? index : parseInt(index, 10);
+      if (!isNaN(n)) target = CURRENT_SALIDAS.sabados[n];
+    }
+    if (target) {
+      if (Array.isArray(target.puntos) && target.puntos[subIndex]) {
+        target.puntos[subIndex].capitan = captainName;
+      } else {
+        target.capitan = captainName;
+      }
+    }
   } else if (section === 'domingos' && CURRENT_SALIDAS.domingos?.[index]) {
     const dom = CURRENT_SALIDAS.domingos[index];
     if (dom.tipo === 'grupos' && Array.isArray(dom.salidas) && dom.salidas[subIndex]) {
@@ -1149,7 +1225,7 @@ function openEditLunesModal(isNew = false) {
         <p style="color: #fde68a; margin: 2px 0 0; font-size: 12px;">Programación para este mes</p>
       </div>
 
-      <div style="padding: 16px; display: flex; flex-direction: column; gap: 12px;">
+      <div class="modal-form-body">
         <div class="field">
           <label>📅 Fecha Exacta (Día y Mes)</label>
           <input type="text" id="lunes-modal-fecha" class="search-input" style="width: 100%; box-sizing: border-box;" value="${escapeHtml(defLunes.fecha || '')}" placeholder="Ej: Lunes 14 de Septiembre" />
@@ -1187,7 +1263,7 @@ function openEditLunesModal(isNew = false) {
         </div>
       </div>
 
-      <div class="modal-actions" style="padding: 12px 16px; border-top: 1px solid var(--line); display: flex; justify-content: flex-end; gap: 8px;">
+      <div class="modal-actions">
         <button class="btn btn-sm btn-ghost" onclick="closeEditLunesModal()">Cancelar</button>
         <button class="btn btn-sm btn-primary" onclick="saveEditLunesModal()">Guardar Salida</button>
       </div>
@@ -1277,7 +1353,7 @@ function openEditRegularModal(section, targetIdOrIndex) {
         <p style="color: #f8c9d2; margin: 2px 0 0; font-size: 12px;">${escapeHtml(item.dia || item.fecha || '')}</p>
       </div>
 
-      <div style="padding: 16px; display: flex; flex-direction: column; gap: 12px;">
+      <div class="modal-form-body">
         ${section === 'entre_semana' ? `
           <div class="field">
             <label>🗓️ Día / Turno (ej: Martes (Mañana), Miércoles (Tarde))</label>
@@ -1310,7 +1386,7 @@ function openEditRegularModal(section, targetIdOrIndex) {
         ` : ''}
       </div>
 
-      <div class="modal-actions" style="padding: 12px 16px; border-top: 1px solid var(--line); display: flex; justify-content: flex-end; gap: 8px;">
+      <div class="modal-actions">
         <button class="btn btn-sm btn-ghost" onclick="closeEditRegularModal()">Cancelar</button>
         <button class="btn btn-sm btn-primary" onclick="saveEditRegularModal('${section}', '${safeId}')">Guardar Cambios</button>
       </div>
@@ -1372,7 +1448,7 @@ function openAddEntreSemanaModal() {
         <p style="color: #f8c9d2; margin: 2px 0 0; font-size: 12px;">Mañana o Tarde (Martes a Viernes)</p>
       </div>
 
-      <div style="padding: 16px; display: flex; flex-direction: column; gap: 12px;">
+      <div class="modal-form-body">
         <div style="display: flex; gap: 12px;">
           <div class="field" style="flex: 1;">
             <label>🗓️ Día de la Semana</label>
@@ -1416,7 +1492,7 @@ function openAddEntreSemanaModal() {
         </div>
       </div>
 
-      <div class="modal-actions" style="padding: 12px 16px; border-top: 1px solid var(--line); display: flex; justify-content: flex-end; gap: 8px;">
+      <div class="modal-actions">
         <button class="btn btn-sm btn-ghost" onclick="closeAddEntreSemanaModal()">Cancelar</button>
         <button class="btn btn-sm btn-primary" onclick="saveNewEntreSemanaModal()">Agregar Salida</button>
       </div>
@@ -1531,7 +1607,7 @@ function openEditDomingoModal(domIndex, salIndex) {
         </p>
       </div>
 
-      <div style="padding: 16px; display: flex; flex-direction: column; gap: 12px;">
+      <div class="modal-form-body">
         <div class="field">
           <label>🏛️ / 👥 Modalidad del Domingo</label>
           <select id="dom-edit-tipo" class="search-input" style="width: 100%; box-sizing: border-box;" onchange="onDomingoTipoChange(this.value)">
@@ -1571,7 +1647,12 @@ function openEditDomingoModal(domIndex, salIndex) {
         </div>
       </div>
 
-      <div class="modal-actions" style="padding: 12px 16px; border-top: 1px solid var(--line); display: flex; justify-content: flex-end; gap: 8px;">
+      <div class="modal-actions" style="flex-wrap: wrap;">
+        ${dom.tipo === 'grupos' ? `
+          <button type="button" class="btn btn-sm" style="margin-right: auto; background: #f0fdfa; color: #0f766e; border: 1px solid #5eead4; font-weight: 600;" onclick="closeEditDomingoModal(); openAddSubSalidaModal(${domIndex});" title="Agregar otra división o salida para visita de grupo">
+            + Agregar División / Grupo
+          </button>
+        ` : ''}
         <button class="btn btn-sm btn-ghost" onclick="closeEditDomingoModal()">Cancelar</button>
         <button class="btn btn-sm btn-primary" onclick="saveEditDomingoModal(${domIndex}, ${salIndex})">Guardar Cambios</button>
       </div>
@@ -1687,6 +1768,420 @@ async function eliminarDomingoCompleto(domIndex) {
   await apiSaveSalidas(SERVICE_SELECTED_MONTH_KEY, CURRENT_SALIDAS, writeToken);
 }
 
+// ============================================================
+// ASISTENTE Y MODAL PARA AGREGAR 3ERA SALIDA (VISITA A GRUPO)
+// ============================================================
+
+function excludeGroupFromDivisionText(text, groupNum) {
+  if (!text) return text;
+  const numStr = String(groupNum);
+  const matches = text.match(/\b([1-9]|10)\b/g);
+  if (!matches || !matches.includes(numStr)) return text;
+
+  const remaining = matches.filter(n => n !== numStr);
+  if (remaining.length === 0) return 'Sin grupos';
+  if (remaining.length === 1) return `Grupo ${remaining[0]}`;
+  return `Grupos ${remaining.join(', ')}`;
+}
+
+function openAddSubSalidaModal(domIndex) {
+  const existing = document.getElementById('wm-add-subsalida-modal');
+  if (existing) existing.remove();
+
+  const dom = CURRENT_SALIDAS?.domingos?.[domIndex];
+  if (!dom) return;
+
+  const captains = getEligiblePeople(PEOPLE || [], 'capitan');
+  const monthLabel = getMonthLabelFromKey(SERVICE_SELECTED_MONTH_KEY);
+
+  const modal = document.createElement('div');
+  modal.id = 'wm-add-subsalida-modal';
+  modal.className = 'overlay';
+  modal.innerHTML = `
+    <div class="modal" style="max-width: 500px;">
+      <div class="modal-head" style="background: #0f766e; color: #fff;">
+        <h3 style="color: #fff; margin: 0;">+ Agregar Salida / Visita a Grupo</h3>
+        <p style="color: #ccfbf1; margin: 2px 0 0; font-size: 12px;">
+          📅 ${escapeHtml(dom.fecha)} · ${escapeHtml(monthLabel)}
+        </p>
+      </div>
+
+      <div class="modal-form-body">
+        <div class="field">
+          <label>🎯 Tipo de Asignación</label>
+          <select id="subdom-mode" class="search-input" style="width: 100%; box-sizing: border-box;" onchange="onSubdomModeChange(this.value)">
+            <option value="visita" selected>🌟 Visita Especial a un Grupo (ej: Grupo 6)</option>
+            <option value="personalizado">✍️ Nombre / División Personalizada</option>
+          </select>
+        </div>
+
+        <!-- Bloque Visita a Grupo -->
+        <div id="subdom-visita-box" style="display: flex; flex-direction: column; gap: 10px; background: #f0fdfa; border: 1px solid #99f6e4; border-radius: 8px; padding: 12px;">
+          <div class="field">
+            <label style="color: #0f766e; font-weight: 700;">👥 Selecciona el Grupo a Visitar:</label>
+            <select id="subdom-group-select" class="search-input" style="width: 100%; box-sizing: border-box; font-weight: 600;" onchange="onSubdomGroupSelectChange(this.value)">
+              ${[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => `
+                <option value="${n}" ${n === 6 ? 'selected' : ''}>Grupo ${n}</option>
+              `).join('')}
+            </select>
+          </div>
+
+          <label style="display: flex; align-items: flex-start; gap: 8px; font-size: 12px; color: #115e59; cursor: pointer; line-height: 1.4;">
+            <input type="checkbox" id="subdom-auto-adjust" checked style="margin-top: 2px;" />
+            <span>
+              <strong>Ajustar automáticamente la división hermana:</strong><br/>
+              Excluir este grupo de la división que lo contenía para evitar repeticiones (ej: cambiar <em>"Grupos 5, 6, 7, 8, 9"</em> a <em>"Grupos 5, 7, 8, 9"</em>).
+            </span>
+          </label>
+        </div>
+
+        <div class="field">
+          <label>🏷️ Nombre de la Nueva Salida / División</label>
+          <input type="text" id="subdom-group-name" class="search-input" style="width: 100%; box-sizing: border-box; font-weight: 600;" value="Grupo 6" />
+        </div>
+
+        <div class="field">
+          <label>📍 Lugar de Salida / Dirección</label>
+          <input type="text" id="subdom-lugar" class="search-input" style="width: 100%; box-sizing: border-box;" list="wm-lugares-subdom-datalist" placeholder="Selecciona o escribe el lugar..." />
+          <datalist id="wm-lugares-subdom-datalist">
+            ${(LUGARES_SALIDAS || []).map(l => `<option value="${escapeHtml(l.nombre)}"></option>`).join('')}
+          </datalist>
+        </div>
+
+        <div class="field">
+          <label>👤 Capitán Asignado</label>
+          <select id="subdom-capitan" class="search-input" style="width: 100%; box-sizing: border-box;">
+            <option value="">-- Por asignar después --</option>
+            ${captains.map(c => `<option value="${escapeHtml(c.nombre)}">${escapeHtml(c.nombre)}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn btn-sm btn-ghost" onclick="closeAddSubSalidaModal()">Cancelar</button>
+        <button class="btn btn-sm btn-primary" onclick="saveAddSubSalidaModal(${domIndex})">+ Agregar Salida</button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+}
+
+function onSubdomModeChange(mode) {
+  const visitaBox = document.getElementById('subdom-visita-box');
+  const nameInput = document.getElementById('subdom-group-name');
+  const groupSelect = document.getElementById('subdom-group-select');
+
+  if (mode === 'visita') {
+    if (visitaBox) visitaBox.style.display = 'flex';
+    if (nameInput && groupSelect) nameInput.value = `Grupo ${groupSelect.value}`;
+  } else {
+    if (visitaBox) visitaBox.style.display = 'none';
+    if (nameInput) {
+      nameInput.value = '';
+      nameInput.placeholder = 'Ej: Grupo 6 o División Especial...';
+    }
+  }
+}
+
+function onSubdomGroupSelectChange(groupNum) {
+  const nameInput = document.getElementById('subdom-group-name');
+  if (nameInput) nameInput.value = `Grupo ${groupNum}`;
+}
+
+function closeAddSubSalidaModal() {
+  const modal = document.getElementById('wm-add-subsalida-modal');
+  if (modal) modal.remove();
+}
+
+async function saveAddSubSalidaModal(domIndex) {
+  const dom = CURRENT_SALIDAS?.domingos?.[domIndex];
+  if (!dom) return;
+
+  const mode = document.getElementById('subdom-mode')?.value || 'visita';
+  const groupNum = document.getElementById('subdom-group-select')?.value || '6';
+  const customName = document.getElementById('subdom-group-name')?.value.trim();
+  const autoAdjust = document.getElementById('subdom-auto-adjust')?.checked;
+  const lugar = document.getElementById('subdom-lugar')?.value.trim() || '';
+  const capitan = document.getElementById('subdom-capitan')?.value.trim() || '';
+
+  const finalGroupName = customName || (mode === 'visita' ? `Grupo ${groupNum}` : 'Nuevo Grupo');
+
+  // Asegurar que el domingo esté en modo grupos
+  dom.tipo = 'grupos';
+  if (!Array.isArray(dom.salidas)) {
+    dom.salidas = [
+      { id: `sal_${Date.now()}_1`, grupo: 'Grupos 1, 2, 3, 4, 10', lugar: dom.lugar || '', capitan: dom.capitan || '' },
+      { id: `sal_${Date.now()}_2`, grupo: 'Grupos 5, 6, 7, 8, 9', lugar: '', capitan: '' }
+    ];
+    delete dom.lugar;
+    delete dom.capitan;
+  }
+
+  // Si se marcó auto-ajustar en modo visita, excluir el número de grupo de las otras divisiones
+  if (mode === 'visita' && autoAdjust) {
+    dom.salidas.forEach(sal => {
+      sal.grupo = excludeGroupFromDivisionText(sal.grupo, groupNum);
+    });
+  }
+
+  // Agregar la nueva salida
+  dom.salidas.push({
+    id: `sal_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+    grupo: finalGroupName,
+    lugar,
+    capitan
+  });
+
+  if (lugar) autoRegistrarLugar(lugar);
+
+  closeAddSubSalidaModal();
+  render();
+  showToast(`✓ Salida para ${finalGroupName} agregada a ${dom.fecha}`, 'success');
+  await apiSaveSalidas(SERVICE_SELECTED_MONTH_KEY, CURRENT_SALIDAS, writeToken);
+}
+
+// ============================================================
+// MODAL Y MANEJO DE PUNTOS DE SALIDA DE SÁBADO (MÚLTIPLES SALIDAS)
+// ============================================================
+
+function openAddPuntoSabadoModal(sabIndex) {
+  const existing = document.getElementById('wm-add-puntosab-modal');
+  if (existing) existing.remove();
+
+  const sab = CURRENT_SALIDAS?.sabados?.[sabIndex];
+  if (!sab) return;
+
+  const captains = getEligiblePeople(PEOPLE || [], 'capitan');
+  const monthLabel = getMonthLabelFromKey(SERVICE_SELECTED_MONTH_KEY);
+
+  const modal = document.createElement('div');
+  modal.id = 'wm-add-puntosab-modal';
+  modal.className = 'overlay';
+  modal.innerHTML = `
+    <div class="modal" style="max-width: 480px;">
+      <div class="modal-head" style="background: #1e293b; color: #fff;">
+        <h3 style="color: #fff; margin: 0;">+ Agregar Punto de Salida</h3>
+        <p style="color: #cbd5e1; margin: 2px 0 0; font-size: 12px;">
+          📅 ${escapeHtml(sab.fecha)} · ${escapeHtml(monthLabel)}
+        </p>
+      </div>
+
+      <div class="modal-form-body">
+        <div style="display: flex; gap: 12px;">
+          <div class="field" style="flex: 1;">
+            <label>⏰ Hora</label>
+            <input type="text" id="add-puntosab-hora" class="search-input" style="width: 100%; box-sizing: border-box;" value="8:30 a.m." />
+          </div>
+          <div class="field" style="flex: 1.5;">
+            <label>🏷️ Tipo de Salida</label>
+            <input type="text" id="add-puntosab-nota" class="search-input" style="width: 100%; box-sizing: border-box;" value="PREDICACION PUBLICA" placeholder="Ej: CARRITOS, RURAL, TABLANCA..." />
+          </div>
+        </div>
+
+        <div class="field">
+          <label>📍 Lugar de Salida / Dirección</label>
+          <input type="text" id="add-puntosab-lugar" class="search-input" style="width: 100%; box-sizing: border-box;" list="wm-lugares-puntosab-datalist" placeholder="Selecciona o escribe el lugar..." />
+          <datalist id="wm-lugares-puntosab-datalist">
+            ${(LUGARES_SALIDAS || []).map(l => `<option value="${escapeHtml(l.nombre)}"></option>`).join('')}
+          </datalist>
+        </div>
+
+        <div class="field">
+          <label>👤 Capitán Asignado</label>
+          <select id="add-puntosab-capitan" class="search-input" style="width: 100%; box-sizing: border-box;">
+            <option value="">-- Por asignar después --</option>
+            ${captains.map(c => `<option value="${escapeHtml(c.nombre)}">${escapeHtml(c.nombre)}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn btn-sm btn-ghost" onclick="closeAddPuntoSabadoModal()">Cancelar</button>
+        <button class="btn btn-sm btn-primary" onclick="saveAddPuntoSabadoModal(${sabIndex})">+ Agregar Punto</button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+}
+
+function closeAddPuntoSabadoModal() {
+  const modal = document.getElementById('wm-add-puntosab-modal');
+  if (modal) modal.remove();
+}
+
+async function saveAddPuntoSabadoModal(sabIndex) {
+  const sab = CURRENT_SALIDAS?.sabados?.[sabIndex];
+  if (!sab) return;
+
+  const hora = document.getElementById('add-puntosab-hora')?.value.trim() || '8:30 a.m.';
+  const nota = document.getElementById('add-puntosab-nota')?.value.trim() || 'PREDICACION PUBLICA';
+  const lugar = document.getElementById('add-puntosab-lugar')?.value.trim() || '';
+  const capitan = document.getElementById('add-puntosab-capitan')?.value.trim() || '';
+
+  if (!Array.isArray(sab.puntos) || sab.puntos.length === 0) {
+    sab.puntos = [
+      {
+        id: `p_${Date.now()}_1`,
+        hora: sab.hora || '8:30 a.m.',
+        lugar: sab.lugar || '',
+        nota: sab.nota || 'PREDICACION PUBLICA',
+        capitan: sab.capitan || ''
+      },
+      {
+        id: `p_${Date.now()}_2`,
+        hora,
+        lugar,
+        nota,
+        capitan
+      }
+    ];
+    delete sab.hora;
+    delete sab.lugar;
+    delete sab.nota;
+    delete sab.capitan;
+  } else {
+    sab.puntos.push({
+      id: `p_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+      hora,
+      lugar,
+      nota,
+      capitan
+    });
+  }
+
+  if (lugar) autoRegistrarLugar(lugar);
+
+  closeAddPuntoSabadoModal();
+  render();
+  showToast(`✓ Punto de salida agregado al sábado ${sab.fecha}`, 'success');
+  await apiSaveSalidas(SERVICE_SELECTED_MONTH_KEY, CURRENT_SALIDAS, writeToken);
+}
+
+// Modal para editar un punto específico de sábado
+function openEditPuntoSabadoModal(sabIndex, pIndex) {
+  const existing = document.getElementById('wm-edit-puntosab-modal');
+  if (existing) existing.remove();
+
+  const sab = CURRENT_SALIDAS?.sabados?.[sabIndex];
+  if (!sab) return;
+
+  const puntos = getSabadoPuntos(sab);
+  const p = puntos[pIndex] || {};
+  const monthLabel = getMonthLabelFromKey(SERVICE_SELECTED_MONTH_KEY);
+
+  const modal = document.createElement('div');
+  modal.id = 'wm-edit-puntosab-modal';
+  modal.className = 'overlay';
+  modal.innerHTML = `
+    <div class="modal" style="max-width: 480px;">
+      <div class="modal-head" style="background: #1e293b; color: #fff;">
+        <h3 style="color: #fff; margin: 0;">✏️ Editar Salida de Sábado</h3>
+        <p style="color: #cbd5e1; margin: 2px 0 0; font-size: 12px;">
+          📅 ${escapeHtml(sab.fecha)} · ${escapeHtml(monthLabel)}
+        </p>
+      </div>
+
+      <div class="modal-form-body">
+        <div class="field">
+          <label>📅 Fecha del Sábado (ej: 12 de Septiembre)</label>
+          <input type="text" id="edit-puntosab-fecha" class="search-input" style="width: 100%; box-sizing: border-box;" value="${escapeHtml(sab.fecha || '')}" />
+        </div>
+
+        <div style="display: flex; gap: 12px;">
+          <div class="field" style="flex: 1;">
+            <label>⏰ Hora</label>
+            <input type="text" id="edit-puntosab-hora" class="search-input" style="width: 100%; box-sizing: border-box;" value="${escapeHtml(p.hora || '8:30 a.m.')}" />
+          </div>
+          <div class="field" style="flex: 1.5;">
+            <label>🏷️ Tipo de Salida</label>
+            <input type="text" id="edit-puntosab-nota" class="search-input" style="width: 100%; box-sizing: border-box;" value="${escapeHtml(p.nota || '')}" placeholder="Ej: PREDICACION PUBLICA, CARRITOS..." />
+          </div>
+        </div>
+
+        <div class="field">
+          <label>📍 Lugar de Salida / Dirección</label>
+          <input type="text" id="edit-puntosab-lugar" class="search-input" style="width: 100%; box-sizing: border-box;" list="wm-lugares-editpuntosab-datalist" value="${escapeHtml(p.lugar || '')}" placeholder="Selecciona o escribe el lugar..." />
+          <datalist id="wm-lugares-editpuntosab-datalist">
+            ${(LUGARES_SALIDAS || []).map(l => `<option value="${escapeHtml(l.nombre)}"></option>`).join('')}
+          </datalist>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn btn-sm btn-ghost" onclick="closeEditPuntoSabadoModal()">Cancelar</button>
+        <button class="btn btn-sm btn-primary" onclick="saveEditPuntoSabadoModal(${sabIndex}, ${pIndex})">Guardar Cambios</button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+}
+
+function closeEditPuntoSabadoModal() {
+  const modal = document.getElementById('wm-edit-puntosab-modal');
+  if (modal) modal.remove();
+}
+
+async function saveEditPuntoSabadoModal(sabIndex, pIndex) {
+  const sab = CURRENT_SALIDAS?.sabados?.[sabIndex];
+  if (!sab) return;
+
+  const fechaInput = document.getElementById('edit-puntosab-fecha')?.value.trim();
+  const hora = document.getElementById('edit-puntosab-hora')?.value.trim() || '8:30 a.m.';
+  const nota = document.getElementById('edit-puntosab-nota')?.value.trim() || '';
+  const lugar = document.getElementById('edit-puntosab-lugar')?.value.trim() || '';
+
+  if (fechaInput) sab.fecha = fechaInput;
+
+  if (Array.isArray(sab.puntos) && sab.puntos[pIndex]) {
+    sab.puntos[pIndex].hora = hora;
+    sab.puntos[pIndex].nota = nota;
+    sab.puntos[pIndex].lugar = lugar;
+  } else {
+    sab.hora = hora;
+    sab.nota = nota;
+    sab.lugar = lugar;
+  }
+
+  if (lugar) autoRegistrarLugar(lugar);
+
+  closeEditPuntoSabadoModal();
+  render();
+  showToast(`✓ Salida del sábado ${sab.fecha} actualizada`, 'success');
+  await apiSaveSalidas(SERVICE_SELECTED_MONTH_KEY, CURRENT_SALIDAS, writeToken);
+}
+
+// Eliminar un punto específico de sábado
+async function eliminarPuntoSabado(sabIndex, pIndex) {
+  const sab = CURRENT_SALIDAS?.sabados?.[sabIndex];
+  if (!sab) return;
+
+  const puntos = getSabadoPuntos(sab);
+  if (puntos.length > 1) {
+    const p = puntos[pIndex];
+    if (!confirm(`¿Deseas eliminar este punto de salida (${p.lugar || p.nota || 'Punto'}) del sábado ${sab.fecha}?`)) return;
+
+    if (Array.isArray(sab.puntos)) {
+      sab.puntos.splice(pIndex, 1);
+      if (sab.puntos.length === 1) {
+        sab.hora = sab.puntos[0].hora;
+        sab.lugar = sab.puntos[0].lugar;
+        sab.nota = sab.puntos[0].nota;
+        sab.capitan = sab.puntos[0].capitan;
+        delete sab.puntos;
+      }
+    }
+  } else {
+    if (!confirm(`¿Deseas eliminar la programación completa del sábado ${sab.fecha} (ej. por Asamblea)?`)) return;
+    CURRENT_SALIDAS.sabados.splice(sabIndex, 1);
+  }
+
+  render();
+  await apiSaveSalidas(SERVICE_SELECTED_MONTH_KEY, CURRENT_SALIDAS, writeToken);
+}
+
 // Eliminar un sábado
 async function eliminarSalidaSabado(targetIdOrIndex) {
   if (!CURRENT_SALIDAS || !Array.isArray(CURRENT_SALIDAS.sabados)) return;
@@ -1725,7 +2220,7 @@ function openAddSabadoModal() {
         <p style="color: #f8c9d2; margin: 2px 0 0; font-size: 12px;">${escapeHtml(monthLabel)}</p>
       </div>
 
-      <div style="padding: 16px; display: flex; flex-direction: column; gap: 12px;">
+      <div class="modal-form-body">
         <div class="field">
           <label>📅 Fecha Exacta (ej: 7 de Noviembre)</label>
           <input type="text" id="add-sab-fecha" class="search-input" style="width: 100%; box-sizing: border-box;" placeholder="Ej: 7 de Noviembre" />
@@ -1759,7 +2254,7 @@ function openAddSabadoModal() {
         </div>
       </div>
 
-      <div class="modal-actions" style="padding: 12px 16px; border-top: 1px solid var(--line); display: flex; justify-content: flex-end; gap: 8px;">
+      <div class="modal-actions">
         <button class="btn btn-sm btn-ghost" onclick="closeAddSabadoModal()">Cancelar</button>
         <button class="btn btn-sm btn-primary" onclick="saveAddSabadoModal()">Agregar Sábado</button>
       </div>
@@ -1822,7 +2317,7 @@ function openAddDomingoModal() {
         <p style="color: #f8c9d2; margin: 2px 0 0; font-size: 12px;">${escapeHtml(monthLabel)}</p>
       </div>
 
-      <div style="padding: 16px; display: flex; flex-direction: column; gap: 12px;">
+      <div class="modal-form-body">
         <div class="field">
           <label>📅 Fecha Exacta (ej: 8 de Noviembre)</label>
           <input type="text" id="add-dom-fecha" class="search-input" style="width: 100%; box-sizing: border-box;" placeholder="Ej: 8 de Noviembre" />
@@ -1852,7 +2347,7 @@ function openAddDomingoModal() {
         </div>
       </div>
 
-      <div class="modal-actions" style="padding: 12px 16px; border-top: 1px solid var(--line); display: flex; justify-content: flex-end; gap: 8px;">
+      <div class="modal-actions">
         <button class="btn btn-sm btn-ghost" onclick="closeAddDomingoModal()">Cancelar</button>
         <button class="btn btn-sm btn-primary" onclick="saveAddDomingoModal()">Agregar Domingo</button>
       </div>
@@ -1921,7 +2416,7 @@ function openManageLugaresModal() {
   modal.id = 'wm-manage-lugares-modal';
   modal.className = 'overlay';
   modal.innerHTML = `
-    <div class="modal" style="max-width: 580px; max-height: 85vh; display: flex; flex-direction: column;">
+    <div class="modal" style="max-width: 580px;">
       <div class="modal-head" style="background: var(--teal-deep); color: #fff; border-bottom: none;">
         <div style="display: flex; justify-content: space-between; align-items: center;">
           <div>
@@ -1932,7 +2427,7 @@ function openManageLugaresModal() {
         </div>
       </div>
 
-      <div style="padding: 16px; overflow-y: auto; flex: 1;">
+      <div class="modal-form-body">
         <!-- Formulario para agregar un nuevo lugar -->
         <div style="background: var(--paper-2); border: 1px solid var(--line); border-radius: 10px; padding: 12px; margin-bottom: 16px;">
           <label style="font-size: 12px; font-weight: 700; color: var(--ink); display: block; margin-bottom: 6px;">
@@ -1965,7 +2460,7 @@ function openManageLugaresModal() {
         </div>
       </div>
 
-      <div class="modal-actions" style="padding: 12px 16px; border-top: 1px solid var(--line); display: flex; justify-content: flex-end;">
+      <div class="modal-actions">
         <button class="btn btn-sm btn-ghost" onclick="closeManageLugaresModal()">
           Cerrar
         </button>
