@@ -31,7 +31,8 @@ try {
 }
 
 // Detectar ID de proyecto en Cloud Shell, Cloud Run o entorno local
-const resolvedProjectId = process.env.GCP_PROJECT_ID || process.env.GOOGLE_CLOUD_PROJECT || process.env.DEVSHELL_PROJECT_ID || (process.env.NODE_ENV === 'production' ? 'vida-y-ministerio-507400' : null);
+let rawProjectId = process.env.GCP_PROJECT_ID || process.env.GOOGLE_CLOUD_PROJECT || process.env.DEVSHELL_PROJECT_ID || (process.env.NODE_ENV === 'production' ? 'vida-y-ministerio-507400' : null);
+const resolvedProjectId = rawProjectId ? rawProjectId.split(/\s+/)[0].trim() : null;
 
 // Intentar inicializar Firestore
 if (resolvedProjectId || process.env.GOOGLE_APPLICATION_CREDENTIALS || process.env.NODE_ENV === 'production') {
