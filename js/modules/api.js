@@ -242,22 +242,22 @@ async function apiSyncAllPersonas(personas, token) {
 }
 
 // 5. Verificar PIN de Administrador
-async function apiVerifyPin(pinHash) {
+async function apiVerifyPin(pinHash, plainPin = '') {
   try {
     const res = await fetch('/api/auth/verify', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ pinHash })
+      body: JSON.stringify({ pinHash, pin: plainPin })
     });
 
     if (res.ok) {
       const data = await res.json();
-      return data.authorized;
+      return !!data.authorized;
     }
   } catch (_) {}
 
   // Fallback local: comparar hash con DEFAULT_PIN_HASH
-  return pinHash.toLowerCase() === DEFAULT_PIN_HASH.toLowerCase();
+  return !!(pinHash && pinHash.toLowerCase() === DEFAULT_PIN_HASH.toLowerCase());
 }
 
 // 6. Cargar Salidas al Servicio de un Mes

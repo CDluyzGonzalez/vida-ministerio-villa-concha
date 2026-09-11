@@ -38,29 +38,33 @@ function render() {
   root.innerHTML = `
     <!-- Header Principal -->
     <header class="app-header">
-      <div class="brand" style="display: flex; align-items: baseline; gap: 10px; margin-bottom: 14px;">
-        <h1>Vida y Ministerio</h1>
-        <span class="sub">Villa Concha</span>
+      <div class="brand">
+        <div class="brand-titles">
+          <h1>Vida y Ministerio</h1>
+          <span class="sub">Villa Concha</span>
+        </div>
 
-        <span class="install-app-slot">
-          ${!isAppStandalone() ? `
-            <button class="install-app-btn" onclick="triggerInstallPrompt()" title="Instalar vida y ministerio">
-              📲 Instalar App
-            </button>
-          ` : ''}
-        </span>
+        <div class="header-actions">
+          <span class="install-app-slot">
+            ${!isAppStandalone() ? `
+              <button class="install-app-btn" onclick="triggerInstallPrompt()" title="Instalar vida y ministerio">
+                📲 Instalar App
+              </button>
+            ` : ''}
+          </span>
 
-        <span class="admin-toggle" style="margin-left: auto;">
-          ${isAdmin ? `
-            <button class="admin-btn admin-on" onclick="logoutAdmin()" title="Modo Administrador Activo (Clic para salir)">
-              🔓 Admin
-            </button>
-          ` : `
-            <button class="admin-btn" onclick="openAdminPinModal()" title="Ingresar PIN para editar">
-              🔒 Admin
-            </button>
-          `}
-        </span>
+          <span class="admin-toggle">
+            ${isAdmin ? `
+              <button class="admin-btn admin-on" onclick="logoutAdmin()" title="Modo Administrador Activo (Clic para salir)">
+                🔓 Admin
+              </button>
+            ` : `
+              <button class="admin-btn" onclick="openAdminPinModal()" title="Ingresar PIN para editar">
+                🔒 Admin
+              </button>
+            `}
+          </span>
+        </div>
       </div>
 
       <!-- Pestañas de Navegación: Programa y Salidas al servicio son públicas; Publicadores y Dashboard SOLO en Admin -->

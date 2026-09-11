@@ -10,6 +10,7 @@ import compression from 'compression';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
+import crypto from 'crypto';
 import { db, isConnected, localData } from './firestore.js';
 
 dotenv.config();
@@ -96,9 +97,23 @@ app.get('/api/health', (req, res) => {
 
 // Verificar PIN de administrador
 app.post('/api/auth/verify', (req, res) => {
-  const { pinHash } = req.body || {};
-  const isValid = pinHash && pinHash.toLowerCase() === ADMIN_PIN_HASH.toLowerCase();
-  res.json({ authorized: !!isValid });
+  const { pinHash, pin } = req.body || {};
+  let valid = false;
+
+  if (pin) {
+    const hashFromPin = crypto.createHash('sha256').update(String(pin).trim()).digest('hex');
+    if (hashFromPin.toLowerCase() === ADMIN_PIN_HASH.toLowerCase()) {
+      valid = true;
+    }
+  }
+
+  if (!valid && pinHash) {
+    if (String(pinHash).trim().toLowerCase() === ADMIN_PIN_HASH.toLowerCase()) {
+      valid = true;
+    }
+  }
+
+  res.json({ authorized: valid, token: valid ? ADMIN_PIN_HASH : null });
 });
 
 // ============================================================

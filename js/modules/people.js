@@ -139,7 +139,7 @@ function openPersonModal(personId) {
   modal.id = 'wm-person-modal';
   modal.className = 'overlay';
   modal.innerHTML = `
-    <div class="modal" style="max-width: 600px; max-height: 85vh;">
+    <div class="modal modal-lg">
       <div class="modal-head">
         <h3>${isNew ? '👤 Nuevo Publicador' : '👤 Ficha de Publicador'}</h3>
         <p>${escapeHtml(person.nombre || 'Nuevo registro')}</p>
@@ -150,15 +150,15 @@ function openPersonModal(personId) {
           <input type="text" id="person-name-input" class="search-input" style="width: 100%; box-sizing: border-box;" value="${escapeHtml(person.nombre)}" ${isAdmin ? '' : 'readonly'} />
         </div>
 
-        <div style="display: flex; gap: 12px; margin-bottom: 12px;">
-          <div class="field" style="flex: 1;">
+        <div class="form-row-responsive">
+          <div class="field field-gender">
             <label>Género</label>
             <select id="person-gender-select" class="search-input" style="width: 100%; box-sizing: border-box;" ${isAdmin ? '' : 'disabled'}>
               <option value="M" ${person.genero === 'M' ? 'selected' : ''}>Hermano (M)</option>
               <option value="F" ${person.genero === 'F' ? 'selected' : ''}>Hermana (F)</option>
             </select>
           </div>
-          <div class="field" style="flex: 2;">
+          <div class="field field-notes">
             <label>Notas / Observaciones</label>
             <input type="text" id="person-note-input" class="search-input" style="width: 100%; box-sizing: border-box;" placeholder="Ej: No asignar primer domingo..." value="${escapeHtml(person.nota || '')}" ${isAdmin ? '' : 'readonly'} />
           </div>
