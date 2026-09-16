@@ -28,16 +28,15 @@ async function exportProgramPdf() {
     const doc = new jsPdfLib({
       orientation: 'p',
       unit: 'mm',
-      format: 'a4',
+      format: 'letter', // 215.9 mm × 279.4 mm (Hoja Carta)
       compress: true
     });
 
-    const pageW = 210;
-    const pageH = 297;
+    const pageW = 215.9;
+    const pageH = 279.4;
     const margin = 8;
-    const contentW = pageW - margin * 2;
-    const contentH = pageH - margin * 2;
-    let firstPage = true;
+    const maxW = pageW - margin * 2; // 199.9 mm
+    const maxH = pageH - margin * 2; // 263.4 mm
 
     for (let i = 0; i < (bim.weeks || []).length; i++) {
       const week = bim.weeks[i];
@@ -48,23 +47,40 @@ async function exportProgramPdf() {
       node.style.top = '0';
       node.style.zIndex = '-1';
       node.style.width = '820px';
-      node.style.background = '#faf6ee';
-      node.style.padding = '18px 0 24px';
+      node.style.minHeight = '1030px';
+      node.style.background = '#ffffff';
+      node.style.padding = '18px 24px';
+      node.style.boxSizing = 'border-box';
+      node.style.fontFamily = "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+      node.style.color = '#1e293b';
+      node.style.display = 'flex';
+      node.style.flexDirection = 'column';
+      node.style.justifyContent = 'space-between';
 
-      // Encabezado
+      // Estructura interna
+      const contentWrapper = document.createElement('div');
+      contentWrapper.style.flex = '1';
+      contentWrapper.style.display = 'flex';
+      contentWrapper.style.flexDirection = 'column';
+
+      // Encabezado Principal Oficial (estilo Villa Concha)
       const header = document.createElement('div');
-      header.style.fontFamily = "'Fraunces', serif";
-      header.style.color = '#123338';
-      header.style.margin = '0 0 12px';
-      header.style.padding = '0 18px 10px';
-      header.style.borderBottom = '2px solid #123338';
+      header.style.textAlign = 'center';
+      header.style.marginBottom = '8px';
+      header.style.borderBottom = '2.5px solid #7a1d2e';
+      header.style.paddingBottom = '8px';
       header.innerHTML = `
-        <div style="font-size:22px;font-weight:700;">Vida y Ministerio — Villa Concha</div>
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#7c7263;margin-top:3px;">
-          ${escapeHtml(bim.bimestre || currentBimestre)} · Programa completo
+        <div style="font-size: 13px; font-weight: 700; color: #7a1d2e; letter-spacing: 1.5px; text-transform: uppercase;">
+          CONGREGACIÓN VILLA CONCHA
+        </div>
+        <div style="font-size: 20px; font-weight: 800; color: #0f172a; margin: 3px 0; font-family: 'Fraunces', Georgia, serif;">
+          VIDA Y MINISTERIO CRISTIANOS
+        </div>
+        <div style="font-size: 11.5px; font-weight: 600; color: #64748b;">
+          📅 ${escapeHtml(bim.bimestre || currentBimestre)} · Programa Oficial
         </div>
       `;
-      node.appendChild(header);
+      contentWrapper.appendChild(header);
 
       // Tarjeta de semana
       const cardContainer = document.createElement('div');
@@ -72,11 +88,36 @@ async function exportProgramPdf() {
       const card = cardContainer.firstElementChild;
       if (card) {
         card.classList.add('open');
-        card.style.margin = '0 18px';
+        card.style.margin = '0';
         card.style.boxShadow = 'none';
-        card.style.border = '1px solid #ddd';
-        node.appendChild(card);
+        card.style.border = '1.5px solid #cbd5e1';
+        card.style.borderRadius = '8px';
+        card.style.background = '#ffffff';
+
+        // Ocultar chevrons y botones de edición en la captura
+        const chevron = card.querySelector('.chevron');
+        if (chevron) chevron.style.display = 'none';
+        card.querySelectorAll('.edit-pencil, button').forEach(el => el.style.display = 'none');
+
+        contentWrapper.appendChild(card);
       }
+      node.appendChild(contentWrapper);
+
+      // Pie de Página
+      const footer = document.createElement('div');
+      footer.style.display = 'flex';
+      footer.style.justifyContent = 'space-between';
+      footer.style.alignItems = 'center';
+      footer.style.borderTop = '1px solid #cbd5e1';
+      footer.style.paddingTop = '6px';
+      footer.style.marginTop = '10px';
+      footer.style.fontSize = '9.5px';
+      footer.style.color = '#64748b';
+      footer.innerHTML = `
+        <span>Vida y Ministerio · Congregación Villa Concha</span>
+        <span>Semana ${i + 1} de ${(bim.weeks || []).length}</span>
+      `;
+      node.appendChild(footer);
 
       document.body.appendChild(node);
 
@@ -86,38 +127,35 @@ async function exportProgramPdf() {
         }
 
         const canvas = await html2canvasLib(node, {
-          backgroundColor: '#faf6ee',
-          scale: 1.5,
+          backgroundColor: '#ffffff',
+          scale: 2, // Calidad nítida para impresión
           useCORS: true,
           logging: false,
           imageTimeout: 15000,
           removeContainer: true
         });
 
-        const pagePxH = Math.max(1, Math.floor((canvas.width * contentH) / contentW));
-        let offsetPx = 0;
+        const imgW = maxW;
+        let imgH = (canvas.height * imgW) / canvas.width;
 
-        while (offsetPx < canvas.height) {
-          if (!firstPage) {
-            doc.addPage();
-          }
-          firstPage = false;
+        let finalW = imgW;
+        let finalH = imgH;
 
-          const sliceH = Math.min(pagePxH, canvas.height - offsetPx);
-          const slice = document.createElement('canvas');
-          slice.width = canvas.width;
-          slice.height = sliceH;
-
-          const ctx = slice.getContext('2d');
-          ctx.fillStyle = '#faf6ee';
-          ctx.fillRect(0, 0, slice.width, slice.height);
-          ctx.drawImage(canvas, 0, offsetPx, canvas.width, sliceH, 0, 0, slice.width, slice.height);
-
-          const sliceHmm = (slice.height * contentW) / slice.width;
-          doc.addImage(slice.toDataURL('image/jpeg', 0.94), 'JPEG', margin, margin, contentW, sliceHmm, undefined, 'FAST');
-
-          offsetPx += sliceH;
+        // Ajuste proporcional a Hoja Carta: garantiza que la semana completa quepa al 100% en 1 sola hoja
+        if (imgH > maxH) {
+          const ratio = maxH / imgH;
+          finalW = imgW * ratio;
+          finalH = maxH;
         }
+
+        const offsetX = margin + (maxW - finalW) / 2;
+        const offsetY = margin + (maxH - finalH) / 2;
+
+        if (i > 0) {
+          doc.addPage();
+        }
+
+        doc.addImage(canvas.toDataURL('image/jpeg', 0.96), 'JPEG', offsetX, offsetY, finalW, finalH, undefined, 'FAST');
       } finally {
         node.remove();
       }
@@ -125,7 +163,7 @@ async function exportProgramPdf() {
 
     const safeName = String(bim.bimestre || 'Villa_Concha').replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ -]/g, '').trim().replace(/\s+/g, '_');
     doc.save(`Vida_y_Ministerio_${safeName}.pdf`);
-    showToast('PDF descargado exitosamente', 'success');
+    showToast('PDF del programa descargado (Hoja Carta)', 'success');
   } catch (error) {
     console.error('Error generando PDF:', error);
     showToast(`Error al generar PDF: ${error.message || error}`, 'error');

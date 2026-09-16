@@ -166,8 +166,6 @@ async function boot() {
     const prog = await apiLoadPrograma(currentBimestre);
     if (prog) {
       PROGRAM = prog;
-    } else if (typeof DEFAULT_PROGRAM !== 'undefined' && Array.isArray(DEFAULT_PROGRAM)) {
-      PROGRAM = DEFAULT_PROGRAM[0];
     }
 
     // Abrir la primera semana por defecto
