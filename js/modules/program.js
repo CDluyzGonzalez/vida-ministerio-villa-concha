@@ -64,8 +64,8 @@ function parseWeekDateRange(weekLabel, year) {
   const str = weekLabel.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   const y = year || new Date().getFullYear();
 
-  // Caso 1: Rango entre dos meses (ej. "31 de agosto a 6 de septiembre" o "26 de octubre a 1 de noviembre")
-  const matchRangoMeses = str.match(/(\d{1,2})\s+de\s+([a-z]+)\s+a\s+(\d{1,2})\s+de\s+([a-z]+)/i);
+  // Caso 1: Rango entre dos meses (ej. "31 de agosto a 6 de septiembre" o "28 de diciembre de 2026 a 3 de enero de 2027")
+  const matchRangoMeses = str.match(/(\d{1,2})\s+de\s+([a-z]+)(?:\s+de\s+\d{4})?\s+a\s+(\d{1,2})\s+de\s+([a-z]+)/i);
   if (matchRangoMeses) {
     const dIni = parseInt(matchRangoMeses[1], 10);
     const mIni = MESES_MAP[matchRangoMeses[2]];
@@ -317,6 +317,7 @@ function renderProgramTab() {
         <div class="actions" style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
           <button class="btn btn-ghost btn-sm" onclick="exportProgramPdf()">⬇ Descargar PDF</button>
           <button class="btn btn-ghost btn-sm" onclick="openS89ExportModal()">📑 Asignaciones S-89 (PDF)</button>
+          <button class="btn btn-ghost btn-sm" onclick="openImportMwbModal()" style="color: var(--teal-deep); border-color: rgba(14, 116, 144, 0.4); font-weight: 600;" title="Descargar y rellenar automáticamente temas y canciones de la Guía de Actividades oficial">📥 Importar Guía Oficial</button>
           <button class="btn btn-ghost btn-sm" style="color: var(--terra-warn); border-color: rgba(181,80,46,0.35);" onclick="clearBimestreAssignmentsPrompt()" title="Vaciar las asignaciones de hermanos en este bimestre para volver a programar">🗑 Limpiar asignaciones</button>
         </div>
       </div>
@@ -1270,4 +1271,153 @@ function expandAllWeeks() {
 function collapseAllWeeks() {
   openWeeks.clear();
   render();
+}
+
+// ============================================================
+// MODAL DE IMPORTACIÓN OFICIAL (GUÍA DE ACTIVIDADES JW)
+// ============================================================
+
+function openImportMwbModal() {
+  if (!isAdmin) {
+    showToast('Solo los administradores pueden importar programas', 'warning');
+    return;
+  }
+  const existing = document.getElementById('wm-import-mwb-modal');
+  if (existing) existing.remove();
+
+  const currentYear = new Date().getFullYear();
+  const nextYear = currentYear + 1;
+
+  const modal = document.createElement('div');
+  modal.id = 'wm-import-mwb-modal';
+  modal.className = 'overlay';
+  modal.innerHTML = `
+    <div class="modal" style="max-width: 440px;">
+      <div class="modal-head">
+        <h3 style="display: flex; align-items: center; gap: 8px;">📥 Importar Guía de Actividades</h3>
+        <p>Crea el programa oficial directamente desde las publicaciones JW</p>
+      </div>
+      <div class="modal-list" style="padding: 18px 20px; display: flex; flex-direction: column; gap: 14px;">
+        <p style="font-size: 13px; color: var(--muted); margin: 0; line-height: 1.45;">
+          El sistema descargará los títulos, canciones, minutos y lecturas bíblicas oficiales del bimestre seleccionado, dejando los nombres listos para asignar.
+        </p>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div>
+            <label style="display: block; font-size: 12px; font-weight: 700; color: var(--text); margin-bottom: 4px;">Año:</label>
+            <select id="import-mwb-year" class="service-prep-select" style="width: 100%; padding: 8px 10px; font-size: 13px;">
+              <option value="${currentYear}">${currentYear}</option>
+              <option value="${nextYear}">${nextYear}</option>
+            </select>
+          </div>
+          <div>
+            <label style="display: block; font-size: 12px; font-weight: 700; color: var(--text); margin-bottom: 4px;">Bimestre:</label>
+            <select id="import-mwb-issue" class="service-prep-select" style="width: 100%; padding: 8px 10px; font-size: 13px;">
+              <option value="11">Noviembre - Diciembre</option>
+              <option value="09">Septiembre - Octubre</option>
+              <option value="07">Julio - Agosto</option>
+              <option value="05">Mayo - Junio</option>
+              <option value="03">Marzo - Abril</option>
+              <option value="01">Enero - Febrero</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="background: rgba(14, 116, 144, 0.08); border-left: 3px solid var(--teal-deep); padding: 10px 12px; border-radius: 4px; font-size: 12px; color: var(--text); line-height: 1.4;">
+          🔒 <strong>Seguridad:</strong> Conservarás todas las funciones para editar partes, cambiar canciones, añadir discursos o asignar publicadores.
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-ghost btn-sm" onclick="closeImportMwbModal()">Cancelar</button>
+        <button class="btn btn-primary btn-sm" id="btn-confirm-import-mwb" onclick="confirmImportMwb()">
+          📥 Descargar y Crear Programa
+        </button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+}
+
+function closeImportMwbModal() {
+  const modal = document.getElementById('wm-import-mwb-modal');
+  if (modal) modal.remove();
+}
+
+async function confirmImportMwb() {
+  const yearSelect = document.getElementById('import-mwb-year');
+  const issueSelect = document.getElementById('import-mwb-issue');
+  const btn = document.getElementById('btn-confirm-import-mwb');
+
+  const year = yearSelect ? yearSelect.value : new Date().getFullYear();
+  const issueMonth = issueSelect ? issueSelect.value : '11';
+
+  const issueNames = {
+    '01': 'Enero - Febrero',
+    '03': 'Marzo - Abril',
+    '05': 'Mayo - Junio',
+    '07': 'Julio - Agosto',
+    '09': 'Septiembre - Octubre',
+    '11': 'Noviembre - Diciembre'
+  };
+  const bimName = issueNames[issueMonth] || 'Bimestre';
+
+  // Verificar si ya existe en memoria y si tiene asignaciones
+  const existingProg = (PROGRAM && PROGRAM.bimestre === bimName)
+    ? PROGRAM
+    : (typeof DEFAULT_PROGRAM !== 'undefined' ? DEFAULT_PROGRAM.find(p => p.bimestre === bimName) : null);
+
+  const hasAssignments = existingProg && Array.isArray(existingProg.weeks) && existingProg.weeks.some(w =>
+    (w.items || []).some(it => Boolean(it.name || it.conductor || it.lector || (Array.isArray(it.subs) && it.subs.some(s => s.name))))
+  );
+
+  if (hasAssignments) {
+    const ok = confirm(
+      `⚠️ ATENCIÓN: El bimestre "${bimName}" ya tiene publicadores asignados.\n\n` +
+      `Si continúas, se actualizarán los temas y canciones con la publicación oficial, y las casillas de publicadores quedarán listas para reasignar.\n\n` +
+      `¿Deseas sobreescribir este bimestre?`
+    );
+    if (!ok) return;
+  }
+
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner" style="width:14px;height:14px;border-width:2px;display:inline-block;vertical-align:middle;margin-right:6px;"></span> Descargando...';
+  }
+
+  showToast(`Descargando Guía de Actividades de ${bimName} ${year}...`, 'info', 4000);
+
+  const result = await apiImportMwb(year, issueMonth, writeToken);
+
+  if (result) {
+    closeImportMwbModal();
+    PROGRAM = result;
+    currentBimestre = result.bimestre;
+
+    if (!BIMESTRES_LIST.includes(result.bimestre)) {
+      BIMESTRES_LIST = [...BIMESTRES_LIST, result.bimestre];
+    }
+
+    if (typeof DEFAULT_PROGRAM !== 'undefined' && Array.isArray(DEFAULT_PROGRAM)) {
+      const idx = DEFAULT_PROGRAM.findIndex(p => p.bimestre === result.bimestre || p.id === result.id);
+      if (idx >= 0) {
+        DEFAULT_PROGRAM[idx] = result;
+      } else {
+        DEFAULT_PROGRAM.push(result);
+      }
+    }
+
+    openWeeks.clear();
+    if (result.weeks?.[0]?.id) {
+      openWeeks.add(result.weeks[0].id);
+    }
+
+    showToast(`✓ Programa de "${result.bimestre}" importado exitosamente (${result.weeks.length} semanas)`, 'success');
+    render();
+  } else {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '📥 Descargar y Crear Programa';
+    }
+  }
 }

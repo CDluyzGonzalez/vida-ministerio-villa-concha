@@ -12,6 +12,7 @@ import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 import crypto from 'crypto';
 import { db, isConnected, localData } from './firestore.js';
+import { fetchAndParseMwbBimestre } from './mwbParser.js';
 
 dotenv.config();
 
@@ -258,6 +259,66 @@ app.put('/api/programa/:bimestreId', async (req, res) => {
   } catch (error) {
     console.error(`Error al guardar programa ${bimestreId}:`, error);
     res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
+// Importar bimestre oficial desde la Guía de Actividades (JW CDN)
+app.post('/api/programa/import-mwb', async (req, res) => {
+  const { year, issueMonth, token } = req.body;
+
+  if (token && String(token).trim().toLowerCase() !== ADMIN_PIN_HASH.trim().toLowerCase()) {
+    return res.status(401).json({ ok: false, error: 'Token no autorizado' });
+  }
+
+  if (!year || !issueMonth) {
+    return res.status(400).json({ ok: false, error: 'Año y mes de publicación requeridos (ej: year=2026, issueMonth="11")' });
+  }
+
+  try {
+    const programData = await fetchAndParseMwbBimestre(year, issueMonth);
+    const cleanId = sanitizeBimestreId(programData.id || programData.bimestre);
+
+    const dataToSave = {
+      id: cleanId,
+      bimestre: programData.bimestre,
+      weeks: programData.weeks || [],
+      actualizado_en: new Date().toISOString()
+    };
+
+    if (db) {
+      try {
+        const docRef = db.collection('programas').doc(cleanId);
+        await docRef.set(dataToSave);
+        const docRefPrefixed = db.collection('programas').doc(`${year}-${cleanId}`);
+        await docRefPrefixed.set(dataToSave);
+
+        // Asegurar que el bimestre esté registrado en la lista de bimestres
+        try {
+          await db.collection('bimestres').doc(cleanId).set({
+            id: cleanId,
+            bimestre: programData.bimestre,
+            actualizado_en: new Date().toISOString()
+          }, { merge: true });
+        } catch (_) {}
+      } catch (firestoreError) {
+        console.warn('Firestore write warning on import:', firestoreError.message);
+        return res.status(500).json({ ok: false, error: 'Error al guardar en base de datos: ' + firestoreError.message });
+      }
+    }
+
+    // Actualizar copia local en memoria
+    if (!localData.programas) localData.programas = [];
+    const idx = localData.programas.findIndex(p => p.id === cleanId || p.id === `${year}-${cleanId}` || p.bimestre === dataToSave.bimestre);
+    if (idx >= 0) {
+      localData.programas[idx] = { ...localData.programas[idx], ...dataToSave };
+    } else {
+      localData.programas.push(dataToSave);
+    }
+
+    res.json({ ok: true, message: `Bimestre ${programData.bimestre} importado correctamente`, programa: dataToSave });
+  } catch (error) {
+    console.error('Error al importar programa oficial:', error);
+    res.status(500).json({ ok: false, error: error.message || 'Error al importar publicación oficial' });
   }
 });
 

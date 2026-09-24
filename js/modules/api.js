@@ -130,6 +130,30 @@ async function apiSavePrograma(bimestreId, programData, token) {
   }
 }
 
+// 3b. Importar Programa Oficial desde Guía de Actividades (JW CDN)
+async function apiImportMwb(year, issueMonth, token) {
+  try {
+    const res = await fetch('/api/programa/import-mwb', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ year, issueMonth, token })
+    });
+
+    const data = await res.json().catch(() => ({}));
+    if (res.ok && data.ok) {
+      setApiStatus(true);
+      return data.programa;
+    } else {
+      showToast('⚠️ ' + (data?.error || `Error al importar (HTTP ${res.status})`), 'warning');
+      return null;
+    }
+  } catch (error) {
+    console.error('Error de red al importar programa oficial:', error);
+    showToast('⚠️ Error de conexión al importar programa', 'warning');
+    return null;
+  }
+}
+
 // 4. Guardar Publicador Individual
 async function apiSavePersona(personaData, token) {
   try {
