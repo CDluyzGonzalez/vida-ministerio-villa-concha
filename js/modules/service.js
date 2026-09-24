@@ -355,6 +355,7 @@ function renderServiceTab() {
   const curKey = getCurrentMonthKey();
   const prep1Key = getNextMonthKey();
   const prep2Key = getSecondNextMonthKey();
+  const prepKey = SERVICE_PREP_MONTH_KEY || prep1Key;
 
   // Si es modo lector, siempre forzar única y exclusivamente el mes vigente
   if (!isAdmin && SERVICE_SELECTED_MONTH_KEY !== curKey) {
