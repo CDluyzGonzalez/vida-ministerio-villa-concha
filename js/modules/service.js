@@ -24,21 +24,28 @@ let SERVICE_PREP_MONTH_KEY = (function() {
   return getNextMonthKey();
 })();
 
-// Obtener clave del mes actual del calendario (ej: '2026-09')
-function getCurrentMonthKey() {
+// Obtener clave de mes con desplazamiento relativo al mes actual del calendario (0 = actual, 1 = siguiente, 2 = subsiguiente)
+function getMonthKeyOffset(offset = 0) {
   const now = new Date();
-  const y = now.getFullYear();
-  const m = String(now.getMonth() + 1).padStart(2, '0');
+  const target = new Date(now.getFullYear(), now.getMonth() + offset, 1);
+  const y = target.getFullYear();
+  const m = String(target.getMonth() + 1).padStart(2, '0');
   return `${y}-${m}`;
 }
 
-// Obtener clave del mes siguiente del calendario (ej: '2026-10')
+// Obtener clave del mes actual del calendario (ej: '2026-09')
+function getCurrentMonthKey() {
+  return getMonthKeyOffset(0);
+}
+
+// Obtener clave del primer mes en preparación (ej: '2026-10')
 function getNextMonthKey() {
-  const now = new Date();
-  const next = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-  const y = next.getFullYear();
-  const m = String(next.getMonth() + 1).padStart(2, '0');
-  return `${y}-${m}`;
+  return getMonthKeyOffset(1);
+}
+
+// Obtener clave del segundo mes en preparación (ej: '2026-11')
+function getSecondNextMonthKey() {
+  return getMonthKeyOffset(2);
 }
 
 // Obtener nombre formateado del mes (ej: 'Septiembre 2026')
@@ -284,9 +291,21 @@ async function loadSalidasData(monthKey) {
   }
 }
 
-// Cambiar mes en modo admin ('current' | 'prep')
-function switchServiceAdminMonth(mode) {
-  const targetKey = (mode === 'prep') ? (SERVICE_PREP_MONTH_KEY || getNextMonthKey()) : getCurrentMonthKey();
+// Cambiar mes en modo admin ('current' | 'prep1' | 'prep2' o clave directa)
+function switchServiceAdminMonth(modeOrKey) {
+  let targetKey;
+  if (modeOrKey === 'current') {
+    targetKey = getCurrentMonthKey();
+  } else if (modeOrKey === 'prep' || modeOrKey === 'prep1') {
+    targetKey = getNextMonthKey();
+  } else if (modeOrKey === 'prep2') {
+    targetKey = getSecondNextMonthKey();
+  } else if (typeof modeOrKey === 'string' && /^\d{4}-\d{2}$/.test(modeOrKey)) {
+    targetKey = modeOrKey;
+  } else {
+    targetKey = getCurrentMonthKey();
+  }
+
   if (targetKey !== SERVICE_SELECTED_MONTH_KEY) {
     loadSalidasData(targetKey);
   }
@@ -334,9 +353,10 @@ async function ajustarFechasCalendarioActual() {
 
 function renderServiceTab() {
   const curKey = getCurrentMonthKey();
-  const prepKey = SERVICE_PREP_MONTH_KEY || getNextMonthKey();
+  const prep1Key = getNextMonthKey();
+  const prep2Key = getSecondNextMonthKey();
 
-  // Si es modo lector, siempre forzar mes vigente
+  // Si es modo lector, siempre forzar única y exclusivamente el mes vigente
   if (!isAdmin && SERVICE_SELECTED_MONTH_KEY !== curKey) {
     SERVICE_SELECTED_MONTH_KEY = curKey;
   } else if (!SERVICE_SELECTED_MONTH_KEY) {
@@ -344,6 +364,8 @@ function renderServiceTab() {
   }
 
   const isCurrentMonth = SERVICE_SELECTED_MONTH_KEY === curKey;
+  const isPrep1 = SERVICE_SELECTED_MONTH_KEY === prep1Key;
+  const isPrep2 = SERVICE_SELECTED_MONTH_KEY === prep2Key;
   const salidas = CURRENT_SALIDAS;
 
   if (isServiceLoading || !salidas) {
@@ -382,8 +404,12 @@ function renderServiceTab() {
               <h2>${escapeHtml(salidas.titulo || `HORARIOS DE PREDICACIÓN ${getMonthLabelFromKey(SERVICE_SELECTED_MONTH_KEY).toUpperCase()}`)}</h2>
               ${isCurrentMonth ? `
                 <span class="service-badge service-badge-live">Mes Vigente</span>
+              ` : isPrep1 ? `
+                <span class="service-badge service-badge-draft">En Preparación 1 (Borrador)</span>
+              ` : isPrep2 ? `
+                <span class="service-badge service-badge-draft">En Preparación 2 (Borrador)</span>
               ` : `
-                <span class="service-badge service-badge-draft">En Preparación (Borrador)</span>
+                <span class="service-badge service-badge-draft">Borrador</span>
               `}
             </div>
             <p class="service-subtitle">
@@ -412,20 +438,27 @@ function renderServiceTab() {
                 📍 Administrar Lugares
               </button>
 
-              <div class="service-month-switcher">
+              <div class="service-month-switcher" style="display: flex; gap: 6px; flex-wrap: wrap;">
                 <button
                   class="service-switcher-btn ${isCurrentMonth ? 'active' : ''}"
                   onclick="switchServiceAdminMonth('current')"
-                  title="Ver mes vigente"
+                  title="Ver mes vigente del calendario"
                 >
                   ${escapeHtml(getMonthLabelFromKey(curKey))} (Vigente)
                 </button>
                 <button
-                  class="service-switcher-btn ${!isCurrentMonth ? 'active' : ''}"
-                  onclick="switchServiceAdminMonth('prep')"
-                  title="Ver mes en preparación"
+                  class="service-switcher-btn ${isPrep1 ? 'active' : ''}"
+                  onclick="switchServiceAdminMonth('prep1')"
+                  title="Ver primer mes en preparación"
                 >
-                  ${escapeHtml(getMonthLabelFromKey(prepKey))} (En preparación ✎)
+                  ${escapeHtml(getMonthLabelFromKey(prep1Key))} (En preparación 1 ✎)
+                </button>
+                <button
+                  class="service-switcher-btn ${isPrep2 ? 'active' : ''}"
+                  onclick="switchServiceAdminMonth('prep2')"
+                  title="Ver segundo mes en preparación"
+                >
+                  ${escapeHtml(getMonthLabelFromKey(prep2Key))} (En preparación 2 ✎)
                 </button>
               </div>
 
