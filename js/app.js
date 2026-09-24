@@ -16,7 +16,9 @@ let BIMESTRES_LIST = [
   'Noviembre - Diciembre'
 ];
 let currentTab = 'programa'; // 'programa' | 'salidas' | 'publicadores' | 'dashboard'
-let currentBimestre = 'Septiembre - Octubre';
+let currentBimestre = (typeof getActiveBimestreForDate === 'function')
+  ? getActiveBimestreForDate(new Date(), BIMESTRES_LIST)
+  : 'Septiembre - Octubre';
 let openWeeks = new Set();
 let peopleSearch = '';
 let isAdmin = false;
@@ -162,21 +164,48 @@ async function boot() {
     // 2. Cargar Publicadores
     PEOPLE = await apiLoadPersonas();
 
-    // 3. Cargar Programa del Bimestre Inicial (el más reciente)
+    // 3. Determinar Bimestre Inicial automáticamente según la fecha actual
+    if (typeof getActiveBimestreForDate === 'function') {
+      currentBimestre = getActiveBimestreForDate(new Date(), BIMESTRES_LIST);
+    }
+
+    // 4. Cargar Programa del Bimestre Inicial
     const prog = await apiLoadPrograma(currentBimestre);
     if (prog) {
       PROGRAM = prog;
     }
 
-    // Abrir la primera semana por defecto
-    if (PROGRAM?.weeks?.[0]?.id) {
-      openWeeks.add(PROGRAM.weeks[0].id);
+    // 5. Determinar y abrir la semana actual de forma inteligente
+    openWeeks.clear();
+    let targetWeekId = null;
+    if (typeof findActiveWeekId === 'function') {
+      targetWeekId = findActiveWeekId(PROGRAM?.weeks, new Date());
+    }
+    if (targetWeekId) {
+      openWeeks.add(targetWeekId);
+    } else if (PROGRAM?.weeks?.[0]?.id) {
+      targetWeekId = PROGRAM.weeks[0].id;
+      openWeeks.add(targetWeekId);
     }
 
-    // 4. Cargar datos de Salidas al Servicio en segundo plano para disponibilidad instantánea
+    // 6. Cargar datos de Salidas al Servicio en segundo plano para disponibilidad instantánea
     if (typeof loadSalidasData === 'function') {
       loadSalidasData();
     }
+
+    // 7. Renderizar vista con la semana actual abierta
+    render();
+
+    // 8. Enfocar la pantalla suavemente en la semana activa
+    if (targetWeekId) {
+      setTimeout(() => {
+        const weekEl = document.getElementById(`week-${targetWeekId}`);
+        if (weekEl) {
+          weekEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 350);
+    }
+    return;
   } catch (error) {
     console.warn('Error durante el arranque:', error);
   }

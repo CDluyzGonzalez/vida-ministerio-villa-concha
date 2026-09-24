@@ -58,6 +58,101 @@ function parseWeekEndDate(weekLabel, year) {
   return null;
 }
 
+// Obtener el rango completo de fechas (inicio y fin) de una semana
+function parseWeekDateRange(weekLabel, year) {
+  if (!weekLabel) return null;
+  const str = weekLabel.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  const y = year || new Date().getFullYear();
+
+  // Caso 1: Rango entre dos meses (ej. "31 de agosto a 6 de septiembre" o "26 de octubre a 1 de noviembre")
+  const matchRangoMeses = str.match(/(\d{1,2})\s+de\s+([a-z]+)\s+a\s+(\d{1,2})\s+de\s+([a-z]+)/i);
+  if (matchRangoMeses) {
+    const dIni = parseInt(matchRangoMeses[1], 10);
+    const mIni = MESES_MAP[matchRangoMeses[2]];
+    const dFin = parseInt(matchRangoMeses[3], 10);
+    const mFin = MESES_MAP[matchRangoMeses[4]];
+    if (mIni && mFin && !isNaN(dIni) && !isNaN(dFin)) {
+      const yFin = (mIni === 12 && mFin === 1) ? y + 1 : y;
+      return {
+        start: new Date(y, mIni - 1, dIni, 0, 0, 0, 0),
+        end: new Date(yFin, mFin - 1, dFin, 23, 59, 59, 999)
+      };
+    }
+  }
+
+  // Caso 2: Rango dentro del mismo mes con guión o palabra "al" (ej. "Semana 2-8 De Marzo", "2 al 8 de noviembre")
+  const matchRangoMismoMes = str.match(/(\d{1,2})\s*(?:al|[-–])\s*(\d{1,2})\s+de\s+([a-z]+)/i);
+  if (matchRangoMismoMes) {
+    const dIni = parseInt(matchRangoMismoMes[1], 10);
+    const dFin = parseInt(matchRangoMismoMes[2], 10);
+    const mFin = MESES_MAP[matchRangoMismoMes[3]];
+    if (mFin && !isNaN(dIni) && !isNaN(dFin)) {
+      return {
+        start: new Date(y, mFin - 1, dIni, 0, 0, 0, 0),
+        end: new Date(y, mFin - 1, dFin, 23, 59, 59, 999)
+      };
+    }
+  }
+
+  // Caso 3: Fallback usando parseWeekEndDate
+  const end = parseWeekEndDate(weekLabel, y);
+  if (end) {
+    const start = new Date(end.getTime() - 6 * 24 * 60 * 60 * 1000);
+    start.setHours(0, 0, 0, 0);
+    return { start, end };
+  }
+
+  return null;
+}
+
+// Encontrar el ID de la semana en curso (o la próxima si estamos en transición)
+function findActiveWeekId(weeks, targetDate) {
+  if (!Array.isArray(weeks) || weeks.length === 0) return null;
+  const now = targetDate || new Date();
+  const currentYear = now.getFullYear();
+
+  // 1. Buscar coincidencia exacta: now >= start && now <= end
+  for (const w of weeks) {
+    const range = parseWeekDateRange(w.semana, currentYear);
+    if (range && now >= range.start && now <= range.end) {
+      return w.id;
+    }
+  }
+
+  // 2. Si no cayó dentro de ninguna (ej. antes de iniciar la semana), buscar la primera que termine después de now
+  for (const w of weeks) {
+    const range = parseWeekDateRange(w.semana, currentYear);
+    if (range && range.end >= now) {
+      return w.id;
+    }
+  }
+
+  // 3. Fallback: última semana si ya pasaron todas, o la primera
+  return weeks[weeks.length - 1]?.id || weeks[0]?.id || null;
+}
+
+// Obtener el nombre del bimestre que corresponde a una fecha
+function getActiveBimestreForDate(date, availableBimestres) {
+  const d = date || new Date();
+  const m = d.getMonth() + 1;
+  const pairStart = (m % 2 === 1) ? m : m - 1;
+  const expectedName = BIMESTRE_MONTH_LABELS[pairStart] || 'Septiembre - Octubre';
+
+  if (Array.isArray(availableBimestres) && availableBimestres.length > 0) {
+    const match = availableBimestres.find(b => {
+      const name = typeof b === 'string' ? b : (b?.bimestre || b?.name || '');
+      return name.trim().toLowerCase() === expectedName.toLowerCase();
+    });
+    if (match) {
+      return typeof match === 'string' ? match : (match.bimestre || match.name);
+    }
+    const last = availableBimestres[availableBimestres.length - 1];
+    return typeof last === 'string' ? last : (last?.bimestre || last?.name || expectedName);
+  }
+
+  return expectedName;
+}
+
 // Obtener bimestres visibles para el publicador según la regla exacta de calendario automatizada
 function computeViewerBimestres(date) {
   const d = date || new Date();
@@ -1157,6 +1252,12 @@ async function switchBimestre(bimestreName) {
 
   PROGRAM = prog;
   openWeeks.clear();
+  const activeWkId = findActiveWeekId(PROGRAM?.weeks, new Date());
+  if (activeWkId) {
+    openWeeks.add(activeWkId);
+  } else if (PROGRAM?.weeks?.[0]?.id) {
+    openWeeks.add(PROGRAM.weeks[0].id);
+  }
   render();
 }
 
