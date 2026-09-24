@@ -316,6 +316,7 @@ function renderProgramTab() {
 
         <div class="actions" style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
           <button class="btn btn-ghost btn-sm" onclick="exportProgramPdf()">⬇ Descargar PDF</button>
+          <button class="btn btn-ghost btn-sm" onclick="openS89ExportModal()">📑 Asignaciones S-89 (PDF)</button>
           <button class="btn btn-ghost btn-sm" style="color: var(--terra-warn); border-color: rgba(181,80,46,0.35);" onclick="clearBimestreAssignmentsPrompt()" title="Vaciar las asignaciones de hermanos en este bimestre para volver a programar">🗑 Limpiar asignaciones</button>
         </div>
       </div>

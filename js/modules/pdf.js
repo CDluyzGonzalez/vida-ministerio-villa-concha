@@ -477,3 +477,349 @@ async function exportSalidasPdf() {
     node.remove();
   }
 }
+
+// ============================================================
+// GENERADOR Y EXPORTADOR DE ASIGNACIONES ESTUDIANTILES S-89
+// Formato: 6 asignaciones por Hoja Carta (2 columnas x 3 filas)
+// ============================================================
+
+// Extraer asignaciones de estudiantes de un bimestre o semana
+function getStudentAssignmentsFromProgram(bimester, filterWeekId = null, onlyAssigned = true) {
+  if (!bimester || !Array.isArray(bimester.weeks)) return [];
+  const assignments = [];
+
+  const targetWeeks = filterWeekId
+    ? bimester.weeks.filter(w => w.id === filterWeekId)
+    : bimester.weeks;
+
+  targetWeeks.forEach(w => {
+    (w.items || []).forEach(it => {
+      // 1. Lectura de la Biblia (Tesoros, num 3)
+      if (it.section === 'TESOROS' && (it.num === 3 || /lectura de la biblia/i.test(it.label || ''))) {
+        const studentName = (it.name || '').trim();
+        const isAssigned = Boolean(studentName && studentName.toLowerCase() !== 'sin asignar');
+
+        if (!onlyAssigned || isAssigned) {
+          assignments.push({
+            nombre: isAssigned ? studentName : '',
+            ayudante: '',
+            fecha: w.semana || '',
+            intervencionNum: it.num || 3,
+            tituloParte: it.label || 'Lectura de la Biblia'
+          });
+        }
+      }
+
+      // 2. Seamos Mejores Maestros (todas las partes)
+      if (it.section === 'MAESTROS') {
+        let studentName = '';
+        let ayudanteName = '';
+
+        if (Array.isArray(it.subs) && it.subs.length > 0) {
+          const sNombre = it.subs.find(s => (s.role || '').toLowerCase() === 'nombre');
+          const sAyudante = it.subs.find(s => (s.role || '').toLowerCase() === 'ayudante');
+          studentName = (sNombre?.name || '').trim();
+          ayudanteName = (sAyudante?.name || '').trim();
+        } else {
+          studentName = (it.name || '').trim();
+        }
+
+        const isAssigned = Boolean(studentName && studentName.toLowerCase() !== 'sin asignar');
+
+        if (!onlyAssigned || isAssigned) {
+          assignments.push({
+            nombre: isAssigned ? studentName : '',
+            ayudante: (ayudanteName && ayudanteName.toLowerCase() !== 'sin asignar') ? ayudanteName : '',
+            fecha: w.semana || '',
+            intervencionNum: it.num || '',
+            tituloParte: it.label || ''
+          });
+        }
+      }
+    });
+  });
+
+  return assignments;
+}
+
+// Abrir modal de configuración para descargar S-89
+function openS89ExportModal() {
+  const existing = document.getElementById('wm-s89-modal');
+  if (existing) existing.remove();
+
+  const bim = PROGRAM;
+  if (!bim || !Array.isArray(bim.weeks) || bim.weeks.length === 0) {
+    showToast('No hay datos en el programa para generar asignaciones S-89', 'warning');
+    return;
+  }
+
+  const bimName = bim.bimestre || currentBimestre || 'Bimestre';
+  const totalBimestreAssigned = getStudentAssignmentsFromProgram(bim, null, true).length;
+
+  // Determinar semana activa si hay alguna abierta
+  let activeWeek = null;
+  if (openWeeks && openWeeks.size > 0) {
+    const firstOpenId = Array.from(openWeeks)[0];
+    activeWeek = bim.weeks.find(w => w.id === firstOpenId);
+  }
+  if (!activeWeek && typeof findActiveWeekId === 'function') {
+    const actId = findActiveWeekId(bim.weeks, new Date());
+    activeWeek = bim.weeks.find(w => w.id === actId);
+  }
+  if (!activeWeek) activeWeek = bim.weeks[0];
+
+  const totalSemanaAssigned = activeWeek ? getStudentAssignmentsFromProgram(bim, activeWeek.id, true).length : 0;
+
+  const modal = document.createElement('div');
+  modal.id = 'wm-s89-modal';
+  modal.className = 'overlay';
+  modal.innerHTML = `
+    <div class="modal" style="max-width: 440px;">
+      <div class="modal-head">
+        <h3 style="display:flex; align-items:center; gap:8px;">📑 Asignaciones S-89</h3>
+        <p>Formulario oficial (6 por hoja carta para recortar)</p>
+      </div>
+      <div class="modal-list" style="padding: 18px 20px; display: flex; flex-direction: column; gap: 16px;">
+        
+        <div>
+          <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 8px; color: var(--text);">
+            ¿Qué semanas deseas incluir?
+          </label>
+          <div style="display: flex; flex-direction: column; gap: 10px;">
+            <label style="display: flex; align-items: flex-start; gap: 10px; font-size: 13px; cursor: pointer;">
+              <input type="radio" name="s89-scope" value="bimestre" checked style="margin-top: 2px;" />
+              <div>
+                <strong>Todo el bimestre: ${escapeHtml(bimName)}</strong>
+                <div style="font-size: 12px; color: var(--muted);">${totalBimestreAssigned} asignaciones listas</div>
+              </div>
+            </label>
+            ${activeWeek ? `
+              <label style="display: flex; align-items: flex-start; gap: 10px; font-size: 13px; cursor: pointer;">
+                <input type="radio" name="s89-scope" value="week" style="margin-top: 2px;" />
+                <div>
+                  <strong>Solo esta semana: ${escapeHtml(activeWeek.semana)}</strong>
+                  <div style="font-size: 12px; color: var(--muted);">${totalSemanaAssigned} asignaciones listas</div>
+                </div>
+              </label>
+            ` : ''}
+          </div>
+        </div>
+
+        <div style="border-top: 1px solid var(--line); padding-top: 14px;">
+          <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer;">
+            <input type="checkbox" id="s89-only-assigned" checked />
+            <span>Solo boletas con estudiante asignado <span style="color: var(--muted); font-size: 11px;">(recomendado)</span></span>
+          </label>
+        </div>
+
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-ghost btn-sm" onclick="closeS89ExportModal()">Cancelar</button>
+        <button class="btn btn-primary btn-sm" onclick="confirmGenerateS89Pdf('${activeWeek ? activeWeek.id : ''}')">
+          ⬇ Descargar PDF
+        </button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+}
+
+function closeS89ExportModal() {
+  const modal = document.getElementById('wm-s89-modal');
+  if (modal) modal.remove();
+}
+
+async function confirmGenerateS89Pdf(activeWeekId) {
+  const modal = document.getElementById('wm-s89-modal');
+  const scopeRadio = modal ? modal.querySelector('input[name="s89-scope"]:checked') : null;
+  const onlyAssignedCb = document.getElementById('s89-only-assigned');
+
+  const scope = scopeRadio ? scopeRadio.value : 'bimestre';
+  const onlyAssigned = onlyAssignedCb ? onlyAssignedCb.checked : true;
+  const filterWeekId = (scope === 'week') ? activeWeekId : null;
+
+  closeS89ExportModal();
+  await executeS89PdfExport(filterWeekId, onlyAssigned);
+}
+
+async function executeS89PdfExport(filterWeekId, onlyAssigned) {
+  const jsPdfLib = window.jspdf?.jsPDF || window.jsPDF;
+  if (!jsPdfLib) {
+    showToast('Librería jsPDF no disponible. Recarga la app con internet.', 'error');
+    return;
+  }
+
+  const bim = PROGRAM;
+  if (!bim || !Array.isArray(bim.weeks)) {
+    showToast('No hay datos disponibles en el programa.', 'error');
+    return;
+  }
+
+  const assignments = getStudentAssignmentsFromProgram(bim, filterWeekId, onlyAssigned);
+  if (assignments.length === 0) {
+    showToast('No se encontraron asignaciones con los criterios seleccionados.', 'warning');
+    return;
+  }
+
+  showToast(`Generando PDF con ${assignments.length} asignaciones S-89...`, 'info', 2500);
+
+  try {
+    const doc = new jsPdfLib({
+      orientation: 'p',
+      unit: 'mm',
+      format: 'letter', // 215.9 mm × 279.4 mm
+      compress: true
+    });
+
+    const marginX = 8;
+    const marginY = 8;
+    const slipW = 96;
+    const slipH = 84;
+    const gapX = 7.9; // 8 + 96 + 7.9 + 96 = 207.9 mm
+    const gapY = 5.7; // 8 + 84 + 5.7 + 84 + 5.7 + 84 = 267.4 mm
+
+    assignments.forEach((data, idx) => {
+      const pageIndex = Math.floor(idx / 6);
+      const slotIndex = idx % 6;
+
+      if (slotIndex === 0 && idx > 0) {
+        doc.addPage();
+      }
+
+      const col = slotIndex % 2;
+      const row = Math.floor(slotIndex / 2);
+      const x = marginX + col * (slipW + gapX);
+      const y = marginY + row * (slipH + gapY);
+
+      drawSingleS89Slip(doc, x, y, slipW, slipH, data);
+    });
+
+    const bimName = bim.bimestre || currentBimestre || 'Programa';
+    const cleanName = String(bimName).replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ -]/g, '').trim().replace(/\s+/g, '_');
+    const suffix = filterWeekId ? '_Semana' : '';
+    doc.save(`S-89_Asignaciones_${cleanName}${suffix}.pdf`);
+
+    showToast(`PDF S-89 descargado correctamente (${assignments.length} boletas)`, 'success');
+  } catch (err) {
+    console.error('Error generando S-89 PDF:', err);
+    showToast(`Error al generar PDF: ${err.message || err}`, 'error');
+  }
+}
+
+function drawSingleS89Slip(doc, x, y, slipW, slipH, data) {
+  // 1. Borde de corte punteado tenue
+  doc.setDrawColor(185, 185, 185);
+  doc.setLineDashPattern([1.5, 1.5], 0);
+  doc.setLineWidth(0.2);
+  doc.rect(x, y, slipW, slipH);
+
+  // 2. Encabezado Oficial Centrado
+  doc.setLineDashPattern([], 0);
+  doc.setTextColor(20, 20, 20);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9.5);
+  doc.text('ASIGNACIÓN PARA LA REUNIÓN', x + slipW / 2, y + 6.5, { align: 'center' });
+  doc.text('VIDA Y MINISTERIO CRISTIANOS', x + slipW / 2, y + 10.5, { align: 'center' });
+
+  const leftX = x + 5;
+  const lineEndX = x + slipW - 5;
+
+  // 3. Campo: Nombre
+  let currY = y + 18;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8.5);
+  doc.text('Nombre:', leftX, currY);
+  const nameLabelW = doc.getTextWidth('Nombre: ');
+  doc.setDrawColor(160, 160, 160);
+  doc.setLineDashPattern([0.5, 0.8], 0);
+  doc.line(leftX + nameLabelW, currY + 0.5, lineEndX, currY + 0.5);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(15, 23, 42); // Texto oscuro nítido
+  doc.text(data.nombre || '', leftX + nameLabelW + 1.5, currY);
+  doc.setTextColor(20, 20, 20);
+
+  // 4. Campo: Ayudante
+  currY += 7;
+  doc.setFont('helvetica', 'bold');
+  doc.text('Ayudante:', leftX, currY);
+  const ayudanteLabelW = doc.getTextWidth('Ayudante: ');
+  doc.line(leftX + ayudanteLabelW, currY + 0.5, lineEndX, currY + 0.5);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(15, 23, 42);
+  doc.text(data.ayudante || '', leftX + ayudanteLabelW + 1.5, currY);
+  doc.setTextColor(20, 20, 20);
+
+  // 5. Campo: Fecha
+  currY += 7;
+  doc.setFont('helvetica', 'bold');
+  doc.text('Fecha:', leftX, currY);
+  const fechaLabelW = doc.getTextWidth('Fecha: ');
+  doc.line(leftX + fechaLabelW, currY + 0.5, lineEndX, currY + 0.5);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(15, 23, 42);
+  doc.text(data.fecha || '', leftX + fechaLabelW + 1.5, currY);
+  doc.setTextColor(20, 20, 20);
+
+  // 6. Campo: Intervención núm.
+  currY += 7;
+  doc.setFont('helvetica', 'bold');
+  doc.text('Intervención núm.:', leftX, currY);
+  const numLabelW = doc.getTextWidth('Intervención núm.: ');
+  doc.line(leftX + numLabelW, currY + 0.5, lineEndX, currY + 0.5);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(15, 23, 42);
+  doc.text(String(data.intervencionNum || ''), leftX + numLabelW + 1.5, currY);
+  doc.setTextColor(20, 20, 20);
+
+  // 7. Campo: Se presentará en:
+  currY += 7.5;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8);
+  doc.text('Se presentará en:', leftX, currY);
+
+  const drawCheckbox = (cbX, cbY, label, isChecked) => {
+    doc.setLineDashPattern([], 0);
+    doc.setDrawColor(60, 60, 60);
+    doc.setLineWidth(0.25);
+    doc.rect(cbX, cbY - 2.5, 3, 3);
+    if (isChecked) {
+      doc.setDrawColor(20, 20, 20);
+      doc.setLineWidth(0.4);
+      doc.line(cbX + 0.6, cbY - 1.0, cbX + 1.2, cbY - 0.2);
+      doc.line(cbX + 1.2, cbY - 0.2, cbX + 2.5, cbY - 1.8);
+      doc.setLineWidth(0.25);
+    }
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7.5);
+    doc.text(label, cbX + 4.5, cbY);
+  };
+
+  currY += 4.5;
+  drawCheckbox(leftX + 2, currY, 'Sala principal', true);
+  currY += 4.2;
+  drawCheckbox(leftX + 2, currY, 'Sala auxiliar núm. 1', false);
+  currY += 4.2;
+  drawCheckbox(leftX + 2, currY, 'Sala auxiliar núm. 2', false);
+
+  // 8. Nota al estudiante oficial S-89
+  currY += 5.5;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(5.8);
+  doc.text('Nota al estudiante:', leftX, currY);
+  const notaLabelW = doc.getTextWidth('Nota al estudiante: ');
+  doc.setFont('helvetica', 'normal');
+  const notaText = 'En la Guía de actividades encontrará la información que necesita para su intervención. Repase también las indicaciones que se describen en las Instrucciones para la reunión Vida y Ministerio Cristianos (S-38).';
+  const splitNota = doc.splitTextToSize(notaText, lineEndX - leftX - notaLabelW);
+  doc.text(splitNota[0] || '', leftX + notaLabelW, currY);
+  if (splitNota.length > 1) {
+    doc.text(splitNota.slice(1), leftX, currY + 2.4);
+  }
+
+  // 9. Pie de código oficial
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(5.5);
+  doc.setTextColor(110, 110, 110);
+  doc.text('S-89-S   11/23', leftX, y + slipH - 2.5);
+  doc.setTextColor(20, 20, 20);
+}
