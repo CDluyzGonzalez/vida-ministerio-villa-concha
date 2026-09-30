@@ -45,20 +45,18 @@
         content="#575a5d"
     >
 
-    <meta name="color-scheme" content="light dark">
+    <meta name="color-scheme" content="light">
 
-    <!-- Anti-FOUC: aplicar modo nocturno inmediatamente antes de renderizar si está activo -->
+    <!-- Anti-FOUC: aplicar modo seleccionado por el usuario inmediatamente antes de renderizar -->
     <script>
       (function() {
         try {
-          var saved = localStorage.getItem('wm_theme');
-          var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-          var theme = saved || (prefersDark ? 'dark' : 'light');
-          if (theme === 'dark') {
-            document.documentElement.setAttribute('data-theme', 'dark');
-            var metaTheme = document.querySelector('meta[name="theme-color"]');
-            if (metaTheme) metaTheme.setAttribute('content', '#070e11');
-          }
+          var saved = localStorage.getItem('wm_theme') || 'light';
+          document.documentElement.setAttribute('data-theme', saved);
+          var metaTheme = document.querySelector('meta[name="theme-color"]');
+          if (metaTheme) metaTheme.setAttribute('content', saved === 'dark' ? '#070e11' : '#575a5d');
+          var metaScheme = document.querySelector('meta[name="color-scheme"]');
+          if (metaScheme) metaScheme.setAttribute('content', saved);
         } catch (_) {}
       })();
     </script>
