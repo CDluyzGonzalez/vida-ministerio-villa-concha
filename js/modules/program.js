@@ -540,7 +540,7 @@ function renderItemRow(bim, w, it, idx) {
         <div class="item-label song-label" style="display:flex; align-items:center; gap:8px;">
           <span style="display:inline-flex; align-items:center; gap:8px;">
             ${songIconSvg()}
-            <span style="font-weight:600; color:#363535; white-space:nowrap;">${escapeHtml(songLabel)}</span>
+            <span class="song-title-text" style="font-weight:600; white-space:nowrap;">${escapeHtml(songLabel)}</span>
           </span>
           ${isAdmin && !pdfExportMode ? `
             <button class="edit-pencil" title="Editar cántico" onclick="editSongPrompt('${w.id}', ${idx}, '${escapeHtml(songLabel)}')">✎</button>
@@ -644,7 +644,7 @@ function renderItemRow(bim, w, it, idx) {
       <div class="item-label label-with-pencil">
         <span style="display:inline-flex; align-items:center; gap:8px;">
           ${isSongWithPrayer ? songIconSvg() : ''}
-          <span style="${isSongWithPrayer ? 'color:#363535 !important; font-weight:600 !important;' : ''}">
+          <span class="${isSongWithPrayer ? 'song-prayer-text' : ''}">
             ${escapeHtml(displayLabel)}
           </span>
         </span>
@@ -699,7 +699,7 @@ function openAssignModal(cat, currentName, onPick) {
         ${options.map(p => {
           return `
             <div class="modal-opt ${p.nombre === currentName ? 'selected' : ''}" data-name="${escapeHtml(p.nombre)}" onclick="selectAssignee('${escapeHtml(p.nombre)}')">
-              <span><strong style="color:#363535;">${escapeHtml(p.nombre)}</strong></span>
+              <span><strong style="color:var(--ink);">${escapeHtml(p.nombre)}</strong></span>
               <span class="stat">${p.genero === 'F' ? 'Hna' : 'Hno'}</span>
             </div>
           `;

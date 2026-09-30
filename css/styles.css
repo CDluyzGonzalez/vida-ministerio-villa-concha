@@ -71,8 +71,20 @@
 }
 
 [data-theme="dark"] .item-label span[style*="#363535"],
-[data-theme="dark"] .item-label span[style*="rgb(54, 53, 53)"] {
+[data-theme="dark"] .item-label span[style*="rgb(54, 53, 53)"],
+[data-theme="dark"] .song-title-text,
+[data-theme="dark"] .song-prayer-text {
   color: var(--ink) !important;
+}
+
+[data-theme="dark"] .song-icon {
+  color: var(--gold) !important;
+}
+
+[data-theme="dark"] .week-head .wk-lectura,
+[data-theme="dark"] .wk-lectura {
+  color: #cbd5e1 !important;
+  font-weight: 500;
 }
 
 [data-theme="dark"] .modal-opt strong[style*="#363535"],
@@ -425,6 +437,8 @@ body{
 .song-label{display:flex;align-items:center;gap:6px;}
 .song-icon{display:inline-flex;align-items:center;line-height:0;color:var(--gold-deep);}
 .song-icon svg{width:16px;height:16px;display:block;}
+.song-title-text,
+.song-prayer-text{font-weight:600; color:var(--ink);}
 
 .item-row{
   display:flex; justify-content:space-between; align-items:flex-start; gap:14px;
