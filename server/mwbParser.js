@@ -199,6 +199,7 @@ function parseMwbWeekHtml(html, weekIndex, year, cleanId) {
             section: 'MAESTROS',
             num: itemCounter++,
             label: fullLabel,
+            forceCat: 'discurso_maestros',
             name: ''
           });
         } else {

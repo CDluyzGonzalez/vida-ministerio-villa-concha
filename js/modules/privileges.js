@@ -7,6 +7,7 @@
 // Catálogo de los privilegios de Vida y Ministerio y Servicio
 const PRIVILEGES_CATALOG = [
   { id: 'lectura_biblia', label: 'Lectura de la Biblia (4 mins.)', section: 'TESOROS' },
+  { id: 'discurso_maestros', label: 'Discurso (Seamos Mejores Maestros)', section: 'MAESTROS' },
   { id: 'que_diria', label: '¿Qué diría?', section: 'MAESTROS' },
   { id: 'maestros', label: 'Seamos Mejores Maestros', section: 'MAESTROS' },
   { id: 'perlas', label: 'Busquemos perlas escondidas', section: 'TESOROS' },
@@ -21,6 +22,7 @@ const PRIVILEGES_CATALOG = [
 
 const CAT_LABELS = {
   lectura_biblia: 'Lectura de la Biblia (4 mins.)',
+  discurso_maestros: 'Discurso (Seamos Mejores Maestros)',
   que_diria: '¿Qué diría?',
   maestros: 'Seamos Mejores Maestros',
   perlas: 'Busquemos perlas escondidas',
@@ -39,6 +41,13 @@ function isQueDiriaAssignment(label) {
   if (!label) return false;
   const normalized = normName(label);
   return normalized.includes('que diria') || normalized.includes('que dirias');
+}
+
+// Detectar si una asignación es de tipo "Discurso" en Seamos Mejores Maestros
+function isDiscursoAssignment(label) {
+  if (!label) return false;
+  const normalized = normName(label);
+  return normalized.includes('discurso');
 }
 
 // Determinar el privilegio requerido para una parte del programa
@@ -73,6 +82,10 @@ function computeCat(it) {
     if (isQueDiriaAssignment(label)) {
       return 'que_diria';
     }
+    // Detección automática de "Discurso"
+    if (isDiscursoAssignment(label)) {
+      return 'discurso_maestros';
+    }
     return 'maestros';
   }
 
@@ -94,10 +107,16 @@ function hasPrivilege(person, privilegeId) {
 
   // Si tiene el array de privilegios normalizado (3FN / Firestore)
   if (Array.isArray(person.privilegios)) {
+    if (privilegeId === 'discurso_maestros') {
+      return person.genero === 'M' && person.privilegios.includes('discurso_maestros');
+    }
     return person.privilegios.includes(privilegeId);
   }
 
   // Compatibilidad con esquema antiguo boolean flags
+  if (privilegeId === 'discurso_maestros') {
+    return person.genero === 'M' && !!person.elig_discurso_maestros;
+  }
   if (privilegeId === 'lectura_biblia') {
     return !!(person.elig_lectura_biblia || person.elig_maestros_lectura || person.lectura_biblia);
   }

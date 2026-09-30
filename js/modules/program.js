@@ -813,6 +813,10 @@ function openEditMaestrosStructureModal(weekId, itemIdx) {
   if (!week || !week.items?.[itemIdx]) return;
   const item = week.items[itemIdx];
   const isPair = Array.isArray(item.subs);
+  const isDiscurso = item.forceCat === 'discurso_maestros' || (!isPair && (typeof isDiscursoAssignment === 'function' ? isDiscursoAssignment(item.label) : /discurso/i.test(item.label || '')));
+  let currentStructure = 'single';
+  if (isPair) currentStructure = 'pair';
+  else if (isDiscurso) currentStructure = 'discurso';
 
   const existing = document.getElementById('wm-maestros-type-modal');
   if (existing) existing.remove();
@@ -827,10 +831,11 @@ function openEditMaestrosStructureModal(weekId, itemIdx) {
         <p>${escapeHtml(item.label || '')}</p>
       </div>
       <div class="field" style="margin-top: 12px;">
-        <label style="font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #64748b;">PERSONAS QUE NECESITA</label>
+        <label style="font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #64748b;">TIPO DE ASIGNACIÓN</label>
         <select class="search-input" id="edit-maestros-structure-select" style="margin-top: 6px;">
-          <option value="single" ${!isPair ? 'selected' : ''}>Solo Nombre</option>
-          <option value="pair" ${isPair ? 'selected' : ''}>Nombre + Ayudante</option>
+          <option value="pair" ${currentStructure === 'pair' ? 'selected' : ''}>Nombre + Ayudante (Demostración)</option>
+          <option value="single" ${currentStructure === 'single' ? 'selected' : ''}>Solo Nombre (Asignación regular)</option>
+          <option value="discurso" ${currentStructure === 'discurso' ? 'selected' : ''}>Discurso de estudiante (Solo hermanos autorizados)</option>
         </select>
       </div>
       <div class="modal-foot" style="margin-top: 20px;">
@@ -849,14 +854,22 @@ function openEditMaestrosStructureModal(weekId, itemIdx) {
       const nombre = oldSubs.find(s => normName(s.role) === 'nombre')?.name || item.name || '';
       const ayudante = oldSubs.find(s => normName(s.role) === 'ayudante')?.name || '';
       delete item.name;
+      delete item.forceCat;
       item.subs = [
         { role: 'Nombre', name: nombre },
         { role: 'Ayudante', name: ayudante }
       ];
+    } else if (val === 'discurso') {
+      const oldSubs = Array.isArray(item.subs) ? item.subs : [];
+      const nombre = oldSubs.find(s => normName(s.role) === 'nombre')?.name || item.name || '';
+      delete item.subs;
+      item.name = nombre;
+      item.forceCat = 'discurso_maestros';
     } else {
       const oldSubs = Array.isArray(item.subs) ? item.subs : [];
       const nombre = oldSubs.find(s => normName(s.role) === 'nombre')?.name || item.name || '';
       delete item.subs;
+      delete item.forceCat;
       item.name = nombre;
     }
 
@@ -888,10 +901,11 @@ function openAddMaestrosAssignmentModal(weekId) {
         <p>Seamos Mejores Maestros · ${escapeHtml(week.semana || '')}</p>
       </div>
       <div class="field" style="margin-top: 12px;">
-        <label style="font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #64748b;">PERSONAS QUE NECESITA</label>
+        <label style="font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #64748b;">TIPO DE ASIGNACIÓN</label>
         <select class="search-input" id="add-maestros-type-select" style="margin-top: 6px;">
-          <option value="pair">Nombre + Ayudante</option>
-          <option value="single">Solo Nombre</option>
+          <option value="pair">Nombre + Ayudante (Demostración)</option>
+          <option value="single">Solo Nombre (Asignación regular)</option>
+          <option value="discurso">Discurso de estudiante (Solo hermanos autorizados)</option>
         </select>
       </div>
       <div class="field" style="margin-top: 14px;">
@@ -928,6 +942,9 @@ function openAddMaestrosAssignmentModal(weekId) {
         { role: 'Nombre', name: '' },
         { role: 'Ayudante', name: '' }
       ];
+    } else if (type === 'discurso') {
+      newItem.name = '';
+      newItem.forceCat = 'discurso_maestros';
     } else {
       newItem.name = '';
     }
