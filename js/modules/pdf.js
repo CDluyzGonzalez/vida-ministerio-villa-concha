@@ -49,6 +49,8 @@ async function exportProgramPdf() {
       node.style.width = '820px';
       node.style.minHeight = '1030px';
       node.style.background = '#ffffff';
+      node.setAttribute('data-theme', 'light');
+      node.style.colorScheme = 'light';
       node.style.padding = '18px 24px';
       node.style.boxSizing = 'border-box';
       node.style.fontFamily = "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";

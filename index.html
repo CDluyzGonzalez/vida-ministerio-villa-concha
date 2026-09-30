@@ -45,6 +45,24 @@
         content="#575a5d"
     >
 
+    <meta name="color-scheme" content="light dark">
+
+    <!-- Anti-FOUC: aplicar modo nocturno inmediatamente antes de renderizar si está activo -->
+    <script>
+      (function() {
+        try {
+          var saved = localStorage.getItem('wm_theme');
+          var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+          var theme = saved || (prefersDark ? 'dark' : 'light');
+          if (theme === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            var metaTheme = document.querySelector('meta[name="theme-color"]');
+            if (metaTheme) metaTheme.setAttribute('content', '#070e11');
+          }
+        } catch (_) {}
+      })();
+    </script>
+
     <meta 
         name="apple-mobile-web-app-capable"
         content="yes"

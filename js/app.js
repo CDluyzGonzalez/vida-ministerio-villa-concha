@@ -24,6 +24,40 @@ let peopleSearch = '';
 let isAdmin = false;
 let writeToken = null;
 
+// Gestión del Modo Nocturno (Dark Mode)
+let currentTheme = localStorage.getItem('wm_theme') || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+
+function applyTheme(theme) {
+  currentTheme = theme;
+  if (theme === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    const metaTheme = document.querySelector('meta[name="theme-color"]');
+    if (metaTheme) metaTheme.setAttribute('content', '#070e11');
+  } else {
+    document.documentElement.removeAttribute('data-theme');
+    const metaTheme = document.querySelector('meta[name="theme-color"]');
+    if (metaTheme) metaTheme.setAttribute('content', '#575a5d');
+  }
+  try {
+    localStorage.setItem('wm_theme', theme);
+  } catch (_) {}
+}
+
+function toggleTheme() {
+  const nextTheme = currentTheme === 'dark' ? 'light' : 'dark';
+  applyTheme(nextTheme);
+  render();
+}
+
+if (window.matchMedia) {
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+    if (!localStorage.getItem('wm_theme')) {
+      applyTheme(e.matches ? 'dark' : 'light');
+      render();
+    }
+  });
+}
+
 // ============================================================
 // RENDERIZADOR PRINCIPAL DE LA APLICACIÓN
 // ============================================================
@@ -47,6 +81,10 @@ function render() {
         </div>
 
         <div class="header-actions">
+          <button class="theme-toggle-btn" onclick="toggleTheme()" title="${currentTheme === 'dark' ? 'Activar modo día (☀️)' : 'Activar modo noche (🌙)'}" aria-label="Cambiar tema">
+            ${currentTheme === 'dark' ? '☀️' : '🌙'}
+          </button>
+
           <span class="install-app-slot">
             ${!isAppStandalone() ? `
               <button class="install-app-btn" onclick="triggerInstallPrompt()" title="Instalar vida y ministerio">
