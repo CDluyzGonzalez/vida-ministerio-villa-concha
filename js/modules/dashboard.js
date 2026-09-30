@@ -289,6 +289,14 @@ function renderDashboardTab() {
           `}
         </div>
 
+        <!-- 🔁 Repetición entre Bimestres (Maestros + Lectura) -->
+        <div id="dash-repeaters-section" class="dash-alert-box alert-repeat" style="margin-top:16px;">
+          <div class="dash-alert-header">
+            <h3>🔁 Repetición entre Bimestres: Maestros y Lectura</h3>
+          </div>
+          <p class="dash-empty-msg">⏳ Comparando con bimestre anterior...</p>
+        </div>
+
         <!-- 🔵 Publicadores Sin Asignación (actual + anterior) -->
         <div id="dash-unassigned-section" class="dash-alert-box alert-info" style="margin-top:16px;">
           <div class="dash-alert-header">
@@ -299,6 +307,52 @@ function renderDashboardTab() {
       </div>
     </div>
   `;
+}
+
+// Extraer SOLO participantes de Seamos Mejores Maestros y Lectura de la Biblia
+// Retorna Map: normName → [{ name, week, part }]
+function extractMaestrosAndLecturaParts(programData) {
+  const map = new Map();
+  if (!programData || !Array.isArray(programData.weeks)) return map;
+
+  programData.weeks.forEach((w, wIdx) => {
+    const weekLabel = w.semana || ('Semana ' + (wIdx + 1));
+
+    (w.items || []).forEach(item => {
+      const isMaestros = item.section === 'MAESTROS';
+      const isLectura = /lectura\s+de\s+la\s+biblia/i.test(item.label || '');
+
+      if (!isMaestros && !isLectura) return;
+
+      // Asignación individual (discursos, lectura)
+      if (item.name && item.name.trim()) {
+        const norm = normName(item.name);
+        if (!map.has(norm)) map.set(norm, []);
+        map.get(norm).push({
+          name: item.name.trim(),
+          week: weekLabel,
+          part: isLectura ? 'Lectura de la Biblia' : (item.label || 'Seamos Mejores Maestros')
+        });
+      }
+
+      // Sub-asignaciones (demostraciones en pareja: Nombre + Ayudante)
+      if (Array.isArray(item.subs)) {
+        item.subs.forEach(sub => {
+          if (sub.name && sub.name.trim()) {
+            const norm = normName(sub.name);
+            if (!map.has(norm)) map.set(norm, []);
+            map.get(norm).push({
+              name: sub.name.trim(),
+              week: weekLabel,
+              part: (item.label || 'Seamos Mejores Maestros') + ' (' + (sub.role || 'Ayudante') + ')'
+            });
+          }
+        });
+      }
+    });
+  });
+
+  return map;
 }
 
 // Obtener nombre del bimestre anterior
@@ -328,10 +382,10 @@ function extractUsedNorms(programData) {
   return used;
 }
 
-// Cargar bimestre anterior y actualizar sección de no-asignados
+// Cargar bimestre anterior y actualizar secciones de repetidores y no-asignados
 async function loadUnassignedWithPrevBimestre() {
   const container = document.getElementById('dash-unassigned-section');
-  if (!container) return;
+  const repeatersContainer = document.getElementById('dash-repeaters-section');
 
   const bimestreActual = PROGRAM?.bimestre || currentBimestre;
   const bimestreAnterior = getPreviousBimestre(bimestreActual);
@@ -339,13 +393,14 @@ async function loadUnassignedWithPrevBimestre() {
   // Nombres usados en el bimestre actual
   const usedCurrent = extractUsedNorms(PROGRAM);
 
-  // Nombres usados en el bimestre anterior
+  // Datos del bimestre anterior
   let usedPrev = new Set();
+  let prevProg = null;
   let prevLoaded = false;
 
   if (bimestreAnterior) {
     try {
-      const prevProg = await apiLoadPrograma(bimestreAnterior);
+      prevProg = await apiLoadPrograma(bimestreAnterior);
       if (prevProg && Array.isArray(prevProg.weeks) && prevProg.weeks.length > 0) {
         usedPrev = extractUsedNorms(prevProg);
         prevLoaded = true;
@@ -355,37 +410,102 @@ async function loadUnassignedWithPrevBimestre() {
     }
   }
 
-  // Publicadores sin asignación en NINGUNO de los dos bimestres
-  const unassigned = (PEOPLE || []).filter(person => {
-    const norm = normName(person.nombre);
-    return !usedCurrent.has(norm) && !usedPrev.has(norm);
-  });
+  // ─── 🔁 Repetidores en Maestros y Lectura ───
+  if (repeatersContainer) {
+    if (!prevLoaded || !prevProg) {
+      repeatersContainer.innerHTML = `
+        <div class="dash-alert-header">
+          <h3>🔁 Repetición entre Bimestres: Maestros y Lectura</h3>
+        </div>
+        <p class="dash-empty-msg">ℹ️ No hay bimestre anterior disponible para comparar.</p>
+      `;
+    } else {
+      const prevMaestros = extractMaestrosAndLecturaParts(prevProg);
+      const currMaestros = extractMaestrosAndLecturaParts(PROGRAM);
 
-  // Subtítulo descriptivo
-  const subtitle = bimestreAnterior && prevLoaded
-    ? `Sin asignación en <strong>${escapeHtml(bimestreAnterior)}</strong> ni en <strong>${escapeHtml(bimestreActual)}</strong>`
-    : `Sin asignación en <strong>${escapeHtml(bimestreActual)}</strong>`;
+      const repeaters = [];
+      currMaestros.forEach((currParts, norm) => {
+        if (prevMaestros.has(norm)) {
+          const prevParts = prevMaestros.get(norm);
+          const personObj = (PEOPLE || []).find(p => normName(p.nombre) === norm);
+          repeaters.push({
+            nombre: currParts[0].name,
+            genero: personObj ? (personObj.genero || 'M') : 'M',
+            anterior: prevParts,
+            actual: currParts
+          });
+        }
+      });
 
-  // Actualizar métricas
-  const metricCard = document.querySelector('.dash-metric-card:nth-child(4) .dash-metric-val');
-  if (metricCard) metricCard.textContent = unassigned.length;
+      // Ordenar por nombre
+      repeaters.sort((a, b) => a.nombre.localeCompare(b.nombre));
 
-  container.innerHTML = `
-    <div class="dash-alert-header">
-      <h3>🔵 Publicadores Sin Asignación (${unassigned.length})</h3>
-    </div>
-    <p style="font-size:12.5px; color:#64748b; margin:4px 16px 8px;">${subtitle}</p>
-    ${unassigned.length === 0 ? `
-      <p class="dash-empty-msg">✅ Todos los publicadores tienen al menos una parte en los últimos 2 bimestres.</p>
-    ` : `
-      <div class="dash-chips-grid">
-        ${unassigned.map(p => `
-          <div class="dash-chip">
-            <span>${escapeHtml(p.nombre)}</span>
-            <small style="color:#64748b;">${p.genero === 'F' ? 'Hna' : 'Hno'}</small>
-          </div>
-        `).join('')}
+      const repeatSubtitle = `Publicadores asignados en <strong>Seamos Mejores Maestros</strong> o <strong>Lectura de la Biblia</strong> tanto en <strong>${escapeHtml(bimestreAnterior)}</strong> como en <strong>${escapeHtml(bimestreActual)}</strong>`;
+
+      repeatersContainer.innerHTML = `
+        <div class="dash-alert-header">
+          <h3>🔁 Repetición entre Bimestres: Maestros y Lectura (${repeaters.length})</h3>
+        </div>
+        <p style="font-size:12.5px; color:var(--muted); margin:4px 16px 8px;">${repeatSubtitle}</p>
+        ${repeaters.length === 0 ? `
+          <p class="dash-empty-msg">✅ Ningún publicador repite asignación en Seamos Mejores Maestros ni Lectura de la Biblia respecto al bimestre anterior.</p>
+        ` : `
+          <ul class="dash-alert-list">
+            ${repeaters.map(r => `
+              <li>
+                <strong>${escapeHtml(r.nombre)}</strong> <small style="color:var(--muted);">${r.genero === 'F' ? 'Hna' : 'Hno'}</small>
+                <div class="dash-parts-sub" style="flex-direction:column; gap:4px; margin-top:6px;">
+                  <span style="font-size:11.5px;">
+                    <strong style="color:var(--gold-deep);">${escapeHtml(bimestreAnterior)}:</strong>
+                    ${r.anterior.map(p => `📅 ${escapeHtml(p.week)} — <em>${escapeHtml(p.part)}</em>`).join(' · ')}
+                  </span>
+                  <span style="font-size:11.5px;">
+                    <strong style="color:var(--teal-deep);">${escapeHtml(bimestreActual)}:</strong>
+                    ${r.actual.map(p => `📅 ${escapeHtml(p.week)} — <em>${escapeHtml(p.part)}</em>`).join(' · ')}
+                  </span>
+                </div>
+              </li>
+            `).join('')}
+          </ul>
+        `}
+      `;
+    }
+  }
+
+  // ─── 🔵 Publicadores sin asignación ───
+  if (container) {
+    // Publicadores sin asignación en NINGUNO de los dos bimestres
+    const unassigned = (PEOPLE || []).filter(person => {
+      const norm = normName(person.nombre);
+      return !usedCurrent.has(norm) && !usedPrev.has(norm);
+    });
+
+    // Subtítulo descriptivo
+    const subtitle = bimestreAnterior && prevLoaded
+      ? `Sin asignación en <strong>${escapeHtml(bimestreAnterior)}</strong> ni en <strong>${escapeHtml(bimestreActual)}</strong>`
+      : `Sin asignación en <strong>${escapeHtml(bimestreActual)}</strong>`;
+
+    // Actualizar métricas
+    const metricCard = document.querySelector('.dash-metric-card:nth-child(4) .dash-metric-val');
+    if (metricCard) metricCard.textContent = unassigned.length;
+
+    container.innerHTML = `
+      <div class="dash-alert-header">
+        <h3>🔵 Publicadores Sin Asignación (${unassigned.length})</h3>
       </div>
-    `}
-  `;
+      <p style="font-size:12.5px; color:var(--muted); margin:4px 16px 8px;">${subtitle}</p>
+      ${unassigned.length === 0 ? `
+        <p class="dash-empty-msg">✅ Todos los publicadores tienen al menos una parte en los últimos 2 bimestres.</p>
+      ` : `
+        <div class="dash-chips-grid">
+          ${unassigned.map(p => `
+            <div class="dash-chip">
+              <span>${escapeHtml(p.nombre)}</span>
+              <small style="color:var(--muted);">${p.genero === 'F' ? 'Hna' : 'Hno'}</small>
+            </div>
+          `).join('')}
+        </div>
+      `}
+    `;
+  }
 }
