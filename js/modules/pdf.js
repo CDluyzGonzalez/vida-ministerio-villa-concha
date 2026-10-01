@@ -482,7 +482,7 @@ async function exportSalidasPdf() {
 
 // ============================================================
 // GENERADOR Y EXPORTADOR DE ASIGNACIONES ESTUDIANTILES S-89
-// Formato: 6 asignaciones por Hoja Carta (2 columnas x 3 filas)
+// Formato: 9 asignaciones por Hoja Carta (3 columnas x 3 filas)
 // ============================================================
 
 // Extraer asignaciones de estudiantes de un bimestre o semana
@@ -579,7 +579,7 @@ function openS89ExportModal() {
     <div class="modal" style="max-width: 440px;">
       <div class="modal-head">
         <h3 style="display:flex; align-items:center; gap:8px;">📑 Asignaciones S-89</h3>
-        <p>Formulario oficial (6 por hoja carta para recortar)</p>
+        <p>Formulario oficial (9 por hoja carta para recortar)</p>
       </div>
       <div class="modal-list" style="padding: 18px 20px; display: flex; flex-direction: column; gap: 16px;">
         
@@ -664,33 +664,34 @@ async function executeS89PdfExport(filterWeekId, onlyAssigned) {
     return;
   }
 
-  showToast(`Generando PDF con ${assignments.length} asignaciones S-89...`, 'info', 2500);
+  showToast(`Generando PDF con ${assignments.length} asignaciones S-89 (9 por hoja)...`, 'info', 2500);
 
   try {
     const doc = new jsPdfLib({
       orientation: 'p',
       unit: 'mm',
-      format: 'letter', // 215.9 mm × 279.4 mm
+      format: 'letter', // 215.9 mm × 279.4 mm (Hoja Carta)
       compress: true
     });
 
-    const marginX = 8;
-    const marginY = 8;
-    const slipW = 96;
-    const slipH = 84;
-    const gapX = 7.9; // 8 + 96 + 7.9 + 96 = 207.9 mm
-    const gapY = 5.7; // 8 + 84 + 5.7 + 84 + 5.7 + 84 = 267.4 mm
+    // Cuadrícula 3x3 = 9 boletas por hoja carta
+    const slipW = 66;
+    const slipH = 86;
+    const gapX = 4;
+    const gapY = 4;
+    const marginX = (215.9 - (3 * slipW + 2 * gapX)) / 2; // 4.95 mm
+    const marginY = (279.4 - (3 * slipH + 2 * gapY)) / 2; // 6.70 mm
 
     assignments.forEach((data, idx) => {
-      const pageIndex = Math.floor(idx / 6);
-      const slotIndex = idx % 6;
+      const pageIndex = Math.floor(idx / 9);
+      const slotIndex = idx % 9;
 
       if (slotIndex === 0 && idx > 0) {
         doc.addPage();
       }
 
-      const col = slotIndex % 2;
-      const row = Math.floor(slotIndex / 2);
+      const col = slotIndex % 3;
+      const row = Math.floor(slotIndex / 3);
       const x = marginX + col * (slipW + gapX);
       const y = marginY + row * (slipH + gapY);
 
@@ -702,7 +703,7 @@ async function executeS89PdfExport(filterWeekId, onlyAssigned) {
     const suffix = filterWeekId ? '_Semana' : '';
     doc.save(`S-89_Asignaciones_${cleanName}${suffix}.pdf`);
 
-    showToast(`PDF S-89 descargado correctamente (${assignments.length} boletas)`, 'success');
+    showToast(`PDF S-89 descargado correctamente (${assignments.length} boletas, 9 por hoja)`, 'success');
   } catch (err) {
     console.error('Error generando S-89 PDF:', err);
     showToast(`Error al generar PDF: ${err.message || err}`, 'error');
@@ -720,94 +721,94 @@ function drawSingleS89Slip(doc, x, y, slipW, slipH, data) {
   doc.setLineDashPattern([], 0);
   doc.setTextColor(20, 20, 20);
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(9.5);
-  doc.text('ASIGNACIÓN PARA LA REUNIÓN', x + slipW / 2, y + 6.5, { align: 'center' });
-  doc.text('VIDA Y MINISTERIO CRISTIANOS', x + slipW / 2, y + 10.5, { align: 'center' });
+  doc.setFontSize(7.5);
+  doc.text('ASIGNACIÓN PARA LA REUNIÓN', x + slipW / 2, y + 5.5, { align: 'center' });
+  doc.text('VIDA Y MINISTERIO CRISTIANOS', x + slipW / 2, y + 9.0, { align: 'center' });
 
-  const leftX = x + 5;
-  const lineEndX = x + slipW - 5;
+  const leftX = x + 3.5;
+  const lineEndX = x + slipW - 3.5;
 
   // 3. Campo: Nombre
-  let currY = y + 18;
+  let currY = y + 16;
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(8.5);
+  doc.setFontSize(7.5);
   doc.text('Nombre:', leftX, currY);
   const nameLabelW = doc.getTextWidth('Nombre: ');
   doc.setDrawColor(160, 160, 160);
   doc.setLineDashPattern([0.5, 0.8], 0);
-  doc.line(leftX + nameLabelW, currY + 0.5, lineEndX, currY + 0.5);
+  doc.line(leftX + nameLabelW, currY + 0.4, lineEndX, currY + 0.4);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(15, 23, 42); // Texto oscuro nítido
-  doc.text(data.nombre || '', leftX + nameLabelW + 1.5, currY);
+  doc.text(data.nombre || '', leftX + nameLabelW + 1.2, currY);
   doc.setTextColor(20, 20, 20);
 
   // 4. Campo: Ayudante
-  currY += 7;
+  currY += 6.5;
   doc.setFont('helvetica', 'bold');
   doc.text('Ayudante:', leftX, currY);
   const ayudanteLabelW = doc.getTextWidth('Ayudante: ');
-  doc.line(leftX + ayudanteLabelW, currY + 0.5, lineEndX, currY + 0.5);
+  doc.line(leftX + ayudanteLabelW, currY + 0.4, lineEndX, currY + 0.4);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(15, 23, 42);
-  doc.text(data.ayudante || '', leftX + ayudanteLabelW + 1.5, currY);
+  doc.text(data.ayudante || '', leftX + ayudanteLabelW + 1.2, currY);
   doc.setTextColor(20, 20, 20);
 
   // 5. Campo: Fecha
-  currY += 7;
+  currY += 6.5;
   doc.setFont('helvetica', 'bold');
   doc.text('Fecha:', leftX, currY);
   const fechaLabelW = doc.getTextWidth('Fecha: ');
-  doc.line(leftX + fechaLabelW, currY + 0.5, lineEndX, currY + 0.5);
+  doc.line(leftX + fechaLabelW, currY + 0.4, lineEndX, currY + 0.4);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(15, 23, 42);
-  doc.text(data.fecha || '', leftX + fechaLabelW + 1.5, currY);
+  doc.text(data.fecha || '', leftX + fechaLabelW + 1.2, currY);
   doc.setTextColor(20, 20, 20);
 
   // 6. Campo: Intervención núm.
-  currY += 7;
+  currY += 6.5;
   doc.setFont('helvetica', 'bold');
   doc.text('Intervención núm.:', leftX, currY);
   const numLabelW = doc.getTextWidth('Intervención núm.: ');
-  doc.line(leftX + numLabelW, currY + 0.5, lineEndX, currY + 0.5);
+  doc.line(leftX + numLabelW, currY + 0.4, lineEndX, currY + 0.4);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(15, 23, 42);
-  doc.text(String(data.intervencionNum || ''), leftX + numLabelW + 1.5, currY);
+  doc.text(String(data.intervencionNum || ''), leftX + numLabelW + 1.2, currY);
   doc.setTextColor(20, 20, 20);
 
   // 7. Campo: Se presentará en:
-  currY += 7.5;
+  currY += 7.0;
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(8);
+  doc.setFontSize(7.2);
   doc.text('Se presentará en:', leftX, currY);
 
   const drawCheckbox = (cbX, cbY, label, isChecked) => {
     doc.setLineDashPattern([], 0);
     doc.setDrawColor(60, 60, 60);
-    doc.setLineWidth(0.25);
-    doc.rect(cbX, cbY - 2.5, 3, 3);
+    doc.setLineWidth(0.2);
+    doc.rect(cbX, cbY - 2.2, 2.6, 2.6);
     if (isChecked) {
       doc.setDrawColor(20, 20, 20);
-      doc.setLineWidth(0.4);
-      doc.line(cbX + 0.6, cbY - 1.0, cbX + 1.2, cbY - 0.2);
-      doc.line(cbX + 1.2, cbY - 0.2, cbX + 2.5, cbY - 1.8);
-      doc.setLineWidth(0.25);
+      doc.setLineWidth(0.35);
+      doc.line(cbX + 0.5, cbY - 0.9, cbX + 1.0, cbY - 0.2);
+      doc.line(cbX + 1.0, cbY - 0.2, cbX + 2.2, cbY - 1.6);
+      doc.setLineWidth(0.2);
     }
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(7.5);
-    doc.text(label, cbX + 4.5, cbY);
+    doc.setFontSize(6.8);
+    doc.text(label, cbX + 3.8, cbY);
   };
 
-  currY += 4.5;
-  drawCheckbox(leftX + 2, currY, 'Sala principal', true);
-  currY += 4.2;
-  drawCheckbox(leftX + 2, currY, 'Sala auxiliar núm. 1', false);
-  currY += 4.2;
-  drawCheckbox(leftX + 2, currY, 'Sala auxiliar núm. 2', false);
+  currY += 4.0;
+  drawCheckbox(leftX + 1.5, currY, 'Sala principal', true);
+  currY += 3.8;
+  drawCheckbox(leftX + 1.5, currY, 'Sala auxiliar núm. 1', false);
+  currY += 3.8;
+  drawCheckbox(leftX + 1.5, currY, 'Sala auxiliar núm. 2', false);
 
   // 8. Nota al estudiante oficial S-89
-  currY += 5.5;
+  currY += 5.0;
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(5.8);
+  doc.setFontSize(4.8);
   doc.text('Nota al estudiante:', leftX, currY);
   const notaLabelW = doc.getTextWidth('Nota al estudiante: ');
   doc.setFont('helvetica', 'normal');
@@ -815,12 +816,16 @@ function drawSingleS89Slip(doc, x, y, slipW, slipH, data) {
   const splitNota = doc.splitTextToSize(notaText, lineEndX - leftX - notaLabelW);
   doc.text(splitNota[0] || '', leftX + notaLabelW, currY);
   if (splitNota.length > 1) {
-    doc.text(splitNota.slice(1), leftX, currY + 2.4);
+    const remainingText = notaText.substring((splitNota[0] || '').length).trim();
+    const restLines = doc.splitTextToSize(remainingText, lineEndX - leftX);
+    restLines.forEach((line, lIdx) => {
+      doc.text(line, leftX, currY + (lIdx + 1) * 2.0);
+    });
   }
 
   // 9. Pie de código oficial
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(5.5);
+  doc.setFontSize(5.0);
   doc.setTextColor(110, 110, 110);
   doc.text('S-89-S   11/23', leftX, y + slipH - 2.5);
   doc.setTextColor(20, 20, 20);
