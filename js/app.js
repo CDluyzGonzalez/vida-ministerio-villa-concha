@@ -6,6 +6,7 @@
 
 // Estado Global
 let PROGRAM = null;
+let PROGRAMS_CACHE = {}; // Almacén limpio en memoria de programas por bimestre
 let PEOPLE = null;
 let BIMESTRES_LIST = [
   'Enero - Febrero',
@@ -205,6 +206,21 @@ async function boot() {
     const prog = await apiLoadPrograma(currentBimestre);
     if (prog) {
       PROGRAM = prog;
+      if (prog.bimestre) PROGRAMS_CACHE[normName(prog.bimestre)] = prog;
+    }
+
+    // 4b. Precarga inteligente para Modo Lector (ej. en Octubre se muestra también Nov-Dic)
+    if (typeof computeViewerBimestres === 'function') {
+      const viewerNeeds = computeViewerBimestres(new Date());
+      await Promise.all(viewerNeeds.map(async (label) => {
+        const key = normName(label);
+        if (!PROGRAMS_CACHE[key]) {
+          const extra = await apiLoadPrograma(label);
+          if (extra && extra.bimestre) {
+            PROGRAMS_CACHE[normName(extra.bimestre)] = extra;
+          }
+        }
+      }));
     }
 
     // 5. Determinar y abrir la semana actual de forma inteligente

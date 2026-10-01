@@ -256,10 +256,11 @@ function renderProgramTab() {
         </div>
 
         ${viewerLabels.map(label => {
-          const bim = (PROGRAM?.bimestre && PROGRAM.bimestre.trim().toLowerCase() === label.trim().toLowerCase())
-            ? PROGRAM
-            : (typeof DEFAULT_PROGRAM !== 'undefined' && Array.isArray(DEFAULT_PROGRAM)
-                ? DEFAULT_PROGRAM.find(b => b.bimestre && b.bimestre.trim().toLowerCase() === label.trim().toLowerCase())
+          const normKey = normName(label);
+          const bim = (typeof PROGRAMS_CACHE !== 'undefined' && PROGRAMS_CACHE[normKey])
+            || (PROGRAM?.bimestre && normName(PROGRAM.bimestre) === normKey ? PROGRAM : null)
+            || (typeof DEFAULT_PROGRAM !== 'undefined' && Array.isArray(DEFAULT_PROGRAM)
+                ? DEFAULT_PROGRAM.find(b => b.bimestre && normName(b.bimestre) === normKey)
                 : null);
           if (!bim || !Array.isArray(bim.weeks) || bim.weeks.length === 0) return '';
 
@@ -1270,6 +1271,9 @@ async function switchBimestre(bimestreName) {
   }
 
   PROGRAM = prog;
+  if (prog && prog.bimestre && typeof PROGRAMS_CACHE !== 'undefined') {
+    PROGRAMS_CACHE[normName(prog.bimestre)] = prog;
+  }
   openWeeks.clear();
   const activeWkId = findActiveWeekId(PROGRAM?.weeks, new Date());
   if (activeWkId) {
